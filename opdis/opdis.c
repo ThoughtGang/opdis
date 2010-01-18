@@ -4,7 +4,7 @@
  * \author thoughtgang.org
  */
 
-#include "opdis.h"
+#include <opdis/opdis.h>
 
 /* ---------------------------------------------------------------------- */
 /* Default callbacks */
@@ -76,8 +76,8 @@ static int null_fprintf( FILE *, const char *, ... ) {
 
 
 /* ---------------------------------------------------------------------- */
-opdis_t opdis_init( void ) {
-	opdis_t o = (opdis_t) calloc( sizeof(opdis_t), 1 );
+opdis_t LIBCALL opdis_init( void ) {
+	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	
 	if ( o ) {
 		init_disassemble_info ( &o->info, o, build_insn_fprintf );
@@ -87,20 +87,20 @@ opdis_t opdis_init( void ) {
 	return o;
 }
 
-void opdis_term( opdis_t o ) {
+void LIBCALL opdis_term( opdis_t o ) {
 	if ( o ) {
 		free( o );
 	}
 }
 
-void opdis_init_from_bfd( bfd * ) {
+void LIBCALL opdis_init_from_bfd( bfd * ) {
 }
 
 /* ---------------------------------------------------------------------- */
 /* Configuration */
 // NOTE: void disassembler_usage (FILE *);
 
-void opdis_set_defaults( opdis_t o ) {
+void LIBCALL opdis_set_defaults( opdis_t o ) {
 	opdis_set_handler( o, default_handler );
 	opdis_set_resolver( o, default_resolver );
 	opdis_set_error_reporter( o, default_error );
@@ -108,7 +108,7 @@ void opdis_set_defaults( opdis_t o ) {
 	opdis_set_x86_syntax( o, x86_syntax_intel );
 }
 
-void opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax ) {
+void LIBCALL opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax ) {
 	disassembler_ftype fn = print_insn_i386_intel;
 	OPDIS_DECODER d_fn = default_decoder; // intel
 
@@ -125,7 +125,7 @@ void opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax ) {
 	opdis_set_decoder( d_fn );
 }
 
-void opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
+void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
 		     disassembler_ftype fn ) {
 	if (! o ) {
 		return;
@@ -138,7 +138,7 @@ void opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 	opdis_set_decoder( default_decoder );
 }
 
-void opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg ) {
+void LIBCALL opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg ) {
 	if (! o ) {
 		return;
 	}
@@ -147,15 +147,15 @@ void opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg ) {
 	o->handler_arg = arg;
 }
 
-void opdis_set_decoder( opdis_t o, OPDIS_DECODER fn ) {
+void LIBCALL opdis_set_decoder( opdis_t o, OPDIS_DECODER fn ) {
 	if ( o ) o->decoder = fn;
 }
 
-void opdis_set_resolver( opdis_t o, OPDIS_RESOLVER fn ) {
+void LIBCALL opdis_set_resolver( opdis_t o, OPDIS_RESOLVER fn ) {
 	if ( o ) o->resolver = fn;
 }
 
-void opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn ) {
+void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn ) {
 	if ( o ) o->error_reporter = fn;
 }
 
@@ -176,7 +176,8 @@ static int buffer_check( opdis_buf_t * buf, opdis_off_t offset ) {
 }
 
 // size of single insn at address
-size_t opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, opdis_off_t offset ){
+size_t LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
+				       opdis_off_t offset ){
 	size_t size;
 	OPDIS_DECODER fn = o->fprintf_func;
 	o->fprintf_func = null_fprintf;
@@ -192,8 +193,8 @@ size_t opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, opdis_off_t offset ){
 }
 
 // disasm single insn at address
-int opdis_disasm_insn( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
-		       opdis_insn_buf_t * insn ) {
+int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
+			       opdis_insn_buf_t * insn ) {
 	size_t size;
 
 	if (! o || ! buf ||! buffer_check( buf, offset ) ) {
@@ -217,19 +218,20 @@ int opdis_disasm_insn( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
 /* ---------------------------------------------------------------------- */
 /* Disassembler algorithms */
 
-int opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset, 
-		         opdis_off_t length ) {
+int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
+				 opdis_off_t length ) {
 	//cont = o.handler( insn, o.handler_arg );
 	return 0;
 }
 
-int opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_off_t offset ) {
+int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
+				opdis_off_t offset ) {
 	//cont = o.handler( insn, o.handler_arg );
 	//addr = o.resolver(insn)
 	return 0;
 }
 
 /* ---------------------------------------------------------------------- */
-void opdis_error( opdis_t o, opdis_error_t error, const char * msg ) {
+void LIBCALL opdis_error( opdis_t o, opdis_error_t error, const char * msg ) {
 	if ( o ) o.error_reporter(error, msg );
 }
