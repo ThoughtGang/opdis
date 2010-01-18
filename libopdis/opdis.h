@@ -20,8 +20,8 @@ typedef size_t opdis_off_t;
 typedef bfd_vma opdis_addr_t;
 
 typedef struct {
-	opdis_byte_t * 		buf;
-	opdis_off_t 		buf_len;
+	opdis_byte_t * 		data;
+	opdis_off_t 		len;
 } opdis_buffer_t;
 typedef opdis_buffer_t * opdis_buf_t;
 
@@ -38,13 +38,13 @@ enum opdis_error_t { opdis_error_unknown,
 // handler must copy instruction (const *) as it is overwritten on next
 // iteration
 // default is stdout
-typedef int (*OPDIS_HANDLER) ( void * arg );
+typedef int (*OPDIS_HANDLER) ( const opdis_insn_t *, void * arg );
 // instructions are submitted to the decoder as an array of strings;
 // the decoder fills the instruction object
 // default is the internal x86 decoder or a generic string-only decoder
 typedef int (*OPDIS_DECODER) ( const opdis_insn_raw_t * in, opdis_insn_t * out,
 			       const opdis_byte_t * start, opdis_off_t length );
-typedef opdis_addr_t (*OPDIS_RESOLVER) ();
+typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * );
 // default writes to stderr
 typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg );
 
@@ -82,9 +82,11 @@ extern "C"
 
 opdis_t opdis_init( void );
 
-int opdis_term( opdis_t );
+void opdis_term( opdis_t );
 
 void opdis_init_from_bfd( opdist_t, bfd * );
+
+void opdis_set_defaults( opdis_t );
 
 // convenience funtion to set AT&T vs INTEL syntax
 // this performs a setarch to x86 and uses the appropriate intel print_insn
@@ -99,7 +101,7 @@ void opdis_set_arch( opdis_t, enum bfd_architecture, disassembler_ftype );
 void opdis_set_disassembler_options( opdis_t, const char * options );
 
 // instructions are emitted to handler; handler makes decision to continue
-void opdis_set_handler( opdis_t, OPDIS_HANDLER );
+void opdis_set_handler( opdis_t, OPDIS_HANDLER, void * arg );
 
 // instructions are submitted to the decoder as an array of strings;
 // the decoder fills the instruction object
@@ -107,6 +109,8 @@ void opdis_set_decoder( opdis_t, OPDIS_DECODER );
 
 // instruction is emitted to resolver; resolver returns jump/call target
 void opdis_set_resolver( opdis_t, OPDIS_RESOLVER );
+
+void opdis_set_error_reporter( opdis_t, OPDIS_ERROR );
 
 // size of single insn at address
 size_t opdis_disasm_insn_size( opdis_t, opdis_buf_t buf, opdis_off_t offset );
@@ -119,6 +123,8 @@ int opdis_disasm_linear( opdis_t, opdis_buf_t buf, opdis_off_t offset,
 		         opdis_off_t length );
 // disasm following cflow
 int opdis_disasm_cflow( opdis_t, opdis_buf_t buf, opdis_off_t offset );
+
+void opdis_error( opdis_t, opdis_error_t, const char * );
 
 // todo invariant?
 //opdis_( opdis_t * );
