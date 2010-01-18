@@ -38,13 +38,15 @@ enum opdis_error_t { opdis_error_unknown,
 // handler must copy instruction (const *) as it is overwritten on next
 // iteration
 // default is stdout
-typedef int (*OPDIS_HANDLER) ( const opdis_insn_t *, void * arg );
+typedef int (*OPDIS_HANDLER) ( const opdis_insn_buf_t *, void * arg );
 // instructions are submitted to the decoder as an array of strings;
 // the decoder fills the instruction object
 // default is the internal x86 decoder or a generic string-only decoder
-typedef int (*OPDIS_DECODER) ( const opdis_insn_raw_t * in, opdis_insn_t * out,
-			       const opdis_byte_t * start, opdis_off_t length );
-typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * );
+typedef int (*OPDIS_DECODER) ( const opdis_insn_raw_t * in, 
+			       opdis_insn_buf_t * out,
+			       const opdis_byte_t * start, 
+			       opdis_off_t length );
+typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_buf_t * );
 // default writes to stderr
 typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg );
 
@@ -86,7 +88,15 @@ void opdis_term( opdis_t );
 
 void opdis_init_from_bfd( opdist_t, bfd * );
 
-void opdis_set_defaults( opdis_t );
+/*!
+ * \fn opdis_set_defaults
+ * \brief Initializes an opdis object to default, sane values.
+ * \param o opdis object to re-initialize
+ * \relates opdis_init
+ * \sa opdis_set_arch
+ * \note The default architecture is i386, and the defaul syntax is Intel.
+ */
+void opdis_set_defaults( opdis_t o );
 
 // convenience funtion to set AT&T vs INTEL syntax
 // this performs a setarch to x86 and uses the appropriate intel print_insn
@@ -116,7 +126,8 @@ void opdis_set_error_reporter( opdis_t, OPDIS_ERROR );
 size_t opdis_disasm_insn_size( opdis_t, opdis_buf_t buf, opdis_off_t offset );
 
 // disasm single insn at address
-int opdis_disasm_insn( opdis_t, opdis_buf_t buf, opdis_off_t offset );
+int opdis_disasm_insn( opdis_t, opdis_buf_t buf, opdis_off_t offset,
+		       opdis_insn_buf_t * insn );
 
 // disasm serial range of addresses
 int opdis_disasm_linear( opdis_t, opdis_buf_t buf, opdis_off_t offset, 

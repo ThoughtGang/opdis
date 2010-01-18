@@ -20,6 +20,7 @@
 #define OPDIS_MAX_INSN_STR 128		/* max length of ASCII insn string */
 #define OPDIS_MAX_INSN_SZ 64		/* max bytes in insn */
 
+/* ---------------------------------------------------------------------- */
 // built from libopcodes lame 
 typedef struct {
 	size_t str_count;
@@ -27,6 +28,7 @@ typedef struct {
 	char insn[OPDIS_MAX_INSN_STR];
 } opdis_insn_raw_t;
 
+/* ---------------------------------------------------------------------- */
 typedef struct {
 	/* ASCII representation of instruction. This is the raw libopcodes
 	 * output. */
@@ -48,9 +50,30 @@ typedef struct {
 	
 	// operands
 	opdis_off_t num_operands;
-	opdis_off_t operands[OPDIS_MAX_OP];
+	//opdis_op_t operands[OPDIS_MAX_OP];
+} opdis_insn_buf_t;
+
+/* ---------------------------------------------------------------------- */
+typedef struct {
+	const char * ascii;
+
+	opdis_off_t offset;
+	opdis_off_t address;
+
+	opdis_off_t size;
+	opdis_byte_t * bytes;
+
+	/* instruction  */
+	const char * mnemonic;
+	// prefixes
+	// instruction type/ is cflow
+	
+	// operands
+	opdis_off_t num_operands;
+	//opdis_op_t * operands;
 } opdis_insn_t;
 
+/* ---------------------------------------------------------------------- */
 #ifdef __cplusplus
 extern "C"
 {
@@ -64,6 +87,12 @@ extern "C"
  * \relates
  * \sa
  */
+
+// tmp init
+// tmp add item
+// init buf
+// insn init
+// insn_from_buf
 
 #ifdef __cplusplus
 }

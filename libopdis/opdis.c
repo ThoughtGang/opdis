@@ -9,13 +9,13 @@
 /* ---------------------------------------------------------------------- */
 /* Default callbacks */
 
-static int default_handler( const opdis_insn_t * insn, void * arg ) {
+static int default_handler( const opdis_insn_buf_t * insn, void * arg ) {
 	// add to internal list
 	// if already present, return false
 	// return true
 }
 
-static opdis_addr_t default_resolver( const opdis_insn_t * insn ) {
+static opdis_addr_t default_resolver( const opdis_insn_buf_t * insn ) {
 	// resolve address if relative
 }
 
@@ -40,7 +40,7 @@ static void default_opdis_error( opdis_error_t error, const char * msg ) {
 /* ---------------------------------------------------------------------- */
 /* Built-in decoders */
 
-static int default_decoder( const opdis_insn_raw_t * in, opdis_insn_t * out,
+static int default_decoder( const opdis_insn_raw_t * in, opdis_insn_buf_t * out,
 		            const opdis_byte_t * start, opdis_off_t length ) {
 	// fill out
 	// handler must put bytes into buffer as well?
@@ -193,7 +193,7 @@ size_t opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, opdis_off_t offset ){
 
 // disasm single insn at address
 int opdis_disasm_insn( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
-		       opdis_insn_t * insn ) {
+		       opdis_insn_buf_t * insn ) {
 	size_t size;
 
 	if (! o || ! buf ||! buffer_check( buf, offset ) ) {
