@@ -93,7 +93,7 @@ void LIBCALL opdis_term( opdis_t o ) {
 	}
 }
 
-void LIBCALL opdis_init_from_bfd( bfd * ) {
+opdis_t LIBCALL opdis_init_from_bfd( bfd * ) {
 }
 
 /* ---------------------------------------------------------------------- */

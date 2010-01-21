@@ -1,0 +1,42 @@
+/*! 
+\mainpage  Opdis
+
+\section overview Overview
+
+<P>
+stuff
+</P>
+
+<HR>
+\section sec1 Section 1
+
+<P></P>
+
+\subsection subsec1 Section 1.1
+
+<P></P>
+
+<HR>
+\section data_model Data Model
+
+<P></P>
+
+<HR>
+\section other_docs Other Documentation
+
+<P></P>
+
+- \ref getting_started
+<BR>
+
+- \ref tutorials
+<BR>
+ 
+- \ref howtos 
+<BR>
+
+- \ref faq
+<BR>
+
+*/
+

@@ -1,0 +1,7 @@
+/*!
+ \defgroup configuration Configuration API
+  Config routines
+
+ \defgroup disassembly Disassembly API
+  Disasm routines
+*/
