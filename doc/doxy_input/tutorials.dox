@@ -1,5 +1,8 @@
 /*! \page tutorials Tutorials
 
   \section tute_disasm Disassembly Tutorials
+  \subsection tute_linear_disasm Writing a Linear Disassembler
+  \subsection tute_cflow_disasm Writing a Control-flow Disassembler
+  \subsection tute_bfd Writing a BFD-based disassembler
 */
 

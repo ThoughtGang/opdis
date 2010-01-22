@@ -1,4 +1,15 @@
 /*! \page getting_started Getting started with Opdis
 
+    \section Using opdis to disassemble an ELF binary
+
+    \section Using opdis to disassemble a hex string
+
+    \section Using libopdis to disassemble a memory location
+
+    \section Using libopdis to disassemble a file
+
+    \section Using libopdis and BFD to disassemble an ELF binary
+
+    \section Using libopdis and BFD to disassemble an MZ binary
 */
 

@@ -4,20 +4,45 @@
 \section overview Overview
 
 <P>
-stuff
+descr
+</P>
+
+<P>
+rationale
+</P>
+
+<P>
+components (lib/util)
+</P>
+
+<P>
+basic usage
 </P>
 
 <HR>
-\section sec1 Section 1
+\section sec_libopdis The libopdis library
+
+<P>...about</P>
+
+\subsection sec_libopdis_config Configuration
 
 <P></P>
 
-\subsection subsec1 Section 1.1
+\subsection sec_libopdis_disasm Disassembly
+
+<P></P>
+
+\subsection sec_libopdis_model Data Model
+
+
+\ref opdis_insn_t
+
+\ref opdis_operand_t
 
 <P></P>
 
 <HR>
-\section data_model Data Model
+\section sec_opdis The opdis command-line utility
 
 <P></P>
 
