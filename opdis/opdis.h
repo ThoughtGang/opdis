@@ -1,8 +1,7 @@
 /*!
  * \file opdis.h
- * \brief Disassembler front-end for libopcodes.
- * \details Opdis is a wrapper for libopcodes which provides more support 
- * for disassembly than that needed by objdump.
+ * \brief Public API for libopdis
+ * \details This defines the API for the libopdis library.
  * \author thoughtgang.org
  */
 
@@ -58,22 +57,66 @@ typedef int (*OPDIS_HANDLER) ( const opdis_insn_t * i, void * arg );
  */
 typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg );
 
-// instructions are submitted to the decoder as an array of strings;
-// the decoder fills the instruction object
-// default is the internal x86 decoder or a generic string-only decoder
+/*!
+ * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in, 
+			           opdis_insn_t * out,
+			           const opdis_byte_t * start, 
+			           opdis_off_t length )
+ * \ingroup configuration
+ * \brief Callback used to fill an opdis_insn_t from an opdis_insn_buf_t
+ * \param in The opdis_insn_buf_t containing the libopcodes output.
+ * \param out Pointer to the opdis_insn_t to fill.
+ * \param start Pointer to the first byte of the instruction.
+ * \param length Size of instruction in bytes.
+ * \return 0 on failure, nonzero on success. 
+ * \details This function is invoked after libopcodes has finished 
+ *          disassembling the instruction. The strings emitted from libopcodes
+ *          are in the opdis_insn_buf_t; the decoder must use these to build
+ *          a valid opdis_insn_t. The default decoder for unsupported
+ *   	    architectures will only fill the ascii field of the opdis_insn_t.
+ *   	    More sophisticated decoders, such as the decoder for the x86
+ *   	    platform, will fill the rest of the object.
+ * \sa \ref sec_supported_arch
+ * \note The caller will only need to provide a decoder callback if they
+ *       are disassembling an architecture not supported by Opdis.
+ */
 typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in, 
 			       opdis_insn_t * out,
 			       const opdis_byte_t * start, 
 			       opdis_off_t length );
 
+/*!
+ * \typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
+ * 					     void * arg )
+ * \ingroup configuration
+ * \brief Callback used to convert a branch target to a buffer offset.
+ * \param i The instruction to resolve.
+ * \param arg Argument provided when the callback is set
+ * \return A valid offset in the buffer, or...
+ * \details This function is invoked...
+ */
 typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_buf_t *, void * arg );
 
+/*!
+ * \enum opdis_error_t
+ * \ingroup disassembly
+ * \brief Error codes
+ */
 enum opdis_error_t { opdis_error_unknown, 
 		     opdis_error_bounds,	/* Bounds of input exceeded */ 
 		     opdis_error_invalid_insn,	/* Invalid instruction */
 		     opdis_error_max_items	/* Instruction > insn_buf */ 
 		   };
-// default writes to stderr
+
+/*!
+ * \typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
+			          void * arg )
+ * \ingroup configuration
+ * \brief Callback used to 
+ * \param arg Argument provided when the callback is set
+ * \details This function is invoked...
+ * default writes to stderr
+ */
 typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
 			      void * arg );
 
