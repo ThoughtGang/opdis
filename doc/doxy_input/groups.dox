@@ -1,7 +1,14 @@
 /*!
- \defgroup configuration Configuration API
-  Config routines
+ \defgroup configuration Configuration
+  API for opdis configuration.
 
- \defgroup disassembly Disassembly API
-  Disasm routines
+ \defgroup disassembly Disassembly
+  API for disassembly.
+
+ \defgroup tree Tree
+  AVL trees for opdis addresses and instructions.
+
+ \defgroup types Types
+  Datatypes used by opdis.
+  
 */

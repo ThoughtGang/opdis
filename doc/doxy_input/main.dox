@@ -1,28 +1,37 @@
 /*! 
-\mainpage  Opdis
+\mainpage Opdis : Opcode Disassembler
 
 \section overview Overview
 
 <P>
-descr
+Opdis is a wrapper for the libopcodes disassembler library distributed as part
+of GNU binutils. It extends the libopcodes library by offering linear and
+control-flow disassembly algorithms, instruction and operand objects that
+are suitable for analysis, and a command-line utility to perform disassembly 
+on arbitrary locations in a file.
 </P>
 
 <P>
-rationale
+These features are lacking in libopcodes and objdump. The design of libopcodes
+makes it awkward to use for binary analysis; it assumes that disassembled
+instructions are going to be printed, not stored or analyzed, and therefore
+it invokes a callback with an fprintf(3) signature. The shortcomings of objdump
+are even greater: it does not support control-flow disassembly, nor does it
+allow the user to specify which bytes in the file to disassemble.
 </P>
 
 <P>
-components (lib/util)
-</P>
-
-<P>
-basic usage
+The Opdis project consists of the \ref sec_libopdis library and the 
+\ref sec_opdis command-line utility.
 </P>
 
 <HR>
-\section sec_libopdis The libopdis library
+\section sec_libopdis libopdis
 
-<P>...about</P>
+<P>
+The libopdis library contains the core functionality; it uses linear and
+control-flow algorithms to generate instruction and operand objects. 
+</P>
 
 \subsection sec_libopdis_config Configuration
 
@@ -34,6 +43,9 @@ basic usage
 
 \subsection sec_libopdis_model Data Model
 
+<P></P>
+
+\subsection sec_libopdis_link Linking to libopdis
 
 \ref opdis_insn_t
 
@@ -42,9 +54,29 @@ basic usage
 <P></P>
 
 <HR>
-\section sec_opdis The opdis command-line utility
+\section sec_opdis opdis
 
-<P></P>
+<P>
+The opdis utility is a command-line front-end to the library which attempts to
+meet the needs of a generic disassembler.
+</P>
+
+<HR>
+\section sec_supported_arch Supported Architectures
+
+<P>
+Opdis supports the disassembly of all architectures that libopcodes supports.
+On most of these architectures, however, only the ASCII string for the
+disassembled instruction is available.
+</P>
+
+<P>
+Complete instruction and operand objects are generated only for the following
+platforms:
+	- x86
+	- x86-64
+</P>
+
 
 <HR>
 \section other_docs Other Documentation
