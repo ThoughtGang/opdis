@@ -91,31 +91,41 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in,
  * \ingroup configuration
  * \brief Callback used to convert a branch target to a buffer offset.
  * \param i The instruction to resolve.
- * \param arg Argument provided when the callback is set
- * \return A valid offset in the buffer, or...
- * \details This function is invoked...
+ * \param arg Argument provided when the callback is set.
+ * \return A valid offset in the buffer, or OPDIS_INVALID_ADDR.
+ * \details This function is invoked when a branch instruction (call or jmp)
+ *          is encountered; it determines the buffer offset of the branch
+ *          target. This is used to convert relative addresses, virtual
+ *          memory addresses, and registers into buffer offsets. If the
+ *          branch target cannot be converted to a memory address (e.g.
+ *          register contents are not being tracked, the load address of
+ *          the buffer is not known, or the address lies outside the buffer)
+ *          then this function must return OPDIS_INVALID_ADDR. The default
+ *          resolver only handled relative addresses.
  */
-typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_buf_t *, void * arg );
+typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
 
 /*!
  * \enum opdis_error_t
  * \ingroup disassembly
- * \brief Error codes
+ * \brief Error codes passed to OPDIS_ERROR
  */
 enum opdis_error_t { opdis_error_unknown, 
-		     opdis_error_bounds,	/* Bounds of input exceeded */ 
-		     opdis_error_invalid_insn,	/* Invalid instruction */
-		     opdis_error_max_items	/* Instruction > insn_buf */ 
+		     opdis_error_bounds,	/*!< Buffer bounds exceeded */ 
+		     opdis_error_invalid_insn,	/*!< Invalid instruction */
+		     opdis_error_max_items	/*!< Instruction > insn_buf */ 
 		   };
 
 /*!
  * \typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
 			          void * arg )
  * \ingroup configuration
- * \brief Callback used to 
- * \param arg Argument provided when the callback is set
- * \details This function is invoked...
- * default writes to stderr
+ * \brief Callback used to handle error messages.
+ * \param error Type of error.
+ * \param msg Detailed message describing error.
+ * \param arg Argument provided when the callback is set.
+ * \details This function is invoked whenever an error is encountered by the
+ *          disassembler. The default error handler writes to STDERR.
  */
 typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
 			      void * arg );
@@ -240,13 +250,11 @@ void LIBCALL opdis_set_defaults( opdis_t o );
  * \ingroup configuration
  * \brief Syntax options for x86 disassembly.
  * \note This wraps the libopcodes syntax options, which only include
- *       Intel and AT&T (i.e., no Nasm support).
+ *       Intel and AT&T (i.e. no Nasm support).
  */
 enum opdis_x86_syntax_t { 
-	/* Intel syntax (dest, src) */
-	x86_syntax_intel, 
-	/* AT&T syntax (src, dest) */
-	x86_syntax_att 
+	opdis_x86_syntax_intel, 	/*!< Intel syntax (dest, src) */
+	opdis_x86_syntax_att 		/*!< AT&T syntax (src, dest) */
 };
 
 /*!
@@ -262,10 +270,6 @@ enum opdis_x86_syntax_t {
  */
 void LIBCALL opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax );
 
-// set architecture and disassembler to use
-// if disassembler_ftype is NULL, the default for arch will be chosen
-// default is x86 at&t
-// also sets decoder
 /*!
  * \fn opdis_set_arch( opdis_t, enum bfd_architecture, disassembler_ftype )
  * \ingroup configuration
@@ -276,6 +280,12 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax );
  * \param o opdis disassembler to configure.
  * \param arch A valid BFD architecture from /usr/include/bfd.h .
  * \param fn A valid libopcodes print_insn routine from /usr/include/dis-asm.h .
+ * \note If the disassembler_ftype parameter is NULL, the default disassembler
+ *       for the architecture will be selected. On x86 targets, this is
+ *       print_insn_i386_att.
+ * \note This sets the decoder to the appropriate built-in decoder for the
+ *       architecture. To override the decoder, call opdis_set_decoder after
+ *       calling this routine.
  */
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
 			     disassembler_ftype fn );
@@ -406,7 +416,6 @@ size_t LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
  */
 int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
 				 opdis_off_t length );
-// disasm following cflow
 /*!
  * \fn opdis_disasm_cflow( opdis_t, opdis_buf_t, opdis_off_t )
  * \ingroup disassembly
@@ -429,8 +438,6 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
  */
 void LIBCALL opdis_error( opdis_t o, opdis_error_t error, const char * msg );
 
-// todo invariant?
-//opdis_( opdis_t * );
 #ifdef __cplusplus
 }
 #endif
