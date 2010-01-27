@@ -17,36 +17,36 @@
 
 /*! \struct opdis_tree_node_t 
  *  \ingroup tree
- *  \brief
+ *  \brief A node in an AVL tree.
  */
 typedef struct opdis_tree_node {
-	struct opdis_tree_node	* parent;
-	struct opdis_tree_node	* left;
-	struct opdis_tree_node	* right;
-	void			* data;
-	int	  		level;
+	struct opdis_tree_node	* parent;	/*!< Parent node or NULL */
+	struct opdis_tree_node	* left;		/*!< Left (<) child node */
+	struct opdis_tree_node	* right;	/*!< Right (>) child node */
+	void			* data;		/*!< Data stored in node */
+	int	  		level;		/*!< Level of node in tree */
 } opdis_tree_node_t;
 
-/*! \struct opdis_tree_node_t 
+/*! \struct opdis_tree_base_t 
  *  \ingroup tree
- *  \brief
+ *  \brief The base of the tree.
  */
 typedef struct std_tree {
-	opdis_tree_node_t	* root;
-	int	  		  num;
+	opdis_tree_node_t	* root;		/*!< Root node of tree */
+	int	  		  num;		/*!< Number of nodes in tree */
 } opdis_tree_base_t;
-
-/*! \typedef opdis_tree_base_t * opdis_insn_tree_t
- *  \ingroup tree
- *  \brief
- */
-typedef opdis_tree_base_t * opdis_insn_tree_t;
 
 /*! \typedef opdis_tree_base_t * opdis_addr_tree_t
  *  \ingroup tree
- *  \brief
+ *  \brief An AVL tree for storing opdis addresses.
  */
 typedef opdis_tree_base_t * opdis_addr_tree_t;
+
+/*! \typedef opdis_tree_base_t * opdis_insn_tree_t
+ *  \ingroup tree
+ *  \brief An AVL tree for storing opdis instructions.
+ */
+typedef opdis_tree_base_t * opdis_insn_tree_t;
 
 
 /* ---------------------------------------------------------------------- */
@@ -55,7 +55,104 @@ extern "C"
 {
 #endif
 
+/* Generic tree routines */
 
+/*!
+ * \typedef void * (*OPDIS_TREE_KEY_FN) (void *)
+ * \ingroup tree
+ * \brief Callback to get the key for an item stored in a tree.
+ * \param item The item in the tree.
+ * \return Key for item
+ * \details This function is invoked in order to retrieve the key for
+ *          an item stored in the tree.
+ */
+
+typedef void * (*OPDIS_TREE_KEY_FN) (void * item);
+
+/*!
+ * \typedef int (*OPDIS_TREE_CMP_FN) (void *, void *)
+ * \ingroup tree
+ * \brief Callback to compare two keys.
+ * \param a The first key.
+ * \param b The second key.
+ * \return -1, 0, 1 if a is <, ==, or > b
+ * \details This function is called to determine if the first item is
+ *          before, after, or equal in order to the second item.
+ */
+
+typedef int (*OPDIS_TREE_CMP_FN) (void * a, void *b);
+
+/*!
+ * \fn opdis_tree_t opdis_tree_init( OPDIS_TREE_KEY_FN, OPDIS_TREE_CMP_FN )
+ * \ingroup tree
+ * \brief
+ * \param key_fn
+ * \param cmp_fn
+ * \return
+ * \sa
+ */
+
+opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn, 
+				      OPDIS_TREE_CMP_FN cmp_fn );
+
+/*!
+ * \fn int opdis_tree_add( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief
+ * \param tree
+ * \param data
+ * \return
+ * \sa
+ */
+
+int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data );
+
+/*!
+ * \fn int opdis_tree_delete( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief
+ * \param tree
+ * \param key
+ * \return
+ * \sa
+ */
+
+int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
+
+/*!
+ * \fn void * opdis_tree_find( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief
+ * \param tree
+ * \param key
+ * \return
+ * \sa
+ */
+
+void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
+
+/*!
+ * \fn size_t opdis_tree_count( opdis_tree_t )
+ * \ingroup tree
+ * \brief
+ * \param tree
+ * \return
+ * \sa
+ */
+
+size_t LIBCALL opdis_tree_count( opdis_tree_t tree );
+
+/*!
+ * \fn void opdis_tree_free( opdis_tree_t )
+ * \ingroup tree
+ * \brief
+ * \param tree
+ * \sa
+ */
+
+void LIBCALL opdis_tree_free( opdis_tree_t tree );
+
+/* ---------------------------------------------------------------------- */
 /* Address tree */
 
 /*!
@@ -202,77 +299,6 @@ void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
  */
 
 void LIBCALL opdis_insn_tree_free( opdis_insn_tree_t tree );
-
-/* ---------------------------------------------------------------------- */
-/* Generic tree routines */
-
-/*!
- * \fn opdis_tree_t opdis_tree_init( OPDIS_TREE_KEY_FN )
- * \ingroup tree
- * \brief
- * \param fn
- * \return
- * \sa
- */
-
-opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN fn );
-
-/*!
- * \fn int opdis_tree_add( opdis_tree_t, void * )
- * \ingroup tree
- * \brief
- * \param tree
- * \param data
- * \return
- * \sa
- */
-
-int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data );
-
-/*!
- * \fn int opdis_tree_delete( opdis_tree_t, void * )
- * \ingroup tree
- * \brief
- * \param tree
- * \param key
- * \return
- * \sa
- */
-
-int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
-
-/*!
- * \fn void * opdis_tree_find( opdis_tree_t, void * )
- * \ingroup tree
- * \brief
- * \param tree
- * \param key
- * \return
- * \sa
- */
-
-void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
-
-/*!
- * \fn size_t opdis_tree_count( opdis_tree_t )
- * \ingroup tree
- * \brief
- * \param tree
- * \return
- * \sa
- */
-
-size_t LIBCALL opdis_tree_count( opdis_tree_t tree );
-
-/*!
- * \fn void opdis_tree_free( opdis_tree_t )
- * \ingroup tree
- * \brief
- * \param tree
- * \sa
- */
-
-void LIBCALL opdis_tree_free( opdis_tree_t tree );
 
 #ifdef __cplusplus
 }
