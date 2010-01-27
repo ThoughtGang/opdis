@@ -5,6 +5,9 @@
  \defgroup disassembly Disassembly
   API for disassembly.
 
+ \defgroup model Data Model
+  Data Model for disassembled objects.
+
  \defgroup tree Tree
   AVL trees for opdis addresses and instructions.
 

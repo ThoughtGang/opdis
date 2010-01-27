@@ -1,6 +1,7 @@
 /*!
  * \file insn.h
- * \brief Instruction and operand support for libopdis.
+ * \brief Data model for libopdis.
+ * \details This defines the data model for libopdis.
  * \author thoughtgang.org
  */
 
@@ -48,23 +49,30 @@ typedef struct {
 #endif
 
 /* ---------------------------------------------------------------------- */
+/*!
+ * \struct opdis_insn_t 
+ * \ingroup model
+ * \brief
+ * \sa
+ * \details
+ */
 typedef struct {
-	const char * ascii;
+	const char * ascii;		/*!< */
 
-	opdis_off_t offset;
-	opdis_off_t address;
+	opdis_off_t offset;		/*!< */
+	opdis_off_t address;		/*!< */
 
-	opdis_off_t size;
-	opdis_byte_t * bytes;
+	opdis_off_t size;		/*!< */
+	opdis_byte_t * bytes;		/*!< */
 
 	/* instruction  */
-	const char * mnemonic;
+	const char * mnemonic;		/*!< */
 	// prefixes
 	// instruction type/ is cflow
 	
 	// operands
-	opdis_off_t num_operands;
-	//opdis_op_t * operands;
+	opdis_off_t num_operands;	/*!< */
+	//opdis_op_t * operands;	/*!< */
 } opdis_insn_t;
 
 /* ---------------------------------------------------------------------- */
@@ -76,9 +84,10 @@ extern "C"
 
 /*!
  * \fn
+ * \ingroup model
  * \brief
  * \param
- * \relates
+ * \return
  * \sa
  */
 
