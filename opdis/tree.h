@@ -27,36 +27,6 @@ typedef struct opdis_tree_node {
 	int	  		level;		/*!< Level of node in tree */
 } opdis_tree_node_t;
 
-/*! \struct opdis_tree_base_t 
- *  \ingroup tree
- *  \brief The base of the tree.
- */
-typedef struct std_tree {
-	opdis_tree_node_t	* root;		/*!< Root node of tree */
-	int	  		  num;		/*!< Number of nodes in tree */
-} opdis_tree_base_t;
-
-/*! \typedef opdis_tree_base_t * opdis_addr_tree_t
- *  \ingroup tree
- *  \brief An AVL tree for storing opdis addresses.
- */
-typedef opdis_tree_base_t * opdis_addr_tree_t;
-
-/*! \typedef opdis_tree_base_t * opdis_insn_tree_t
- *  \ingroup tree
- *  \brief An AVL tree for storing opdis instructions.
- */
-typedef opdis_tree_base_t * opdis_insn_tree_t;
-
-
-/* ---------------------------------------------------------------------- */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/* Generic tree routines */
-
 /*!
  * \typedef void * (*OPDIS_TREE_KEY_FN) (void *)
  * \ingroup tree
@@ -81,6 +51,38 @@ typedef void * (*OPDIS_TREE_KEY_FN) (void * item);
  */
 
 typedef int (*OPDIS_TREE_CMP_FN) (void * a, void *b);
+
+/*! \struct opdis_tree_base_t 
+ *  \ingroup tree
+ *  \brief The base of the tree.
+ */
+typedef struct std_tree {
+	OPDIS_TREE_KEY_FN	key_fn;		/*!< Key retrieval callback */
+	OPDIS_TREE_CMP_FN	cmp_fn;		/*!< Key compare callback */
+	opdis_tree_node_t	* root;		/*!< Root node of tree */
+	int	  		  num;		/*!< Number of nodes in tree */
+} opdis_tree_base_t;
+
+/*! \typedef opdis_tree_base_t * opdis_addr_tree_t
+ *  \ingroup tree
+ *  \brief An AVL tree for storing opdis addresses.
+ */
+typedef opdis_tree_base_t * opdis_addr_tree_t;
+
+/*! \typedef opdis_tree_base_t * opdis_insn_tree_t
+ *  \ingroup tree
+ *  \brief An AVL tree for storing opdis instructions.
+ */
+typedef opdis_tree_base_t * opdis_insn_tree_t;
+
+
+/* ---------------------------------------------------------------------- */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* Generic tree routines */
 
 /*!
  * \fn opdis_tree_t opdis_tree_init( OPDIS_TREE_KEY_FN, OPDIS_TREE_CMP_FN )
