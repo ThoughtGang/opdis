@@ -1,12 +1,12 @@
 /*!
- * \file insn.h
+ * \file model.h
  * \brief Data model for libopdis.
  * \details This defines the data model for libopdis.
  * \author thoughtgang.org
  */
 
-#ifndef OPDIS_INSN_H
-#define OPDIS_INSN_H
+#ifndef OPDIS_MODEL_H
+#define OPDIS_MODEL_H
 
 #ifdef WIN32
         #define LIBCALL _stdcall
@@ -15,10 +15,6 @@
 #endif
 
 
-// this amounts to < 5 k for runtime. overkill, but safe(?).
-#define OPDIS_MAX_ITEMS 64		/* max # items (mnem, prefix, op) */
-#define OPDIS_MAX_ITEM_SIZE 64		/* max size of a single insn item */
-#define OPDIS_MAX_INSN_STR 128		/* max length of ASCII insn string */
 #define OPDIS_MAX_INSN_SZ 64		/* max bytes in insn */
 
 /* ---------------------------------------------------------------------- */

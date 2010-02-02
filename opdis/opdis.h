@@ -11,8 +11,8 @@
 #include <dis-asm.h>		/* libopcodes (provided by binutils-dev) */
 
 #include <opdis/types.h>
-#include <opdis/insn.h>
 #include <opdis/insn_buf.h>
+#include <opdis/model.h>
 
 #ifdef WIN32
         #define LIBCALL _stdcall
