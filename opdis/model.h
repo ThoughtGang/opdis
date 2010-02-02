@@ -45,30 +45,52 @@ typedef struct {
 #endif
 
 /* ---------------------------------------------------------------------- */
+/* OPERAND */
+/*!
+ * \struct opdis_op_t 
+ * \ingroup model
+ * \brief Operand object
+ * \details Stuff
+ * \sa opdis_insn_t
+ */
+
+typedef struct {
+	const char * ascii;		/*!< String representation of operand */
+} opdis_op_t;
+
+/* ---------------------------------------------------------------------- */
+/* INSTRUCTION */
 /*!
  * \struct opdis_insn_t 
  * \ingroup model
- * \brief
- * \sa
- * \details
+ * \brief Instruction object
+ * \details Stuff
+ * \sa opdis_op_t
  */
 typedef struct {
-	const char * ascii;		/*!< */
+	const char * ascii;		/*!< String representation of insn */
 
-	opdis_off_t offset;		/*!< */
-	opdis_off_t address;		/*!< */
+	opdis_off_t offset;		/*!< Offset of instruction in buffer */
+	opdis_off_t address;		/*!< VMA of instruction */
 
-	opdis_off_t size;		/*!< */
-	opdis_byte_t * bytes;		/*!< */
+	opdis_off_t size;		/*!< Size (# bytes) of insn */
+	opdis_byte_t * bytes;		/*!< Pointer to insn bytes in buffer */
 
 	/* instruction  */
-	const char * mnemonic;		/*!< */
-	// prefixes
-	// instruction type/ is cflow
+	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */
+	const char * prefixes;		/*!< Array of prefix strings */
+
+	const char * mnemonic;		/*!< ASCII mnemonic for insn */
+	int category;			/*!< Type of insn */
+	union {
+		// TODO: fn instruction type/ is cflow
+		int cflow_flags;	/*!< Control flow insn flags */
+	} flags;			/*!< Instruction-specific flags */
+
 	
 	// operands
-	opdis_off_t num_operands;	/*!< */
-	//opdis_op_t * operands;	/*!< */
+	opdis_off_t num_operands;	/*!< Number of operands in insn */
+	opdis_op_t * operands;		/*!< Array of operand objects */
 } opdis_insn_t;
 
 /* ---------------------------------------------------------------------- */
