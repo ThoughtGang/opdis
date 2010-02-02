@@ -5,6 +5,9 @@
  \defgroup disassembly Disassembly
   API for disassembly.
 
+ \defgroup internal
+  Internal types and functions.
+
  \defgroup model Data Model
   Data Model for disassembled objects.
 
