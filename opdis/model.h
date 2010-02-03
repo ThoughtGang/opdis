@@ -8,6 +8,9 @@
 #ifndef OPDIS_MODEL_H
 #define OPDIS_MODEL_H
 
+#include <opdis/metadata.h>
+#include <opdis/types.h>
+
 #ifdef WIN32
         #define LIBCALL _stdcall
 #else
@@ -15,56 +18,52 @@
 #endif
 
 
-#define OPDIS_MAX_INSN_SZ 64		/* max bytes in insn */
-
-/* ---------------------------------------------------------------------- */
-#if 0
-typedef struct {
-	/* ASCII representation of instruction. This is the raw libopcodes
-	 * output. */
-	char ascii[OPDIS_MAX_INSN_STR];
-
-	/* offset, load_address, and bytes in instruction. Note that address
-	 * is set to offset by default; the OPDIS_HANDLER can choose to
-	 * supply a real load address. */
-	// TODO: use resolver?
-	opdis_off_t offset;
-	opdis_off_t address;
-	opdis_off_t size;
-	opdis_byte_t bytes[OPDIS_MAX_INSN_SIZE];
-
-	/* instruction  */
-	char mnemonic[OPDIS_MAX_ITEM_SZ];
-	// prefixes
-	// instruction type/ is cflow
-	
-	// operands
-	opdis_off_t num_operands;
-	//opdis_op_t operands[OPDIS_MAX_OP];
-} opdis_insn_buf_t;
-#endif
-
 /* ---------------------------------------------------------------------- */
 /* OPERAND */
+
+/*! 
+ * \def OPDIS_REG_NAME_SZ
+ * Max size of an operand register name.
+ */
+#define OPDIS_REG_NAME_SZ 16
+
 /*!
  * \struct opdis_op_t 
  * \ingroup model
  * \brief Operand object
- * \details Stuff
+ * \details  An instruction operand.
  * \sa opdis_insn_t
  */
 
 typedef struct {
 	const char * ascii;		/*!< String representation of operand */
+	enum opdis_op_cat_t category;	/*!< Type of operand */
+	union {
+		const char reg[OPDIS_REG_NAME_SZ];
+		// TODO
+	} value;
 } opdis_op_t;
 
 /* ---------------------------------------------------------------------- */
 /* INSTRUCTION */
+
 /*!
  * \struct opdis_insn_t 
  * \ingroup model
  * \brief Instruction object
- * \details Stuff
+ * \details A disassembled instruction. Depending on the decoder, some or
+ *          all of the fields will be set.
+ * \note The \e ascii field always contains the raw libopcodes output
+ *       for the instruction.
+ * \note The \e offset field is always set to the offset of the instruction
+ *       in the buffer. By default, the \e address field will be set to the
+ *       value in \e offset. The \ref OPDIS_HANDLER callback can set 
+ *       \e address to the load address of the instruction.
+ * \note For instructions allocated by opdis_insn_alloc, \e num_operands
+ *       and \e alloc_operands will be the same. For instructions allocated by
+ *       opdis_insn_alloc_fixed, \e num_operands will contain the number of
+ *       operands in the instruction, and \e alloc_operands will contain the
+ *       number of fixed_size operands that have been allocated.
  * \sa opdis_op_t
  */
 typedef struct {
@@ -81,15 +80,16 @@ typedef struct {
 	const char * prefixes;		/*!< Array of prefix strings */
 
 	const char * mnemonic;		/*!< ASCII mnemonic for insn */
-	int category;			/*!< Type of insn */
+	enum opdis_insn_cat_t category;	/*!< Type of insn */
 	union {
-		// TODO: fn instruction type/ is cflow
-		int cflow_flags;	/*!< Control flow insn flags */
+		opdis_cflow_flags_t cflow;	/*!< Control flow insn flags */
+		// TODO
 	} flags;			/*!< Instruction-specific flags */
 
 	
-	// operands
+	/* operands */
 	opdis_off_t num_operands;	/*!< Number of operands in insn */
+	opdis_off_t alloc_operands;	/*!< Number of allocated operands */
 	opdis_op_t * operands;		/*!< Array of operand objects */
 } opdis_insn_t;
 
@@ -101,16 +101,164 @@ extern "C"
 
 
 /*!
- * \fn
+ * \fn opdis_insn_t * opdis_insn_alloc()
  * \ingroup model
- * \brief
- * \param
- * \return
- * \sa
+ * \brief Allocate an instruction object and initialize its contents to zero.
+ * \param num_operands The number of operands to allocate, or 0.
+ * \return The allocated instruction.
+ * \sa opdis_insn_free
+ * \note The \e ascii and \e mnemonic fields are not allocated.
  */
 
-// insn alloc
-// insn init
+opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands );
+
+/*!
+ * \fn opdis_insn_t * opdis_insn_alloc_fixed( size_t, size_t, size_t, size_t )
+ * \ingroup model
+ * \brief Allocate a fixed-size instruction object for use as a buffer.
+ * \details This allocates an instruction object with the specified number
+ *          of operands, and with \e ascii and \e mnemonic allocated to
+ *          the specified sizes. Each operand is allocated by 
+ *          opdis_op_alloc_fixed.
+ * \param ascii_sz
+ * \param mnemonic_sz
+ * \param num_operands
+ * \param op_ascii_sz
+ * \return The allocated instruction.
+ * \sa opdis_insn_alloc
+ * \sa opdis_insn_free
+ * \note The instruction object returned by this function is intended for use
+ *       as a buffer. All fields (including operands) should be accessed
+ *       directly instead of using opdis_insn functions.
+ */
+opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz, 
+				size_t mnemonic_sz, size_t num_operands,
+				size_t op_ascii_sz );
+
+/*!
+ * \fn opdis_insn_t * opdis_insn_dupe( const opdis_insn_t * )
+ * \ingroup model
+ * \brief Duplicate an instruction object
+ * \details Allocate an instruction object and initialize it with the contents
+ *          of \e i. This is primarily used to create an instruction object
+ *          from a fixed-size opdis_insn_t. The \e ascii, \e mnemonic, and
+ *          \e operands fields are only as large as they need to be (i.e.
+ *          the length of the string and the number of valid operands).
+ * \param i The instruction to duplicate.
+ * \return The duplicate instruction.
+ * \sa opdis_insn_alloc
+ */
+opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * i );
+
+/*!
+ * \fn void opdis_insn_free( opdis_insn_t * )
+ * \ingroup model
+ * \brief Free an allocated instruction object.
+ * \param i The instruction to free.
+ * \sa opdis_insn_alloc
+ * \note This frees \e ascii, \e mnemonic, and all allocated operands.
+ */
+void LIBCALL opdis_insn_free( opdis_insn_t * i );
+
+/*!
+ * \fn void opdis_insn_set_ascii( opdis_insn_t *, const char * )
+ * \ingroup model
+ * \brief Set the \e ascii field of an instruction.
+ * \details This duplicates the string \e ascii and sets the \e ascii field
+ *          of \e i to the new string. If the \e ascii field is non-NULL, it
+ *          is freed before the assignment.
+ * \param i The instruction to modify.
+ * \param ascii The new value for the \e ascii field.
+ * \sa opdis_insn_set_mnemonic
+ * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
+ */
+void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
+
+/*!
+ * \fn void opdis_insn_set_mnemonic( opdis_insn_t *, const char * )
+ * \ingroup model
+ * \brief Set the \e mnemonic field of an instruction.
+ * \details This duplicates the string \e mnemonic and sets the \e mnemonic
+ *          field of \e i to the new string. If the \e mnemonic field is
+ *          non-NULL, it is freed before the assignment.
+ * \param i The instruction to modify.
+ * \param mnemonic The new value for the \e mnemonic field.
+ * \sa opdis_insn_set_ascii
+ * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
+ */
+void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
+
+/*!
+ * \fn void opdis_insn_add_operand( opdis_insn_t *, opdis_op_t * )
+ * \ingroup model
+ * \brief Add an operand to an instruction.
+ * \details Append an operand to the list of operands in the instruction.
+ *          This does \e not duplicate the operand; it performs a realloc
+ *          on the \e operands array, appends the pointer \e op to it, and
+ *          increases the instruction count.
+ * \param i The instruction to modify.
+ * \param op The operand to append to the instruction.
+ * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
+ */
+void LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
+
+/*!
+ * \fn opdis_op_t * opdis_op_alloc()
+ * \ingroup model
+ * \brief Allocate an operand object.
+ * \return The allocated operand.
+ * \sa opdis_op_free
+ */
+opdis_op_t * LIBCALL opdis_op_alloc( void );
+
+/*!
+ * \fn opdis_op_t * opdis_op_alloc_fixed( size_t )
+ * \ingroup model
+ * \brief Allocate a fixed-size operand object for use as a buffer.
+ * \details This allocates an operand object with \e ascii allocated to
+ *          the specified size. 
+ * \param ascii_sz
+ * \return The allocated operand.
+ * \sa opdis_op_alloc
+ * \sa opdis_op_free
+ */
+opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz );
+
+/*! 
+ * \fn opdis_op_t * opdis_op_dupe( opdis_op_t * )
+ * \ingroup model
+ * \brief Duplicate an operand object
+ * \details Allocate an operand object and initialize it with the contents
+ *          of \e op. This is primarily used to create an operand object
+ *          from a fixed-size opdis_op_t.
+ * \param op The operand to duplicate.
+ * \return The duplicate operand.
+ * \sa opdis_op_alloc
+ * \sa opdis_insn_dupe
+ */
+opdis_op_t * LIBCALL opdis_op_alloc(  opdis_op_t * op );
+
+/*!
+ * \fn void opdis_op_free( opdis_op_t * )
+ * \ingroup model
+ * \brief Free an allocated operand object.
+ * \param op The operand to free.
+ * \sa opdis_op_alloc
+ */
+void LIBCALL opdis_op_free( opdis_op_t * op );
+
+/*!
+ * \fn void opdis_set_ascii( opdis_op_t *, const char * )
+ * \ingroup model
+ * \brief Set the \e ascii field of an operand.
+ * \details This duplicates the string \e ascii and sets the \e ascii field
+ *          of \e op to the new string. If the \e ascii field is non-NULL, it
+ *          is freed before the assignment.
+ * \param op The operand to modify
+ * \param ascii The new value for the \e ascii field.
+ * \note Not for use with operand allocated by opdis_op_alloc_fixed.
+ */
+void LIBCALL opdis_set_ascii( opdis_op_t * op, const char * ascii );
 
 #ifdef __cplusplus
 }
