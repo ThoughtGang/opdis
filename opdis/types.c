@@ -27,3 +27,12 @@ void LIBCALL opdis_buf_free( opdis_buf_t buf ) {
 	// free buf->data
 	// free buf
 }
+
+opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size );
+
+opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size );
+
+int LIBCALL opdis_buf_fill( opdis_buf_t buf, opdis_off_t offset,
+			    void * src, opdis_off_t len );
+
+void LIBCALL opdis_buf_free( opdis_buf_t buf );

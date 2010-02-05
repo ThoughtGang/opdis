@@ -235,3 +235,41 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
 void LIBCALL opdis_error( opdis_t o, opdis_error_t error, const char * msg ) {
 	if ( o ) o.error_reporter(error, msg );
 }
+
+opdis_t LIBCALL opdis_init( void );
+
+opdis_t LIBCALL opdis_init_from_bfd( bfd * target );
+
+void LIBCALL opdis_term( opdis_t );
+
+void LIBCALL opdis_set_defaults( opdis_t o );
+
+void LIBCALL opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax );
+
+void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
+			     disassembler_ftype fn );
+
+void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options );
+
+void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg );
+
+void LIBCALL opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg );
+
+void LIBCALL opdis_set_decoder( opdis_t o, OPDIS_DECODER fn );
+
+void LIBCALL opdis_set_resolver( opdis_t o, OPDIS_RESOLVER fn, void * arg );
+
+void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg );
+
+size_t LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
+				       opdis_off_t offset );
+
+size_t LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
+				  opdis_off_t offset, opdis_insn_t * insn );
+
+int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
+				 opdis_off_t length );
+int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
+				opdis_off_t offset );
+
+void LIBCALL opdis_error( opdis_t o, opdis_error_t error, const char * msg );

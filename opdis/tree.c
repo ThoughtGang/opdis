@@ -435,3 +435,50 @@ void LIBCALL opdis_insntree_free( opdis_insntree_t tree ) {
 }
 
 
+opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn, 
+				      OPDIS_TREE_CMP_FN cmp_fn,
+				      OPDIS_TREE_FREE_FN free_fn );
+
+int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data );
+
+int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data );
+
+int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
+
+void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
+
+size_t LIBCALL opdis_tree_count( opdis_tree_t tree );
+
+void LIBCALL opdis_tree_free( opdis_tree_t tree );
+
+opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void );
+
+int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr );
+
+int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr );
+
+opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree, 
+					   opdis_addr_t addr );
+
+typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
+
+int LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
+				  OPDIS_ADDR_TREE_WALK_FN fn, void * arg );
+
+void LIBCALL opdis_addr_tree_free( opdis_addr_tree_t tree );
+
+opdis_insn_tree_t LIBCALL opdis_insn_tree_init( int manage );
+
+int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree, 
+				 opdis_insn_t * insn );
+
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
+
+opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
+				  	      opdis_vma_t addr );
+
+typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t * insn, void * arg);
+
+void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
+				   OPDIS_INSN_TREE_WALK_FN fn, void * arg );
+void LIBCALL opdis_insn_tree_free( opdis_insn_tree_t tree );
