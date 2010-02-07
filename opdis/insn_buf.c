@@ -11,8 +11,8 @@
 opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items, 
 					       unsigned int max_item_size,
 					       unsigned int max_insn_str ) {
-	opdis_insn_buf_t buf = (opdis_insn_buf_t) 
-				calloc( sizeof(opdis_insn_buffer_t) );
+	opdis_insn_buf_t buf = (opdis_insn_buf_t) calloc( 1,
+						sizeof(opdis_insn_buffer_t) );
 	if (! buf ) {
 		return NULL;
 	}

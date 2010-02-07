@@ -9,13 +9,13 @@
 #include <opdis/types.h>
 
 opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size ) {
-	opdis_buf_t buf = (opdis_buf_t) calloc( sizeof(opdis_buffer_t) );
+	opdis_buf_t buf = (opdis_buf_t) calloc( 1, sizeof(opdis_buffer_t) );
 	if (! buf ) {
 		return NULL;
 	}
 
 	buf->len = size;
-	buf->data = (opdis_byte_t *) calloc( size );
+	buf->data = (opdis_byte_t *) calloc( 1, size );
 
 	if (! buf->data ) {
 		free( buf );
