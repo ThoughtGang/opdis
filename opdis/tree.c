@@ -7,35 +7,26 @@
 #include <opdis/insntree.h>
 
 /* ----------------------------------------------------------------------*/
-/* Node comparison routines */
-
-static int node_val_cmp( opdis_insntree_node_t *n, opdis_vma_t val ) {
-}
-
-static int node_cmp( opdisinsntree_node_t * a, opdisinsntree_node_t * b ) {
-}
-
-/* ----------------------------------------------------------------------*/
 /* Node utility routines */
 
-static opdis_insntree_node_t * treenode_alloc(void *data) {
-	opdis_insntree_node_t *node;
+static opdis_tree_node_t * node_alloc(void *data) {
+	opdis_tree_node_t *node;
 
 	if (NULL == data)
-		return std_seterrp(STD_BAD_ARG);
+		//return std_seterrp(STD_BAD_ARG);
 
 	node = calloc(1, sizeof(*node));
 	if (NULL == node)
-		return std_seterrp(STD_NO_MEM);
+		//return std_seterrp(STD_NO_MEM);
 
 	node->data = data;
 
 	return node;
 }
 
-static int treenode_free(opdis_insntree_node_t * node) {
+static int node_free(opdis_tree_node_t * node) {
 	if (NULL == node)
-		return std_seterr(STD_NO_MEM);
+		//return std_seterr(STD_NO_MEM);
 
 	memset(node, 0, sizeof(*node));
 	free(node);
@@ -43,11 +34,11 @@ static int treenode_free(opdis_insntree_node_t * node) {
 	return (1);
 }
 
-static int replace_parent_ref(opdis_insntree_node_t * old, opdis_insntree_node_t * new) {
-	opdis_insntree_node_t *parent;
+static int replace_parent_ref(opdis_tree_node_t * old, opdis_tree_node_t * new) {
+	opdis_tree_node_t *parent;
 
 	if (NULL == old)
-		return std_seterr(STD_BAD_ARG);
+		//return std_seterr(STD_BAD_ARG);
 
 	parent = old->parent;
 	if (NULL == parent)
@@ -64,26 +55,26 @@ static int replace_parent_ref(opdis_insntree_node_t * old, opdis_insntree_node_t
 /* ----------------------------------------------------------------------*/
 /* Node navigation routines */
 
-static opdis_insntree_node_t * treenode_first(opdis_insntree_node_t * node) {
+static opdis_tree_node_t * node_first(opdis_tree_node_t * node) {
 	if (NULL == node)
 		return NULL;
 	for (; node->left; node = node->left);
 	return node;
 }
 
-static opdis_insntree_node_t * treenode_last(opdis_insntree_node_t * node) {
+static opdis_tree_node_t * node_last(opdis_tree_node_t * node) {
 	if (NULL == node)
 		return NULL;
 	for (; node; node = node->right);
 	return node;
 }
 
-static opdis_insntree_node_t * tree_closest(opdis_insntree_t tree, void *data) {
-	opdis_insntree_node_t *node, *next, *closest = NULL, *first = NULL;
+static opdis_tree_node_t * tree_closest(opdis_insntree_t tree, void *data) {
+	opdis_tree_node_t *node, *next, *closest = NULL, *first = NULL;
 
 
-	if (!std_test_magic(tree, STD_TREE_MAGIC))
-		return std_seterrp(STD_BAD_JUJU);
+	//if (!std_test_magic(tree, STD_TREE_MAGIC))
+		//return std_seterrp(STD_BAD_JUJU);
 
 	for (node = tree->root; node; node = next) {
 		int lr;
@@ -105,15 +96,15 @@ static opdis_insntree_node_t * tree_closest(opdis_insntree_t tree, void *data) {
 	return (closest);
 }
 
-static opdis_insntree_node_t * tree_next(opdis_insntree_node_t * node) {
+static opdis_tree_node_t * tree_next(opdis_tree_node_t * node) {
 	if (NULL == node)
-		return std_seterrp(STD_BAD_ARG);
+		//return std_seterrp(STD_BAD_ARG);
 
 	if (node->right)
-		return std_treenode_first(node->right);
+		return node_first(node->right);
 
 	if (NULL == node->parent)
-		return std_seterrp(STD_NO_ENT);
+		//return std_seterrp(STD_NO_ENT);
 
 	for (; (node->parent) && (node == node->parent->right);
 	     node = node->parent);
@@ -121,17 +112,17 @@ static opdis_insntree_node_t * tree_next(opdis_insntree_node_t * node) {
 	if (node->parent && node == node->parent->left)
 		return node->parent;
 
-	return std_seterrp(STD_NO_ENT);
+	//return std_seterrp(STD_NO_ENT);
 }
 
-static opdis_insntree_node_t * tree_prev(opdis_insntree_node_t * node) {
-	opdis_insntree_node_t *parent;
+static opdis_tree_node_t * tree_prev(opdis_tree_node_t * node) {
+	opdis_tree_node_t *parent;
 
 	if (NULL == node)
-		return std_seterrp(STD_BAD_ARG);
+		//return std_seterrp(STD_BAD_ARG);
 
 	if (node->left)
-		return std_treenode_last(node->left);
+		return node_last(node->left);
 
 	for (parent = node->parent; parent && node != parent->right;
 	     node = parent, parent = parent->parent);
@@ -139,8 +130,8 @@ static opdis_insntree_node_t * tree_prev(opdis_insntree_node_t * node) {
 	return (parent);
 }
 
-static opdis_insntree_node_t * subtree_max(opdis_insntree_node_t * node) {
-	opdis_insntree_node_t *max;
+static opdis_tree_node_t * subtree_max(opdis_tree_node_t * node) {
+	opdis_tree_node_t *max;
 
 	if (NULL == node)
 		return NULL;
@@ -152,7 +143,7 @@ static opdis_insntree_node_t * subtree_max(opdis_insntree_node_t * node) {
 /* Tree rotation routines */
 
 
-static int max_level(opdis_insntree_node_t * a, opdis_insntree_node_t * b) {
+static int max_level(opdis_tree_node_t * a, opdis_tree_node_t * b) {
 	if ((NULL == a) && (NULL == b))
 		return (0);
 
@@ -165,12 +156,12 @@ static int max_level(opdis_insntree_node_t * a, opdis_insntree_node_t * b) {
 	return ((a->level > b->level) ? a->level + 1 : b->level + 1);
 }
 
-static opdis_insntree_node_t * rotate_left(opdis_insntree_node_t * node, int num) {
-	opdis_insntree_node_t *root;
+static opdis_tree_node_t * rotate_left(opdis_tree_node_t * node, int num) {
+	opdis_tree_node_t *root;
 
 
 	if (NULL == node)
-		return std_seterrp(STD_BAD_ARG);
+		//return std_seterrp(STD_BAD_ARG);
 
 	if (num > 1) {
 		if (!node->left)
@@ -197,12 +188,12 @@ static opdis_insntree_node_t * rotate_left(opdis_insntree_node_t * node, int num
 	return root;
 }
 
-static opdis_insntree_node_t * rotate_right(opdis_insntree_node_t * node, int num) {
-	opdis_insntree_node_t *root;
+static opdis_tree_node_t * rotate_right(opdis_tree_node_t * node, int num) {
+	opdis_tree_node_t *root;
 
 
 	if (NULL == node)
-		return std_seterrp(STD_BAD_ARG);
+		//return std_seterrp(STD_BAD_ARG);
 
 	if (num > 1) {
 		if (!node->right)
@@ -232,26 +223,14 @@ static opdis_insntree_node_t * rotate_right(opdis_insntree_node_t * node, int nu
 
 
 /* ----------------------------------------------------------------------*/
-opdis_insntree_t LIBCALL opdis_insntree_init( void ) { 
-	return (opdis_insntree_t) calloc(1, sizeof(opdis_insntree_base_t));
-}
 
-size_t LIBCALL opdis_insntree_count( opdis_insntree_t tree ) {
-	if (! tree ) {
-		return 0;
-	}
-
-	return tree->num;
-}
-
-/* ----------------------------------------------------------------------*/
-static opdis_insntree_node_t * insert_node( opdis_insntree_t tree, 
-					    opdis_insntree_node_t * start, 
+static opdis_tree_node_t * insert_node( opdis_insntree_t tree, 
+					    opdis_tree_node_t * start, 
 					    void *data) {
 	int lr;
 
 	if (NULL == start) {
-		return std_treenode_alloc(data);
+		return node_alloc(data);
 	}
 
 	lr = insn_cmp(data, start->data);
@@ -291,60 +270,8 @@ static opdis_insntree_node_t * insert_node( opdis_insntree_t tree,
 	return (start);
 }
 
-
-int LIBCALL opdis_insntree_add( opdis_insntree_t tree, opdis_insn_t * insn ) {
-	if (! tree || ! insn ) {
-		return 0;
-	}
-
-	tree->root = insert_node(tree, tree->root, data);
-	tree->root->parent = NULL;
-
-	tree->num++;
-
-	return 1;
-}
-
-int LIBCALL opdis_insntree_delete( opdis_insntree_t tree ) {
-	opdis_insntree_node_t *node;
-
-
-	node = std_treenode_find(tree, data);
-	if (NULL == node)
-		return (0);
-
-	if (!remove_node(node))
-		return (0);
-
-	std_treenode_free(node);
-
-	tree->num--;
-
-	return (1);
-
-}
-
-int LIBCALL opdis_insntree_walk( opdis_insntree_t tree,
-				 OPDIS_INSNTREE_WALK fn, void * arg ) {
-	opdis_insntree_node_t *node;
-
-
-	if (func == NULL) {
-		return 0;
-	}
-
-	node = treenode_first(tree->root);
-	for (; node; node = tree_next(node)) {
-		func(arg, node->data, arg);
-	}
-
-	return 1;
-}
-
-/* ----------------------------------------------------------------------*/
-
-static int remove_node(opdis_insntree_node_t * node) {
-	opdis_insntree_node_t *new;
+static int remove_node(opdis_tree_node_t * node) {
+	opdis_tree_node_t *new;
 
 	if (!node->left) {
 		if (!node->right)
@@ -393,8 +320,92 @@ static int remove_node(opdis_insntree_node_t * node) {
 }
 
 
-opdis_insn_t * LIBCALL opdis_insntree_find( opdis_insntree_t tree, 
-				  	    opdis_vma_t addr ) {
+static int node_destroy(opdis_tree_node_t * node) {
+	if (! node ) {
+		return 1;
+	}
+
+	node_destroy(node->left);
+	node_destroy(node->right);
+
+	node_free(node);
+	return 1;
+}
+
+
+/* ----------------------------------------------------------------------*/
+/* BUILTIN TREE CALLBACKS */
+
+/* uses item as key */
+static void * builtin_key_fn (void * item) {
+	return item;
+}
+
+/* compares items directly */
+static int builtin_cmp_fn (void * a, void *b) {
+	if ( a < b ) return -1;
+	if ( a > b ) return 1;
+	return 0;
+}
+
+/* no-op : item is not freed */
+static void builtin_free_fn (void * ) {
+	return;
+}
+
+/* ----------------------------------------------------------------------*/
+/* GENERIC AVL TREE */
+
+opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn, 
+				      OPDIS_TREE_CMP_FN cmp_fn,
+				      OPDIS_TREE_FREE_FN free_fn ) {
+	opdis_tree_t * t = (opdis_tree_t) calloc( 1, 
+						sizeof(opdis_base_tree_t), 1);
+	if (! t ) {
+		return NULL;
+	}
+
+	t->key_fn = key_fn == NULL ? builtin_key_fn : key_fn;
+	t->cmp_fn = cmp_fn == NULL ? builtin_cmp_fn : cmp_fn;
+	t->free_fn = free_fn == NULL ? builtin_free_fn : free_fn;
+
+	return t;
+}
+
+int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data ) {
+	if (! tree || ! insn ) {
+		return 0;
+	}
+
+	tree->root = insert_node(tree, tree->root, data);
+	tree->root->parent = NULL;
+
+	tree->num++;
+
+	return 1;
+}
+
+int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data ) {
+}
+
+int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key ) {
+	opdis_tree_node_t *node;
+
+	node = node_find(tree, data);
+	if (NULL == node)
+		return (0);
+
+	if (!remove_node(node))
+		return (0);
+
+	node_free(node);
+
+	tree->num--;
+
+	return (1);
+}
+
+void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key ) {
 	for (node = tree->root; node; node = next) {
 		int lr;
 
@@ -411,21 +422,15 @@ opdis_insn_t * LIBCALL opdis_insntree_find( opdis_insntree_t tree,
 	return NULL;
 }
 
-/* ----------------------------------------------------------------------*/
-
-static int node_destroy(opdis_insntree_node_t * node) {
-	if (! node ) {
-		return 1;
+size_t LIBCALL opdis_tree_count( opdis_tree_t tree ) {
+	if (! tree ) {
+		return 0;
 	}
 
-	node_destroy(node->left);
-	node_destroy(node->right);
-
-	node_free(node);
-	return 1;
+	return tree->num;
 }
 
-void LIBCALL opdis_insntree_free( opdis_insntree_t tree ) {
+void LIBCALL opdis_tree_free( opdis_tree_t tree ) {
 	if (! tree ) {
 		return;
 	}
@@ -434,51 +439,88 @@ void LIBCALL opdis_insntree_free( opdis_insntree_t tree ) {
 	free(tree);
 }
 
+/* ----------------------------------------------------------------------*/
+/* ADDRESS TREE */
 
-opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn, 
-				      OPDIS_TREE_CMP_FN cmp_fn,
-				      OPDIS_TREE_FREE_FN free_fn );
+opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void ) {
+	return (opdis_addr_tree_t) opdis_tree_init( NULL, NULL, NULL );
+}
 
-int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data );
+int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr ) {
+}
 
-int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data );
-
-int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
-
-void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
-
-size_t LIBCALL opdis_tree_count( opdis_tree_t tree );
-
-void LIBCALL opdis_tree_free( opdis_tree_t tree );
-
-opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void );
-
-int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr );
-
-int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr );
+int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr ){
+}
 
 opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree, 
-					   opdis_addr_t addr );
+					   opdis_addr_t addr ) {
+}
 
-typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
+//typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
 
 int LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
-				  OPDIS_ADDR_TREE_WALK_FN fn, void * arg );
+				  OPDIS_ADDR_TREE_WALK_FN fn, void * arg ) {
+	opdis_tree_node_t *node;
 
-void LIBCALL opdis_addr_tree_free( opdis_addr_tree_t tree );
 
-opdis_insn_tree_t LIBCALL opdis_insn_tree_init( int manage );
+	if (func == NULL) {
+		return 0;
+	}
+
+	node = node_first(tree->root);
+	for (; node; node = tree_next(node)) {
+		func(arg, node->data, arg);
+	}
+
+	return 1;
+}
+
+void LIBCALL opdis_addr_tree_free( opdis_addr_tree_t tree ) {
+}
+
+/* ----------------------------------------------------------------------*/
+/* INSTRUCTION TREE */
+
+/* returns item load addresses */
+static void * insn_key_fn (void * item) {
+	if ( item ) {
+		opdis_insn_t * i = (opdis_insn_t *) item;
+		return (void *) i->address;
+	}
+
+	return NULL;
+}
+
+/* frees instruction */
+static void insn_free_fn (void * item) {
+	if ( item ) {
+		opdis_insn_t * i = (opdis_insn_t *) item;
+		opdis_insn_free( i );
+	}
+}
+
+opdis_insn_tree_t LIBCALL opdis_insn_tree_init( int manage ) {
+	OPDIS_TREE_FREE_FN free_fn = manage ? insn_free_fn : NULL;
+	
+	return (opdis_insn_tree_t) opdis_tree_init(insn_key_fn, NULL, free_fn);
+}
 
 int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree, 
-				 opdis_insn_t * insn );
+				 opdis_insn_t * insn ) {
+}
 
-int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr ) {
+}
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
-				  	      opdis_vma_t addr );
+				  	      opdis_vma_t addr ) {
+}
 
-typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t * insn, void * arg);
+//typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t * insn, void * arg);
 
 void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
-				   OPDIS_INSN_TREE_WALK_FN fn, void * arg );
-void LIBCALL opdis_insn_tree_free( opdis_insn_tree_t tree );
+				   OPDIS_INSN_TREE_WALK_FN fn, void * arg ) {
+}
+
+void LIBCALL opdis_insn_tree_free( opdis_insn_tree_t tree ) {
+}

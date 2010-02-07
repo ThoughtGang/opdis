@@ -73,6 +73,12 @@ typedef struct std_tree {
 	int	  		  num;		/*!< Number of nodes in tree */
 } opdis_tree_base_t;
 
+/*! \typedef opdis_tree_base_t * opdis_tree_t
+ *  \ingroup tree
+ *  \brief A  generic AVL tree.
+ */
+typedef opdis_tree_base_t * opdis_tree_t;
+
 /*! \typedef opdis_tree_base_t * opdis_addr_tree_t
  *  \ingroup tree
  *  \brief An AVL tree for storing opdis addresses.
