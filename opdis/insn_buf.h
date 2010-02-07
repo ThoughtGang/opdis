@@ -51,9 +51,12 @@
  *           is also constructed.
  */
 typedef struct {
-	size_t item_count;			/*!< Number of items */
+	unsigned int item_count;		/*!< Number of items */
+	unsigned int max_item_count;		/*!< Max number of items */
+	unsigned int max_item_size;		/*!< Max size of items */
 	char items[MAX_ITEMS][MAX_ITEM_SZ];	/*!< Array of stored items */
 	char string[OPDIS_MAX_INSN_STR];	/*!< Raw instruction string */
+	unsigned int max_string_size;		/*!< Max insn string length */
 } opdis_insn_buffer_t;
 
 /*! \typedef opdis_insn_buf_t
@@ -80,9 +83,9 @@ extern "C"
  * \return The allocated opdis_insn_buffer_t.
  * \sa opdis_insn_buf_free
  */
-opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( size_t max_items, 
-					       size_t max_item_size,
-					       size_t max_insn_str );
+opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items, 
+					       unsigned int max_item_size,
+					       unsigned int max_insn_str );
 
 /*!
  * \fn void opdis_insn_buf_free( opdis_insn_buf_t )
@@ -102,6 +105,7 @@ void LIBCALL opdis_insn_buf_free( opdis_insn_buf_t buf );
  *          to the raw instruction string.
  * \param buf The instruction buffer to append to.
  * \param item The item to append.
+ * \return 1 on success, 0 on failure.
  * \sa opdis_insn_buf_alloc
  */
 int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item );
