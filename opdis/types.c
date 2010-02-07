@@ -4,35 +4,82 @@
  * \author thoughtgang.org
  */
 
+#include <string.h>
+
 #include <opdis/types.h>
 
 opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size ) {
-	// alloc opdis_buf
-	// alloc buf->data
+	opdis_buf_t buf = (opdis_buf_t) calloc( sizeof(opdis_buffer_t) );
+	if (! buf ) {
+		return NULL;
+	}
+
+	buf->len = size;
+	buf->data = (opdis_byte_t *) calloc( size );
+
+	if (! buf->data ) {
+		free( buf );
+		return NULL;
+	}
+
+	return buf;
 }
 
-opdis_buf_t LIBCALL opdis_buf_read( FILE * f ) {
-	// alloc opdis buf
-	// fseek
-	// alloc buf_data
-	// fread
+static opdis_off_t get_read_length( FILE * f ) {
+	opdis_off_t size;
+	long pos = ftell(f);
+	if ( pos == -1 || fseek(f, 0, SEEK_END) == -1 ) {
+		return 0;
+	}
+
+	size = ftell(f) - pos;
+	if ( size == -1 || fseek(f, pos, SEEK_SET) == -1 ) {
+		return 0;
+	}
+
+	return size;
+}
+
+opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size ) {
+	opdis_buf_t buf;
+
+	if (! size ) {
+		size = get_read_length( f );
+		if (! size ) {
+			return NULL;
+		}
+	}
+
+	buf = opdis_buf_alloc( size );
+	if (! buf ) {
+		return NULL;
+	}
+
+	if ( fread( buf->data, 1, size, f ) < size ) {
+		fprintf( stderr, "opdis_buf_read: cannot read %d bytes\n", 
+				  size );
+	}
+
+	return buf;
 }
 
 int LIBCALL opdis_buf_fill( opdis_buf_t buf, opdis_off_t offset,
-			    void * src, opdist_off_t len ) {
-	// straight memcpy
+			    void * src, opdis_off_t len ) {
+	if ( ! buf || ! buf->data || ! src || ! len || 
+	     offset + len >= buf->len ) {
+		return 0;
+	}
+
+	memcpy( &buf->data[offset], src, len );
+
+	return len;
 }
 
 void LIBCALL opdis_buf_free( opdis_buf_t buf ) {
-	// free buf->data
-	// free buf
+	if ( buf ) {
+		if ( buf->data ) {
+			free(buf->data);
+		}
+		free(buf);
+	}
 }
-
-opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size );
-
-opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size );
-
-int LIBCALL opdis_buf_fill( opdis_buf_t buf, opdis_off_t offset,
-			    void * src, opdis_off_t len );
-
-void LIBCALL opdis_buf_free( opdis_buf_t buf );

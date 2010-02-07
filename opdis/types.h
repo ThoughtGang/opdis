@@ -87,12 +87,13 @@ opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size );
  * \details Allocates an opdis buffer and fills it with the contents of
  *          the file. This reads \e size bytes from the current position
  *          in \e f, or from the current position to the end of the file
- *          if \e size is 0. The current position in \e f is restored 
- *          on return.
+ *          if \e size is 0. 
  * \param f The file to read from.
  * \param size The number of bytes to read from the file, or 0.
  * \return The allocated opdis buffer.
  * \sa opdis_buf_alloc opdis_buf_free
+ * \note The current position of the file will be increased by \e size
+ *       bytes upon return.
  */
 opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size );
 
@@ -100,7 +101,6 @@ opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size );
  * \fn int opdis_buf_fill( opdis_buf_t, opdis_off_t, void *, opdis_off_t )
  * \ingroup types
  * \brief Fill an opdis buffer from a memory location
- * \details
  * \param buf Opdis buffer to fill.
  * \param offset Offset in buf to copy to.
  * \param src Memory location to copy from.
