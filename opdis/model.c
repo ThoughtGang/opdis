@@ -1,33 +1,242 @@
 /*!
  * \file model.c
- * \brief Data model for libopdis.
+ * \brief Data model implementation for libopdis.
  * \author thoughtgang.org
  */
 
 #include <opdis/model.h>
 
-opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands );
+opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands ) {
+	opdis_insn_t * i = (opdis_insn_t *) calloc( 1, sizeof(opdis_insn_t) );
+	if (! i ) {
+		return NULL;
+	}
+
+	if (! num_operands ) {
+		return i;
+	}
+
+	/* operands is an array of opdis_t pointers */
+	i->operands = (opdis_op_t **) calloc( num_operands, 
+					     sizeof(opdis_op_t *) );
+	if (! i->operands ) {
+		free(i);
+		return NULL;
+	}
+
+	i->alloc_operands = num_operands;
+
+	return i;
+}
 
 opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz, 
 				size_t mnemonic_sz, size_t num_operands,
-				size_t op_ascii_sz );
+				size_t op_ascii_sz ) {
+	int i;
 
-opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * i );
+	opdis_insn_t * insn = opdis_insn_alloc( num_operands );
+	if (! insn ) {
+		return NULL;
+	}
 
-void LIBCALL opdis_insn_free( opdis_insn_t * i );
+	insn->ascii = calloc( 1, ascii_sz );
+	insn->mnemonic = calloc( 1, mnemonic_sz );
 
-void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
+	if (! insn->ascii || ! insn->mnemonic ) {
+		opdis_insn_free( insn );
+		return NULL;
+	}
 
-void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
+	for ( i = 0; i < num_operands; i++ ) {
+		opdis_op__t * op = opdis_op_alloc_fixed( op_ascii_sz );
+		if ( op ) {
+			insn->operands[i] = op;
+			insn->alloc_operands++;
+		} else {
+			opdis_insn_free( insn );
+			return NULL;
+		}
+	}
 
-void LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
+}
 
-opdis_op_t * LIBCALL opdis_op_alloc( void );
+opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
+	int i;
+	opdis_op_t ** new_operands = NULL;
 
-opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz );
+	opdis_insn_t * new_insn = insn_alloc( insn->num_operands );
+	if (! new_insn ) {
+		return NULL;
+	}
 
-opdis_op_t * LIBCALL opdis_op_alloc(  opdis_op_t * op );
+	new_operands = new_insn->operands;
+	memcpy( new_insn, insn, sizeof(opdis_insn_t) );
+	new_insn->ascii = NULL;
+	new_insn->mnemonic = NULL;
+	new_insn->operands = new_operands;
 
-void LIBCALL opdis_op_free( opdis_op_t * op );
+	if ( insn->ascii ) {
+		new_insn->ascii = strdup(insn->ascii);
+		if (! new_insn->ascii ) {
+			opdis_insn_free(new_insn);
+			return NULL;
+		}
+	}
 
-void LIBCALL opdis_set_ascii( opdis_op_t * op, const char * ascii );
+	if ( insn->mnemonic ) {
+		new_insn->mnemonic = strdup(insn->mnemonic);
+		if (! new_insn->mnemonic ) {
+			opdis_insn_free(new_insn);
+			return NULL;
+		}
+	}
+
+	new_insn->num_operands = 0;
+	for ( i = 0; i < insn->num_operands && i < new_insn->alloc_operands;
+	      i++ ) {
+		opdis_op_t * op = opdis_op_dupe( insn->operands[i] );
+		if ( op ) {
+			new_insn->operands[i] = op;
+			new_insn->num_operands++;
+		} else {
+			opdis_insn_free(new_insn);
+			return NULL;
+		}
+	}
+
+	return new_insn;
+}
+
+void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
+	int i; 
+	if (! insn ) {
+		return;
+	}
+
+	if ( insn->ascii ) {
+		free(insn->ascii);
+	}
+
+	if ( insn->mnemonic ) {
+		free(insn->mnemonic);
+	}
+
+	for ( i = 0; i < insn->num_operands; i++ ) {
+		opdis_op_t * op = insn->operands[i];
+		if ( op ) {
+			opdis_op_free( op );
+		}
+	}
+
+	free(insn);
+}
+
+void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii ) {
+	if (! i || ! ascii ) {
+		return;
+	}
+
+	if ( i->ascii ) {
+		free(i->ascii);
+	}
+
+	i->ascii = strdup(ascii);
+}
+
+void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic ){
+	if (! i || ! mnemonic ) {
+		return;
+	}
+
+	if ( i->mnemonic ) {
+		free(i->mnemonic);
+	}
+
+	i->mnemonic = strdup(mnemonic);
+}
+
+int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
+	void * p;
+
+	if (! i || ! op ) {
+		return 0;
+	}
+
+	if ( i->num_operands < i->alloc_operands ) {
+		i->operands[num_operands] = op;
+		i->num_operands++;
+		return 1;
+	}
+
+	i->alloc_operands++;
+	p = realloc( i->operands, sizeof(opdis_op_t *) * i->alloc_operands ); 
+	if (! p ) {
+		i->alloc_operands--;
+		return 0;
+	}
+
+	i->operands = (opdis_op_t *) p;
+	i->operands[i->num_operands] = op;
+	i->num_operands++;
+
+	return 1;
+}
+
+opdis_op_t * LIBCALL opdis_op_alloc( void ) {
+	return (opdis_op_t *) calloc( 1, sizeof(opdis_op_t) );
+}
+
+opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz ) {
+	opdis_op_t * op = opdis_op_alloc();
+	if ( op ) {
+		op->ascii = (char *) calloc( 1, ascii_sz );
+		if (! op->ascii ) {
+			free(op);
+			op = NULL;
+		}
+	}
+
+	return op;
+}
+
+opdis_op_t * LIBCALL opdis_op_dupe(  opdis_op_t * op ) {
+	opdis_op_t * new_op = opdis_alloc();
+	if (! new_op ) {
+		return NULL;
+	}
+
+	memcpy( new_op, op, sizeof(opdis_op_t) );
+
+	new_op->ascii = NULL;
+	if ( op->ascii ) {
+		new_op->ascii = strdup(op->ascii);
+		if (! new_op->ascii ) {
+			free(new_op);
+			new_op = NULL;
+		}
+	}
+
+	return new_op;
+}
+
+void LIBCALL opdis_op_free( opdis_op_t * op ) {
+	if (! op ) {
+		return;
+	}
+
+	if ( op->ascii ) {
+		free(op->ascii);
+	}
+}
+
+void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
+	if (! op || ! ascii ) {
+		return;
+	}
+
+	if ( op->ascii ) {
+		free(op->ascii);
+	}
+
+	op->ascii = strdup(ascii);
+}

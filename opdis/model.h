@@ -90,7 +90,7 @@ typedef struct {
 	/* operands */
 	opdis_off_t num_operands;	/*!< Number of operands in insn */
 	opdis_off_t alloc_operands;	/*!< Number of allocated operands */
-	opdis_op_t * operands;		/*!< Array of operand objects */
+	opdis_op_t ** operands;		/*!< Array of operand objects */
 } opdis_insn_t;
 
 /* ---------------------------------------------------------------------- */
@@ -108,6 +108,8 @@ extern "C"
  * \return The allocated instruction.
  * \sa opdis_insn_free
  * \note The \e ascii and \e mnemonic fields are not allocated.
+ * \note The operands array is allocated as an empty array of pointers; the 
+ *       operands themselves are not allocated.
  */
 
 opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands );
@@ -189,7 +191,7 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
 void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
 
 /*!
- * \fn void opdis_insn_add_operand( opdis_insn_t *, opdis_op_t * )
+ * \fn int opdis_insn_add_operand( opdis_insn_t *, opdis_op_t * )
  * \ingroup model
  * \brief Add an operand to an instruction.
  * \details Append an operand to the list of operands in the instruction.
@@ -198,9 +200,11 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
  *          increases the instruction count.
  * \param i The instruction to modify.
  * \param op The operand to append to the instruction.
- * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
+ * \return 1 on success, 0 on failure.
+ * \note If the number of operands in \e i is less than the number of
+ *       allocated operands in \e i, no realloc is performed.
  */
-void LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
+int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
 
 /*!
  * \fn opdis_op_t * opdis_op_alloc()
@@ -236,7 +240,7 @@ opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz );
  * \sa opdis_op_alloc
  * \sa opdis_insn_dupe
  */
-opdis_op_t * LIBCALL opdis_op_alloc(  opdis_op_t * op );
+opdis_op_t * LIBCALL opdis_op_dupe(  opdis_op_t * op );
 
 /*!
  * \fn void opdis_op_free( opdis_op_t * )
@@ -248,7 +252,7 @@ opdis_op_t * LIBCALL opdis_op_alloc(  opdis_op_t * op );
 void LIBCALL opdis_op_free( opdis_op_t * op );
 
 /*!
- * \fn void opdis_set_ascii( opdis_op_t *, const char * )
+ * \fn void opdis_op_set_ascii( opdis_op_t *, const char * )
  * \ingroup model
  * \brief Set the \e ascii field of an operand.
  * \details This duplicates the string \e ascii and sets the \e ascii field
@@ -258,7 +262,7 @@ void LIBCALL opdis_op_free( opdis_op_t * op );
  * \param ascii The new value for the \e ascii field.
  * \note Not for use with operand allocated by opdis_op_alloc_fixed.
  */
-void LIBCALL opdis_set_ascii( opdis_op_t * op, const char * ascii );
+void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
 
 #ifdef __cplusplus
 }
