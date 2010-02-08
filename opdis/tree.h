@@ -174,6 +174,16 @@ int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
 void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
 
 /*!
+ * \fn void * opdis_tree_closest( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief Find closest match to data in a tree.
+ * \param tree The AVL tree.
+ * \param key The key of the item to match.
+ * \return The item that is the closest match, or NULL.
+ */
+void * LIBCALL opdis_tree_closest( opdis_tree_t tree, void * key );
+
+/*!
  * \fn size_t opdis_tree_count( opdis_tree_t )
  * \ingroup tree
  * \brief Return the number of items in the tree.
@@ -268,7 +278,7 @@ typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
  * \param arg An optional argument to pass to the callback function.
  */
 
-int LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
+void LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
 				  OPDIS_ADDR_TREE_WALK_FN fn, void * arg );
 
 /*!
