@@ -178,6 +178,7 @@ typedef struct {
 	 *  \brief callback to build an opdis_insn_t from libopcodes strings.
 	 */
 	OPDIS_DECODER decoder;
+	void * decoder_arg;
 
 	/*! \var buf
 	 *  \brief buffer for storing libopcodes strings as they are emitted.
@@ -229,7 +230,7 @@ opdis_t LIBCALL opdis_init_from_bfd( bfd * target );
  * \sa opdis_init
  */
 
-void LIBCALL opdis_term( opdis_t );
+void LIBCALL opdis_term( opdis_t o );
 
 
 /*!
@@ -337,7 +338,7 @@ void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg );
 void LIBCALL opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg );
 
 /*!
- * \fn opdis_set_decoder( opdis_t, OPDIS_DECODER )
+ * \fn opdis_set_decoder( opdis_t, OPDIS_DECODER, void * )
  * \ingroup configuration
  * \brief Set the callback used to build an opdis_insn_t from libopcodes data.
  * \details This sets the function used to fill an opdis_insn_t based on the
@@ -349,8 +350,9 @@ void LIBCALL opdis_set_handler( opdis_t o, OPDIS_HANDLER fn, void * arg );
  *          opdis_insn_t.
  * \param o opdis disassembler to configure.
  * \param fn The callback function.
+ * \param arg An optional argument to pass to the callback function.
  */
-void LIBCALL opdis_set_decoder( opdis_t o, OPDIS_DECODER fn );
+void LIBCALL opdis_set_decoder( opdis_t o, OPDIS_DECODER fn, void * arg );
 
 /*!
  * \fn opdis_set_resolver( opdis_t, OPDIS_RESOLVER, void * )
@@ -390,8 +392,8 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg );
  * \param buf The buffer to disassemble
  * \param offset The offset into the buffer to disassemble.
  */
-size_t LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
-				       opdis_off_t offset );
+unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
+					     opdis_off_t offset );
 
 /*!
  * \fn opdis_disasm_insn(opdis_t, opdis_buf_t, opdis_off_t, opdis_insn_t * )
@@ -402,8 +404,9 @@ size_t LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
  * \param offset The offset into the buffer to disassemble.
  * \param insn The op_insn_t to fill with the disassembled instruction
  */
-size_t LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
-				  opdis_off_t offset, opdis_insn_t * insn );
+unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
+					opdis_off_t offset, 
+					opdis_insn_t * insn );
 
 /*!
  * \fn opdis_disasm_linear( opdis_t, opdis_buf_t, opdis_off_t, opdis_off_t )
