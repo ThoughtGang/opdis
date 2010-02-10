@@ -9,6 +9,11 @@
 #ifndef OPDIS_INSNTREE_H
 #define OPDIS_INSNTREE_H
 
+#include <sys/types.h>
+
+#include <opdis/model.h>
+#include <opdis/types.h>
+
 #ifdef WIN32
         #define LIBCALL _stdcall
 #else
@@ -332,7 +337,7 @@ int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree,
  *       \e manage set to 1.
  */
 
-int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_addr_t addr );
 
 /*!
  * \fn opdis_insn_t * opdis_insn_tree_find( opdis_insn_tree_t, opdis_vma_t )
@@ -344,7 +349,7 @@ int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
  */
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
-				  	      opdis_vma_t addr );
+				  	      opdis_addr_t addr );
 
 /*!
  * \typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t *, void *)

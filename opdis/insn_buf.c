@@ -4,6 +4,7 @@
  * \author thoughtgang.org
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include <opdis/insn_buf.h>
@@ -16,6 +17,11 @@ opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items,
 	if (! buf ) {
 		return NULL;
 	}
+
+	max_items = (max_items == 0) ? OPDIS_MAX_ITEMS : max_items;
+	max_item_size = (max_item_size == 0) ? OPDIS_MAX_ITEM_SIZE : 
+					     max_item_size;
+	max_insn_str = (max_insn_str == 0) ? OPDIS_MAX_INSN_STR : max_insn_str;
 
 	buf->items = (char *) calloc( max_items, max_item_size );
 	if (! buf->items ) {

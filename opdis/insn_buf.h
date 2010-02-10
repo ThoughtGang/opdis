@@ -54,8 +54,8 @@ typedef struct {
 	unsigned int item_count;		/*!< Number of items */
 	unsigned int max_item_count;		/*!< Max number of items */
 	unsigned int max_item_size;		/*!< Max size of items */
-	char items[MAX_ITEMS][MAX_ITEM_SZ];	/*!< Array of stored items */
-	char string[OPDIS_MAX_INSN_STR];	/*!< Raw instruction string */
+	char **items;				/*!< Array of stored items */
+	char *string;				/*!< Raw instruction string */
 	unsigned int max_string_size;		/*!< Max insn string length */
 } opdis_insn_buffer_t;
 

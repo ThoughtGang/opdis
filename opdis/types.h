@@ -8,6 +8,10 @@
 #ifndef OPDIS_TYPES_H
 #define OPDIS_TYPES_H
 
+#include <bfd.h>
+#include <stdio.h>
+#include <sys/types.h>
+
 #ifdef WIN32
         #define LIBCALL _stdcall
 #else

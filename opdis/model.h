@@ -82,7 +82,7 @@ typedef struct {
 	const char * mnemonic;		/*!< ASCII mnemonic for insn */
 	enum opdis_insn_cat_t category;	/*!< Type of insn */
 	union {
-		opdis_cflow_flags_t cflow;	/*!< Control flow insn flags */
+		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
 		// TODO
 	} flags;			/*!< Instruction-specific flags */
 

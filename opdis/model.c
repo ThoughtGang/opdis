@@ -4,6 +4,9 @@
  * \author thoughtgang.org
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <opdis/model.h>
 
 opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands ) {
@@ -48,7 +51,7 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 	}
 
 	for ( i = 0; i < num_operands; i++ ) {
-		opdis_op__t * op = opdis_op_alloc_fixed( op_ascii_sz );
+		opdis_op_t * op = opdis_op_alloc_fixed( op_ascii_sz );
 		if ( op ) {
 			insn->operands[i] = op;
 			insn->alloc_operands++;
@@ -64,7 +67,7 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 	int i;
 	opdis_op_t ** new_operands = NULL;
 
-	opdis_insn_t * new_insn = insn_alloc( insn->num_operands );
+	opdis_insn_t * new_insn = opdis_insn_alloc( insn->num_operands );
 	if (! new_insn ) {
 		return NULL;
 	}
@@ -114,11 +117,11 @@ void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
 	}
 
 	if ( insn->ascii ) {
-		free(insn->ascii);
+		free( (void *) insn->ascii);
 	}
 
 	if ( insn->mnemonic ) {
-		free(insn->mnemonic);
+		free( (void *) insn->mnemonic);
 	}
 
 	for ( i = 0; i < insn->num_operands; i++ ) {
@@ -137,7 +140,7 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii ) {
 	}
 
 	if ( i->ascii ) {
-		free(i->ascii);
+		free((void *) i->ascii);
 	}
 
 	i->ascii = strdup(ascii);
@@ -149,7 +152,7 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic ){
 	}
 
 	if ( i->mnemonic ) {
-		free(i->mnemonic);
+		free((void *) i->mnemonic);
 	}
 
 	i->mnemonic = strdup(mnemonic);
@@ -163,7 +166,7 @@ int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
 	}
 
 	if ( i->num_operands < i->alloc_operands ) {
-		i->operands[num_operands] = op;
+		i->operands[i->num_operands] = op;
 		i->num_operands++;
 		return 1;
 	}
@@ -175,7 +178,7 @@ int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
 		return 0;
 	}
 
-	i->operands = (opdis_op_t *) p;
+	i->operands = (opdis_op_t **) p;
 	i->operands[i->num_operands] = op;
 	i->num_operands++;
 
@@ -200,7 +203,7 @@ opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz ) {
 }
 
 opdis_op_t * LIBCALL opdis_op_dupe(  opdis_op_t * op ) {
-	opdis_op_t * new_op = opdis_alloc();
+	opdis_op_t * new_op = opdis_op_alloc();
 	if (! new_op ) {
 		return NULL;
 	}
@@ -225,7 +228,7 @@ void LIBCALL opdis_op_free( opdis_op_t * op ) {
 	}
 
 	if ( op->ascii ) {
-		free(op->ascii);
+		free((void *) op->ascii);
 	}
 }
 
@@ -235,7 +238,7 @@ void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
 	}
 
 	if ( op->ascii ) {
-		free(op->ascii);
+		free((void *) op->ascii);
 	}
 
 	op->ascii = strdup(ascii);

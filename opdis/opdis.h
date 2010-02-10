@@ -117,7 +117,7 @@ enum opdis_error_t { opdis_error_unknown,
 		   };
 
 /*!
- * \typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
+ * \typedef void (*OPDIS_ERROR) ( enum opdis_error_t error, const char * msg,
 			          void * arg )
  * \ingroup configuration
  * \brief Callback used to handle error messages.
@@ -127,13 +127,13 @@ enum opdis_error_t { opdis_error_unknown,
  * \details This function is invoked whenever an error is encountered by the
  *          disassembler. The default error handler writes to STDERR.
  */
-typedef void (*OPDIS_ERROR) ( opdis_error_t error, const char * msg,
+typedef void (*OPDIS_ERROR) ( enum opdis_error_t error, const char * msg,
 			      void * arg );
 
 /* ---------------------------------------------------------------------- */
 
 /*!
- * \struct opdis_t
+ * \struct opdis_info_t
  * \ingroup configuration
  * \brief An opdis disassembler
  */
@@ -185,7 +185,15 @@ typedef struct {
 	 */
 	opdis_insn_buf_t * buf;
 
-} * opdis_t;
+} opdis_info_t;
+
+/*!
+ * \typedef opdis_info_t * opdis_t
+ * \ingroup configuration
+ * \brief Disassembler handle (pointer to opdis_info_t).
+ */
+
+typedef opdis_info_t * opdis_t;
 
 /* ---------------------------------------------------------------------- */
 
@@ -259,7 +267,7 @@ enum opdis_x86_syntax_t {
 };
 
 /*!
- * \fn opdis_set_x86_syntax( opdis_t, opdis_x86_syntax_t )
+ * \fn opdis_set_x86_syntax( opdis_t, enum opdis_x86_syntax_t )
  * \ingroup configuration
  * \brief Configure the disassembler to use Intel or AT&T syntax.
  * \details Invokes opdist_set_arch() to force the architecture to i386,
@@ -269,7 +277,7 @@ enum opdis_x86_syntax_t {
  * \param syntax The syntax option to use.
  * \note This only applies to x86 disassemblers.
  */
-void LIBCALL opdis_set_x86_syntax( opdis_t o, opdis_x86_syntax_t syntax );
+void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax );
 
 /*!
  * \fn opdis_set_arch( opdis_t, enum bfd_architecture, disassembler_ftype )
@@ -431,7 +439,7 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
 				opdis_off_t offset );
 
 /*!
- * \fn opdis_error( opdis_t, opdis_error_t, const char * )
+ * \fn opdis_error( opdis_t, enum opdis_error_t, const char * )
  * \ingroup disassembly
  * \brief Send an error message to the error reporter/
  * \details This is used internally and by callbacks to report errors.
@@ -439,7 +447,8 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
  * \param error The error code
  * \param msg The detailed error message
  */
-void LIBCALL opdis_error( opdis_t o, opdis_error_t error, const char * msg );
+void LIBCALL opdis_error( opdis_t o, enum opdis_error_t error, 
+			  const char * msg );
 
 #ifdef __cplusplus
 }

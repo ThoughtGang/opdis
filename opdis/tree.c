@@ -4,6 +4,8 @@
  * \author thoughtgang.org
  */
 
+#include <stdlib.h>
+
 #include <opdis/tree.h>
 
 /* ----------------------------------------------------------------------*/
@@ -159,6 +161,9 @@ static int max_level( opdis_tree_node_t * a, opdis_tree_node_t * b ) {
 
 	return (a->level > b->level) ? a->level + 1 : b->level + 1;
 }
+
+/* rotate_left and rotate_right depend on each other */
+static opdis_tree_node_t * rotate_right(opdis_tree_node_t *, int);
 
 static opdis_tree_node_t * rotate_left( opdis_tree_node_t * node, int num ) {
 	opdis_tree_node_t *root;
@@ -346,15 +351,16 @@ static int tree_node_destroy( opdis_tree_t tree, opdis_tree_node_t * node) {
 		return 1;
 	}
 
-	tree_node_destroy(node->left);
-	tree_node_destroy(node->right);
+	tree_node_destroy( tree, node->left );
+	tree_node_destroy( tree, node->right );
 
-	tree_node_free(node);
+	tree_node_free( tree, node );
 
 	return 1;
 }
 
 static opdis_tree_node_t *  tree_node_find( opdis_tree_t tree, void * key ) {
+	opdis_tree_node_t * node, * next;
 
 	for (node = tree->root; node; node = next) {
 		int lr;
@@ -390,7 +396,7 @@ static int builtin_cmp_fn (void * a, void *b) {
 }
 
 /* no-op : item is not freed */
-static void builtin_free_fn (void * ) {
+static void builtin_free_fn (void * arg) {
 	return;
 }
 
@@ -400,8 +406,7 @@ static void builtin_free_fn (void * ) {
 opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn, 
 				      OPDIS_TREE_CMP_FN cmp_fn,
 				      OPDIS_TREE_FREE_FN free_fn ) {
-	opdis_tree_t * t = (opdis_tree_t) calloc( 1, 
-						sizeof(opdis_base_tree_t), 1);
+	opdis_tree_t t = (opdis_tree_t) calloc( 1, sizeof(opdis_tree_base_t) );
 	if (! t ) {
 		return NULL;
 	}
@@ -414,7 +419,7 @@ opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn,
 }
 
 int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data ) {
-	if (! tree || ! insn ) {
+	if (! tree || ! data ) {
 		return 0;
 	}
 
@@ -427,7 +432,7 @@ int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data ) {
 }
 
 int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data ) {
-	opdis_tree_node_t * node = tree_node_find( node, tree->key_fn(data) );
+	opdis_tree_node_t * node = tree_node_find( tree, tree->key_fn(data) );
 	if ( node ) {
 		tree->free_fn(node->data);
 		node->data = data;
@@ -440,7 +445,7 @@ int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data ) {
 int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key ) {
 	opdis_tree_node_t *node;
 
-	node = node_find(tree, key);
+	node = tree_node_find(tree, key);
 	if (! node) {
 		return 0;
 	}
@@ -521,29 +526,30 @@ opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void ) {
 }
 
 int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr ) {
-	return opdis_tree_add( (opdis_tree_t) tree, addr );
+	return opdis_tree_add( (opdis_tree_t) tree, (void *) addr );
 }
 
 int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr ){
-	return opdis_tree_delete( (opdis_tree_t) tree, addr );
+	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
 opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree, 
 					   opdis_addr_t addr ) {
-	return (opdis_addr_t) opdis_tree_find( (opdis_tree_t) tree, addr );
+	return (opdis_addr_t) opdis_tree_find( (opdis_tree_t) tree, 
+						(void *) addr );
 }
 
 void LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
 				   OPDIS_ADDR_TREE_WALK_FN fn, void * arg ) {
 	opdis_tree_node_t *node;
 
-	if (! func ) {
+	if (! fn ) {
 		return;
 	}
 
 	node = node_first(tree->root);
 	for ( ; node; node = node_next(node) ) {
-		func( (opdis_addr_t) node->data, arg );
+		fn( (opdis_addr_t) node->data, arg );
 	}
 }
 
@@ -583,26 +589,27 @@ int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree,
 	return opdis_tree_add( (opdis_tree_t) tree, insn );
 }
 
-int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr ) {
-	return opdis_tree_delete( (opdis_tree_t) tree, addr );
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_addr_t addr ){
+	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
-				  	      opdis_vma_t addr ) {
-	return (opdis_insn_t *) opdis_tree_find( (opdis_tree_t)tree, addr );
+				  	      opdis_addr_t addr ) {
+	return (opdis_insn_t *) opdis_tree_find( (opdis_tree_t)tree, 
+						 (void *) addr );
 }
 
 void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
 				   OPDIS_INSN_TREE_WALK_FN fn, void * arg ) {
 	opdis_tree_node_t *node;
 
-	if (! func ) {
+	if (! fn ) {
 		return;
 	}
 
 	node = node_first(tree->root);
 	for ( ; node; node = node_next(node) ) {
-		func( (opdis_insn_t) node->data, arg );
+		fn( (opdis_insn_t *) node->data, arg );
 	}
 }
 

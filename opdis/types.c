@@ -4,6 +4,7 @@
  * \author thoughtgang.org
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include <opdis/types.h>
