@@ -471,7 +471,7 @@ void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key ) {
 	return NULL;
 }
 
-static opdis_tree_node_t * tree_closest( opdis_tree_t tree, void * key ) {
+void * opdis_tree_closest( opdis_tree_t tree, void * key ) {
 	opdis_tree_node_t *node, *next, *closest = NULL, *first = NULL;
 
 	for ( node = tree->root; node; node = next ) {
@@ -499,6 +499,23 @@ static opdis_tree_node_t * tree_closest( opdis_tree_t tree, void * key ) {
 
 	return NULL;
 }
+
+void LIBCALL opdis_tree_foreach( opdis_tree_t tree, OPDIS_TREE_FOREACH_FN fn,
+				 void * arg ) {
+	opdis_tree_node_t *node;
+
+	if (! fn ) {
+		return;
+	}
+
+	node = node_first(tree->root);
+	for ( ; node; node = node_next(node) ) {
+		if (! fn( node->data, arg ) ) {
+			break;
+		}
+	}
+}
+
 
 size_t LIBCALL opdis_tree_count( opdis_tree_t tree ) {
 	if (! tree ) {
@@ -539,8 +556,8 @@ opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree,
 						(void *) addr );
 }
 
-void LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
-				   OPDIS_ADDR_TREE_WALK_FN fn, void * arg ) {
+void LIBCALL opdis_addr_tree_foreach( opdis_addr_tree_t tree,
+				   OPDIS_ADDR_TREE_FOREACH_FN fn, void * arg ) {
 	opdis_tree_node_t *node;
 
 	if (! fn ) {
@@ -549,7 +566,9 @@ void LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
 
 	node = node_first(tree->root);
 	for ( ; node; node = node_next(node) ) {
-		fn( (opdis_addr_t) node->data, arg );
+		if (! fn( (opdis_addr_t) node->data, arg ) ) {
+			break;
+		}
 	}
 }
 
@@ -599,8 +618,8 @@ opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree,
 						 (void *) addr );
 }
 
-void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
-				   OPDIS_INSN_TREE_WALK_FN fn, void * arg ) {
+void LIBCALL opdis_insn_tree_foreach( opdis_insn_tree_t tree,
+				   OPDIS_INSN_TREE_FOREACH_FN fn, void * arg ) {
 	opdis_tree_node_t *node;
 
 	if (! fn ) {
@@ -609,7 +628,9 @@ void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
 
 	node = node_first(tree->root);
 	for ( ; node; node = node_next(node) ) {
-		fn( (opdis_insn_t *) node->data, arg );
+		if (! fn( (opdis_insn_t *) node->data, arg ) ) {
+			break;
+		}
 	}
 }
 

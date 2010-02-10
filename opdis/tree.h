@@ -189,6 +189,29 @@ void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
 void * LIBCALL opdis_tree_closest( opdis_tree_t tree, void * key );
 
 /*!
+ * \typedef int (*OPDIS_TREE_FOREACH_FN) (void *, void *)
+ * \ingroup tree
+ * \brief Callback invoked by opdis_tree_foreach.
+ * \param item The current item.
+ * \param arg The argument provided to opdis_tree_foreach.
+ * \note A zero return value will break out of the foreach.
+ */
+
+typedef int (*OPDIS_TREE_FOREACH_FN) (void * item, void * arg);
+
+/*!
+ * \fn void opdis_tree_foreach( opdis_tree_t, OPDIS_TREE_FOREACH_FN, void * )
+ * \ingroup tree
+ * \brief Iterate over the tree, invoking a callback for each item.
+ * \param tree The AVL tree.
+ * \param fn The callback function to invoke.
+ * \param arg  An optional argument to pass to the callback.
+ */
+
+void LIBCALL opdis_tree_foreach( opdis_tree_t tree, OPDIS_TREE_FOREACH_FN fn,
+				 void * arg );
+
+/*!
  * \fn size_t opdis_tree_count( opdis_tree_t )
  * \ingroup tree
  * \brief Return the number of items in the tree.
@@ -264,18 +287,19 @@ opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree,
 					   opdis_addr_t addr );
 
 /*!
- * \typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t, void *)
+ * \typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_addr_t, void *)
  * \ingroup tree
- * \brief Callback invoked for every address emitted by opdis_addr_tree_walk.
+ * \brief Callback invoked for every address emitted by opdis_addr_tree_foreach.
  * \param addr The address.
- * \param arg Argument provided to opdis_addr_tree_walk
+ * \param arg Argument provided to opdis_addr_tree_foreach
+ * \note A zero return value will break out of the foreach.
  */
 
-typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
+typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_addr_t addr, void * arg);
 
 /*!
- * \fn void opdis_addr_tree_walk( opdis_addr_tree_t,
-				  OPDIS_ADDR_TREE_WALK_FN, void * )
+ * \fn void opdis_addr_tree_foreach( opdis_addr_tree_t,
+				  OPDIS_ADDR_TREE_FOREACH_FN, void * )
  * \ingroup tree
  * \brief Invoke a callback for every item in the tree.
  * \param tree The Address Tree.
@@ -283,8 +307,8 @@ typedef void (*OPDIS_ADDR_TREE_WALK_FN) (opdis_addr_t addr, void * arg);
  * \param arg An optional argument to pass to the callback function.
  */
 
-void LIBCALL opdis_addr_tree_walk( opdis_addr_tree_t tree,
-				  OPDIS_ADDR_TREE_WALK_FN fn, void * arg );
+void LIBCALL opdis_addr_tree_foreach( opdis_addr_tree_t tree,
+				  OPDIS_ADDR_TREE_FOREACH_FN fn, void * arg );
 
 /*!
  * \fn void opdis_addr_tree_free( opdis_addr_tree_t )
@@ -352,28 +376,28 @@ opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree,
 				  	      opdis_addr_t addr );
 
 /*!
- * \typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t *, void *)
+ * \typedef int (*OPDIS_INSN_TREE_FOREACH_FN) (opdis_insn_t *, void *)
  * \ingroup tree
- * \brief Callback invoked for each instruction emitted by opdis_insn_tree_walk.
+ * \brief Callback invoked for each insn emitted by opdis_insn_tree_foreach.
  * \param addr The instruction.
- * \param arg Argument provided to opdis_insn_tree_walk
+ * \param arg Argument provided to opdis_insn_tree_foreach
+ * \note A zero return value will break out of the foreach.
  */
 
-typedef void (*OPDIS_INSN_TREE_WALK_FN) (opdis_insn_t * insn, void * arg);
+typedef int (*OPDIS_INSN_TREE_FOREACH_FN) (opdis_insn_t * insn, void * arg);
 
 /*!
- * \fn void opdis_insn_tree_walk( opdis_insn_tree_t,
-				  OPDIS_INSN_TREE_WALK_FN, void * )
+ * \fn void opdis_insn_tree_foreach( opdis_insn_tree_t,
+				  OPDIS_INSN_TREE_FOREACH_FN, void * )
  * \ingroup tree
  * \brief Invoke a callback for every item in the tree.
  * \param tree The Instruction Tree.
  * \param fn The callback to invoke for each instruction.
  * \param arg An optional argument to pass to the callback function.
- * \sa
  */
 
-void LIBCALL opdis_insn_tree_walk( opdis_insn_tree_t tree,
-				   OPDIS_INSN_TREE_WALK_FN fn, void * arg );
+void LIBCALL opdis_insn_tree_foreach( opdis_insn_tree_t tree,
+				   OPDIS_INSN_TREE_FOREACH_FN fn, void * arg );
 
 /*!
  * \fn void opdis_insn_tree_free( opdis_insn_tree_t )
