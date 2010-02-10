@@ -58,7 +58,7 @@ opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size ) {
 
 	if ( fread( buf->data, 1, size, f ) < size ) {
 		fprintf( stderr, "opdis_buf_read: cannot read %d bytes\n", 
-				  size );
+				  (int) size );
 	}
 
 	return buf;

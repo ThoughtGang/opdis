@@ -21,8 +21,8 @@ dist_libopdis_la_SOURCES = opdis/insn_buf.c opdis/model.c opdis/opdis.c \
 		      opdis/tree.c opdis/types.c
 
 test_tree_test_SOURCES = test/tree_test.c
-test_disasm_cflow_SOURCES = test/disasm_cflow/disasm_cflow.c
-test_disasm_linear_SOURCES = test/disasm_linear/disasm_linear.c
+test_disasm_cflow_SOURCES = test/disasm_cflow.c
+test_disasm_linear_SOURCES = test/disasm_linear.c
 docs:
 	doxygen config/Doxyfile
 

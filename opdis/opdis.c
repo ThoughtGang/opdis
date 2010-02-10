@@ -194,7 +194,7 @@ static int buffer_check( opdis_buf_t buf, opdis_off_t offset ) {
 	if ( offset >= buf->len ) {
 		char msg[64];
 		snprintf( msg, 63, "Offset %d exceeds buffer length %d\n",
-			 offset, buf->len );
+			 (int) offset, (int) buf->len );
 
 		//opdis_error( o, opdis_error_bounds, buf );
 		return 0;
@@ -237,7 +237,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 
 	if (! size ) {
 		char msg[64];
-		snprintf( msg, 63, "Invalid insn at offset %d\n", offset );
+		snprintf( msg, 63, "Invalid insn at offset %d\n", (int) offset);
 		opdis_error( o, opdis_error_bounds, msg );
 		return 0;
 	}

@@ -1,6 +1,8 @@
 
 #include <stdio.h>
-#include <big_std.h>
+#include <string.h>
+
+#include <opdis/tree.h>
 
 struct TN {
 	struct TN *p, *l, *r;
@@ -47,44 +49,62 @@ static int sumtree( void * arg, void *data ) {
 	return 1;
 }
 
+static int cmp_int( void * arg_a, void * arg_b ) {
+	int a = (int) arg_a, b = (int) arg_b;
+
+	if ( a < b ) {
+		return -1;
+	} else if ( a > b ) {
+		return 1;
+	}
+
+	return 0;
+}
+
+static int cmp_str( void * arg_a, void * arg_b ) {
+	const char * a = (const char *) arg_a, * b = (const char *) arg_b;
+
+	return strcmp(a, b);
+}
+
 int main (void) {
 	int i, sum, treesum;
-	std_tree_t *t;
+	opdis_tree_t t;
 	struct TN *strtn;
 
 	/* ============================================== */
 	/* test the unsigned int comparison */
-	t = std_tree_alloc( std_cmp_uint );
+	t = opdis_tree_init( NULL, NULL, NULL );
 	sum = treesum = 0;
 	for ( i = 0; i < 1024; i++ ) {
-		std_tree_insert( t, (void *) i );
+		opdis_tree_add( t, (void *) i );
 		sum += i;
 	}
 
-	std_tree_foreach( t, sumtree, &treesum );
+	opdis_tree_foreach( t, sumtree, &treesum );
 
 	printf( "(unsigned) SUM: %d TreeSUM: %d\n", sum, treesum );
-	std_tree_free( t );
+	opdis_tree_free( t );
 		
 
 	/* test the signed int comparison */
-	t = std_tree_alloc( std_cmp_int );
+	t = opdis_tree_init( NULL, cmp_int, NULL );
 	sum = treesum = 0;
 	for ( i = -512; i < 512; i++ ) {
-		std_tree_insert( t, (void *) i );
+		opdis_tree_add( t, (void *) i );
 		sum += i;
 	}
 
-	std_tree_foreach( t, sumtree, &treesum );
+	opdis_tree_foreach( t, sumtree, &treesum );
 
 	printf( " (signed)  SUM: %d TreeSUM: %d\n", sum, treesum );
-	std_tree_free( t );
+	opdis_tree_free( t );
 
 
 	/* test against our home-brewed tree */
-	t = std_tree_alloc( std_cmp_str );
+	t = opdis_tree_init( NULL, cmp_str, NULL );
 	for ( i = 0; i <= 14; i++ ) {
-		std_tree_insert( t, (void *) (strtree[i].data) );
+		opdis_tree_add( t, (void *) (strtree[i].data) );
 	}
 
 	printf("Reference tree: ");
@@ -92,10 +112,10 @@ int main (void) {
 	printf("\n");
 
 	printf("Test tree     : ");
-	std_tree_foreach( t, printtree, NULL );
+	opdis_tree_foreach( t, printtree, NULL );
 	printf("\n");
 
-	std_tree_free( t );
+	opdis_tree_free( t );
 
 	return 0;
 }
