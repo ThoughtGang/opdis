@@ -74,8 +74,9 @@ static int null_fprintf( FILE *, const char *, ... ) {
 }
 
 
-
 /* ---------------------------------------------------------------------- */
+/* OPDIS MGT */
+
 opdis_t LIBCALL opdis_init( void ) {
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	

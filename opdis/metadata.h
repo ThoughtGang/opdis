@@ -39,7 +39,11 @@ enum opdis_op_cat_t {
  */
 enum opdis_insn_cat_t {
 	opdis_insn_cat_unknown,	/*!< Unknown instruction type */
-	opdis_insn_cat_cflow	/*!< Control flow instruction */
+	opdis_insn_cat_cflow,	/*!< Control flow instruction */
+	opdis_insn_cat_stack,	/*!< Stack manipulation instruction */
+	opdis_insn_cat_fpu,	/*!< Floating-Point instruction */
+	opdis_insn_cat_gpu,	/*!< GPU instruction */
+	opdis_insn_cat_simd	/*!< SIMD extension instruction */
 };
 
 /*!

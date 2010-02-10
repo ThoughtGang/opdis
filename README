@@ -1,0 +1,11 @@
+libopcodes-based disassembler library
+
+libopdis : shared/static library for performing disassembly
+
+opdis : command-line disassembler
+
+libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
+
+./configure
+make
+make install
