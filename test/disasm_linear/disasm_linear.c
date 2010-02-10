@@ -3,6 +3,8 @@
  * 
  */
 
+#include <stdio.h>
+
 #include <opdis/opdis.h>
 
 int main( int argc, char ** argv ) {
@@ -13,7 +15,7 @@ int main( int argc, char ** argv ) {
 		return 1;
 	}
 
-	f = fopen( argv[1], 'r' );
+	f = fopen( argv[1], "r" );
 	// read
 	fclose( f );
 	// TODO : implement!

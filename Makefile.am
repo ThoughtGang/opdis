@@ -5,7 +5,7 @@ bin_PROGRAMS = dist/opdis
 
 lib_LTLIBRARIES = dist/libopdis.la
 
-check_PROGRAMS = tree_test disasm_cflow disasm_linear
+check_PROGRAMS = test/tree_test test/disasm_cflow test/disasm_linear
 
 TESTS = $(check_PROGRAMS)
 
@@ -20,9 +20,9 @@ nobase_include_HEADERS = opdis/insn_buf.h opdis/metadata.h opdis/model.h \
 dist_libopdis_la_SOURCES = opdis/insn_buf.c opdis/model.c opdis/opdis.c \
 		      opdis/tree.c opdis/types.c
 
-tree_test_SOURCES = test/tree_test.c
-disasm_cflow_SOURCES = test/disasm_cflow/disasm_cflow.c
-disasm_linear_SOURCES = test/disasm_linear/disasm_linear.c
+test_tree_test_SOURCES = test/tree_test.c
+test_disasm_cflow_SOURCES = test/disasm_cflow/disasm_cflow.c
+test_disasm_linear_SOURCES = test/disasm_linear/disasm_linear.c
 docs:
 	doxygen config/Doxyfile
 
