@@ -439,7 +439,7 @@ int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data ) {
 		return 1;
 	}
 
-	return opdis_tree_insert( tree, data );
+	return opdis_tree_add( tree, data );
 }
 
 int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key ) {
