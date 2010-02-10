@@ -36,13 +36,13 @@ static void print_tree( struct TN *tn ) {
 	}
 }
 
-static int printtree( void * arg, void *data ) {
+static int printtree( void * data, void * arg ) {
 	char *str = (char *) data;
 	printf( "%s ", str );
 	return 1;
 }
 
-static int sumtree( void * arg, void *data ) {
+static int sumtree( void * data, void * arg ) {
 	int *sum = (int *) arg;
 	int num = (int) data;
 	*sum += num;

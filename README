@@ -9,3 +9,7 @@ libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
 ./configure
 make
 make install
+
+libtool execute opdis
+libtool execute gdb/opdis
+libtool execute test/tree_test
