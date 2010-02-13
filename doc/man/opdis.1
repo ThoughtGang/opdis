@@ -1,0 +1,95 @@
+.NOTE man 7 man
+.TH OPDIS 1 "February 13, 2010" "" "Development Tools"
+
+.SH NAME
+opdis \- program for...
+
+.SH SYNOPSIS
+opdis [\fB\-a\fR|\fB\-\-action\fR=\fIjobspec\fR]
+      [\fB\-s\fR|\fB\-\-syntax\fR=\fIatt\fR|\fIintel\fR]
+      [\fB\-f\fR|\fB\-\-format\fR=\fIfmtspec\fR]
+      [\fB\-o\fR|\fB\-\-output\fR=\fIfilename\fR]
+      [\fB\-m\fR|\fB\-\-map\fR=\fImapspec\fR]
+      [\fB\-b\fR|\fB\-\-bytes\fR=\fIstring\fR]
+      [\fB\-B\fR|\fB\-\-bfd\fR[=\fIbfdspec\fR\]
+      [\fB\-\-dry\-run\fR]
+      \fIobjfile\fR...
+.br
+
+.SH DESCRIPTION
+This manual page explains the
+.B opdis
+program. This program...
+.PP
+\fBopdis\fP is for...
+
+.SH OPTIONS
+.IP \fB-a\fR \fIjobspec\fR
+.PD 0
+.IP \fB--action\fR=\fIjobspec\fR
+.PD
+action...
+.PD
+See \fBADDRESS FORMAT\fR.
+.IP \fB-s\fR \fIatt\fR|\fIintel\fR
+.PD 0
+.IP \fB--syntax\fR=\fIatt\fR|\fIintel\fR
+.PD
+syntax..
+.IP \fB-F\fR \fIformat_string\fR
+.PD 0
+.IP \fB--format\fR=\fIformat_string\fR
+.PD
+output format
+.PD
+See \fBFORMAT STRINGS\fR.
+.IP \fB-o\fR \fIfilename\fR
+.PD 0
+.IP \fB--output\fR=\fIfilename\fR
+.PD
+output file
+.IP \fB-m\fR \fImapspec\fR
+.PD 0
+.IP \fB--map\fR=\fImapspec\fR
+.PD
+map
+.PD
+See \fBADDRESS FORMAT\fR.
+.IP \fB-b\fR \fIstring\fR
+.PD 0
+.IP \fB--bytes\fR=\fIstring\fR
+.PD
+target
+.IP \fB-B\fR [\fIbfdspec\fR]
+.PD 0
+.IP \fB--bfd\fR[=\fIbfdspec\fR]
+.PD
+bfd lib
+.IP \fB--dry-run\fR
+.PD
+do nothing
+
+.IP -OPTION
+This option...
+
+.SH ADDRESS FORMAT
+	[target]:offset|@vma[+size]
+
+.SH FORMAT STRINGS
+printf-style format string for output
+	%o[l|#] operand list or #
+	%b[x|X|o|O|d|D|a|A][len] bytes
+	%m mnemonic
+	%v vma
+	%a address (offset)
+	%f[si]m|o# flags string|int mnemonic|operand#
+	%p prefixes
+	%c[,] conditional delimiter
+	
+
+.SH NOTES
+
+.SH EXAMPLE
+
+.SH "SEE ALSO"
+
