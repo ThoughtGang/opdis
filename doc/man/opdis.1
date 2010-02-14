@@ -76,46 +76,67 @@ This option...
 	[target]:offset|@vma[+size]
 
 .SH FORMAT STRINGS
-printf-style format string for output
+printf-style format string for output.
+
 .B
 Operations
 .IP
-	\fB%[len]o[l|#]\fR
+        \fB%i\fR
 .PD
-operand list or #
+instruction. Print the raw instruction ASCII representation, untouched.
 .IP
-	\fB%b[[0][#]x|X|o|O|d|D|a|A][len]\fR 
+	\fB%o[l|#]\fR
 .PD
-bytes
+operand. Prints comma-delimitedlist of operands (%ol) or specified operand # ('' if not present in insn).
 .IP
-	\fB%[len]m\fR
+	\fB%b[b|h|w|d]\fR 
 .PD
-mnemonic
+bytes: print hex bytes in specified word size (byte, half, word, dword). Defaults to byte-size words of hex format.
+.IP
+	\fB%m\fR
+.PD
+mnemonic. insn mnemonic or ''
 .IP
 	\fB%v\fR
 .PD
-vma
+vma: virtual memory address. Defaults to hex.
 .IP
 	\fB%a\fR 
 .PD
-address (offset)
+address (offset). Defaults to hex.
 .IP
-	\fB%f[si]m|o#\fR 
+	\fB%fi|o#\fR 
 .PD
-flags string|int mnemonic|operand#
+insn (i) or operand (o) flags. default ia string; use format conversion (e.g. d) to print as integer.
 .IP
 	\fB%p\fR
 .PD
-prefixes
+prefixes: insn prefixes or ''
 .IP
 	\fB%c[delim]\fR
 .PD
-conditional delimiter
+conditional delimiter. Print ',' if an operand follows.
 	
 .B
-Length modifiers
+Field width
+.PD
+applies to all. 
+
 .B
-Format modifiers
+Flag Characters 
+.PD
+such as 0, #, -, and + can be used, though everything but - will only apply to bytes, addresses, and numeric operands.
+
+.B
+Conversion specifier
+.PD
+apply to all.
+d,i
+o,u,x,X
+c
+s
+p
+%
 
 .SH NOTES
 
