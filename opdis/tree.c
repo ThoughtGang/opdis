@@ -538,25 +538,25 @@ void LIBCALL opdis_tree_free( opdis_tree_t tree ) {
 /* ----------------------------------------------------------------------*/
 /* ADDRESS TREE */
 
-opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void ) {
-	return (opdis_addr_tree_t) opdis_tree_init( NULL, NULL, NULL );
+opdis_vma_tree_t LIBCALL opdis_vma_tree_init( void ) {
+	return (opdis_vma_tree_t) opdis_tree_init( NULL, NULL, NULL );
 }
 
-int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr ) {
+int LIBCALL opdis_vma_tree_add( opdis_vma_tree_t tree, opdis_vma_t addr ) {
 	return opdis_tree_add( (opdis_tree_t) tree, (void *) addr );
 }
 
-int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr ){
+int LIBCALL opdis_vma_tree_delete( opdis_vma_tree_t tree, opdis_vma_t addr ){
 	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
-opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree, 
-					   opdis_addr_t addr ) {
-	return (opdis_addr_t) opdis_tree_find( (opdis_tree_t) tree, 
+opdis_vma_t LIBCALL opdis_vma_tree_find( opdis_vma_tree_t tree, 
+					   opdis_vma_t addr ) {
+	return (opdis_vma_t) opdis_tree_find( (opdis_tree_t) tree, 
 						(void *) addr );
 }
 
-void LIBCALL opdis_addr_tree_foreach( opdis_addr_tree_t tree,
+void LIBCALL opdis_vma_tree_foreach( opdis_vma_tree_t tree,
 				   OPDIS_ADDR_TREE_FOREACH_FN fn, void * arg ) {
 	opdis_tree_node_t *node;
 
@@ -566,13 +566,13 @@ void LIBCALL opdis_addr_tree_foreach( opdis_addr_tree_t tree,
 
 	node = node_first(tree->root);
 	for ( ; node; node = node_next(node) ) {
-		if (! fn( (opdis_addr_t) node->data, arg ) ) {
+		if (! fn( (opdis_vma_t) node->data, arg ) ) {
 			break;
 		}
 	}
 }
 
-void LIBCALL opdis_addr_tree_free( opdis_addr_tree_t tree ) {
+void LIBCALL opdis_vma_tree_free( opdis_vma_tree_t tree ) {
 	opdis_tree_free( (opdis_tree_t) tree );
 }
 
@@ -608,12 +608,12 @@ int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree,
 	return opdis_tree_add( (opdis_tree_t) tree, insn );
 }
 
-int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_addr_t addr ){
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr ){
 	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
-				  	      opdis_addr_t addr ) {
+				  	      opdis_vma_t addr ) {
 	return (opdis_insn_t *) opdis_tree_find( (opdis_tree_t)tree, 
 						 (void *) addr );
 }

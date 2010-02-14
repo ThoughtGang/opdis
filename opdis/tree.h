@@ -84,11 +84,11 @@ typedef struct std_tree {
  */
 typedef opdis_tree_base_t * opdis_tree_t;
 
-/*! \typedef opdis_tree_base_t * opdis_addr_tree_t
+/*! \typedef opdis_tree_base_t * opdis_vma_tree_t
  *  \ingroup tree
  *  \brief An AVL tree for storing opdis addresses.
  */
-typedef opdis_tree_base_t * opdis_addr_tree_t;
+typedef opdis_tree_base_t * opdis_vma_tree_t;
 
 /*! \typedef opdis_tree_base_t * opdis_insn_tree_t
  *  \ingroup tree
@@ -238,44 +238,44 @@ void LIBCALL opdis_tree_free( opdis_tree_t tree );
 /* Address tree */
 
 /*!
- * \fn opdis_addr_tree_t opdis_addr_tree_init()
+ * \fn opdis_vma_tree_t opdis_vma_tree_init()
  * \ingroup tree
  * \brief Allocate an Address Tree.
  * \return The allocated tree.
- * \sa opdis_addr_tree_free
+ * \sa opdis_vma_tree_free
  * \details This creates a balanced binary tree of addresses. In this tree, the
  *          key is the same as the data: its primary use is to keep track of
  *          addresses which have been visited.
  */
 
-opdis_addr_tree_t LIBCALL opdis_addr_tree_init( void );
+opdis_vma_tree_t LIBCALL opdis_vma_tree_init( void );
 
 /*!
- * \fn int opdis_addr_tree_add( opdis_addr_tree_t, opdis_addr_t )
+ * \fn int opdis_vma_tree_add( opdis_vma_tree_t, opdis_vma_t )
  * \ingroup tree
  * \brief Insert an address into the tree.
  * \param tree The Address Tree.
  * \param addr The address to insert.
  * \return 1 on success, 0 on failure.
- * \sa opdis_addr_tree_delete
+ * \sa opdis_vma_tree_delete
  */
 
-int LIBCALL opdis_addr_tree_add( opdis_addr_tree_t tree, opdis_addr_t addr );
+int LIBCALL opdis_vma_tree_add( opdis_vma_tree_t tree, opdis_vma_t addr );
 
 /*!
- * \fn int opdis_addr_tree_delete( opdis_addr_tree_t, opdis_addr_t )
+ * \fn int opdis_vma_tree_delete( opdis_vma_tree_t, opdis_vma_t )
  * \ingroup tree
  * \brief Delete an address from the tree.
  * \param tree The Address Tree.
  * \param addr The address to delete.
  * \return 1 on success, 0 on failure.
- * \sa opdis_addr_tree_add 
+ * \sa opdis_vma_tree_add 
  */
 
-int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr );
+int LIBCALL opdis_vma_tree_delete( opdis_vma_tree_t tree, opdis_vma_t addr );
 
 /*!
- * \fn opdis_addr_t opdis_addr_tree_find( opdis_addr_tree_t, opdis_addr_t )
+ * \fn opdis_vma_t opdis_vma_tree_find( opdis_vma_tree_t, opdis_vma_t )
  * \ingroup tree
  * \brief Find an address in the tree.
  * \param tree The Address Tree.
@@ -283,22 +283,22 @@ int LIBCALL opdis_addr_tree_delete( opdis_addr_tree_t tree, opdis_addr_t addr );
  * \return The address or OPDIS_INVALID_ADDR.
  */
 
-opdis_addr_t LIBCALL opdis_addr_tree_find( opdis_addr_tree_t tree, 
-					   opdis_addr_t addr );
+opdis_vma_t LIBCALL opdis_vma_tree_find( opdis_vma_tree_t tree, 
+					   opdis_vma_t addr );
 
 /*!
- * \typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_addr_t, void *)
+ * \typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_vma_t, void *)
  * \ingroup tree
- * \brief Callback invoked for every address emitted by opdis_addr_tree_foreach.
+ * \brief Callback invoked for every address emitted by opdis_vma_tree_foreach.
  * \param addr The address.
- * \param arg Argument provided to opdis_addr_tree_foreach
+ * \param arg Argument provided to opdis_vma_tree_foreach
  * \note A zero return value will break out of the foreach.
  */
 
-typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_addr_t addr, void * arg);
+typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_vma_t addr, void * arg);
 
 /*!
- * \fn void opdis_addr_tree_foreach( opdis_addr_tree_t,
+ * \fn void opdis_vma_tree_foreach( opdis_vma_tree_t,
 				  OPDIS_ADDR_TREE_FOREACH_FN, void * )
  * \ingroup tree
  * \brief Invoke a callback for every item in the tree.
@@ -307,18 +307,18 @@ typedef int (*OPDIS_ADDR_TREE_FOREACH_FN) (opdis_addr_t addr, void * arg);
  * \param arg An optional argument to pass to the callback function.
  */
 
-void LIBCALL opdis_addr_tree_foreach( opdis_addr_tree_t tree,
+void LIBCALL opdis_vma_tree_foreach( opdis_vma_tree_t tree,
 				  OPDIS_ADDR_TREE_FOREACH_FN fn, void * arg );
 
 /*!
- * \fn void opdis_addr_tree_free( opdis_addr_tree_t )
+ * \fn void opdis_vma_tree_free( opdis_vma_tree_t )
  * \ingroup tree
  * \brief Free the address tree.
  * \param tree The Address Tree.
- * \sa opdis_addr_tree_init
+ * \sa opdis_vma_tree_init
  */
 
-void LIBCALL opdis_addr_tree_free( opdis_addr_tree_t tree );
+void LIBCALL opdis_vma_tree_free( opdis_vma_tree_t tree );
 
 /* ---------------------------------------------------------------------- */
 /* Instruction tree */
@@ -361,7 +361,7 @@ int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree,
  *       \e manage set to 1.
  */
 
-int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_addr_t addr );
+int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
 
 /*!
  * \fn opdis_insn_t * opdis_insn_tree_find( opdis_insn_tree_t, opdis_vma_t )
@@ -373,7 +373,7 @@ int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_addr_t addr );
  */
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
-				  	      opdis_addr_t addr );
+				  	      opdis_vma_t addr );
 
 /*!
  * \typedef int (*OPDIS_INSN_TREE_FOREACH_FN) (opdis_insn_t *, void *)

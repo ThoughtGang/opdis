@@ -24,7 +24,7 @@
  */
 enum opdis_insn_decode_t {
 	opdis_decode_invalid = 0,	/*!< invalid instruction */
-	opdis_decode_basic = 1,		/*!< ascii, offset, address, bytes */
+	opdis_decode_basic = 1,		/*!< ascii, offset, vma, bytes */
 	opdis_decode_mnem = 2,		/*!< mnemonic, prefixes parsed */
 	opdis_decode_ops = 4,		/*!< operands parsed */
 	opdis_decode_mnem_flags = 8,	/*!< insn flags decoded */
@@ -69,9 +69,9 @@ typedef struct {
  * \note The \e ascii field always contains the raw libopcodes output
  *       for the instruction.
  * \note The \e offset field is always set to the offset of the instruction
- *       in the buffer. By default, the \e address field will be set to the
+ *       in the buffer. By default, the \e vma field will be set to the
  *       value in \e offset. The \ref OPDIS_HANDLER callback can set 
- *       \e address to the load address of the instruction.
+ *       \e vma to the load address of the instruction.
  * \note For instructions allocated by opdis_insn_alloc, \e num_operands
  *       and \e alloc_operands will be the same. For instructions allocated by
  *       opdis_insn_alloc_fixed, \e num_operands will contain the number of
@@ -84,7 +84,7 @@ typedef struct {
 	const char * ascii;		/*!< String representation of insn */
 
 	opdis_off_t offset;		/*!< Offset of instruction in buffer */
-	opdis_off_t address;		/*!< VMA of instruction */
+	opdis_vma_t vma;		/*!< Virtual memory address of insn */
 
 	opdis_off_t size;		/*!< Size (# bytes) of insn */
 	opdis_byte_t * bytes;		/*!< Pointer to insn bytes in buffer */

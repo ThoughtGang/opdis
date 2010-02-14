@@ -23,7 +23,7 @@ void opdis_default_display( const opdis_insn_t * i, void * arg ) {
 	printf( "%s\n", i->ascii );
 }
 
-opdis_addr_t opdis_default_resolver( const opdis_insn_t * insn, void * arg ) {
+opdis_vma_t opdis_default_resolver( const opdis_insn_t * insn, void * arg ) {
 	// resolve address if relative
 	return OPDIS_INVALID_ADDR;
 }
@@ -57,7 +57,7 @@ int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 
 	out->bytes = &buf->data[offset];
 	out->size = length;
-	out->offset = out->address = offset;
+	out->offset = out->vma = offset;
 
 	out->status |= opdis_decode_basic;
 	return 1;

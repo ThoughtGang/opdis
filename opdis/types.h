@@ -36,18 +36,18 @@ typedef size_t opdis_off_t;
  */
 #define OPDIS_INVALID_OFFSET ((opdis_off_t) -1 )
 
-/*! \typedef bfd_vma opdis_addr_t;
+/*! \typedef bfd_vma opdis_vma_t;
  *  \ingroup types
  *  A virtual memory (load) address.
  */
-typedef bfd_vma opdis_addr_t;
+typedef bfd_vma opdis_vma_t;
 
 /*! \def OPDIS_INVALID_ADDR
  *  An invalid address.
  *  \ingroup types
- *  \sa opdis_addr_t
+ *  \sa opdis_vma_t
  */
-#define OPDIS_INVALID_ADDR ((opdis_addr_t) -1 )
+#define OPDIS_INVALID_ADDR ((opdis_vma_t) -1 )
 
 /*! \struct opdis_buffer_t
  *  \ingroup types

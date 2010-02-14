@@ -98,7 +98,7 @@ void opdis_default_display ( const opdis_insn_t * i, void * arg );
  *       are disassembling an architecture not supported by Opdis.
  * \note The default decoder, opdis_default_decoder, should be used by
  *       all decoder callbacks to set the basic instruction info
- *       (ascii, offset, address, bytes, size).
+ *       (ascii, offset, vma, bytes, size).
  */
 typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in, 
 			       opdis_insn_t * out,
@@ -111,7 +111,7 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in,
 				  opdis_off_t )
  * \ingroup configuration
  * \brief The built-in opdis instruction decoder
- * This callback fills the \e ascii, \e offset, \e address, \e bytes,
+ * This callback fills the \e ascii, \e offset, \e vma, \e bytes,
  * and \e size fields of the output instruction object. It is recommended 
  * that all other decoders invoke this callback directly to fill these fields.
  */
@@ -120,7 +120,7 @@ int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			   opdis_off_t length );
 
 /*!
- * \typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
+ * \typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
  * 					     void * arg )
  * \ingroup configuration
  * \brief Callback used to convert a branch target to a buffer offset.
@@ -137,15 +137,15 @@ int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
  *          then this function must return OPDIS_INVALID_ADDR. The default
  *          resolver only handled relative addresses.
  */
-typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
+typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
 
 /*!
- * \fn opdis_addr_t opdis_default_resolver( const opdis_insn_t *, void * )
+ * \fn opdis_vma_t opdis_default_resolver( const opdis_insn_t *, void * )
  * \ingroup configuration
  * \brief The built-in opdis resolver callback.
  * This callback returns OPDIS_INVALID_ADDR for all addresses.
  */
-opdis_addr_t opdis_default_resolver( const opdis_insn_t * i, void * arg );
+opdis_vma_t opdis_default_resolver( const opdis_insn_t * i, void * arg );
 
 /*!
  * \enum opdis_error_t
