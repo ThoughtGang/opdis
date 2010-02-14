@@ -34,9 +34,17 @@
  * behavior is to halt disassembly only if an invalid instruction is
  * encountered. The caller can override this function in order to 
  * specify more detailed halting conditions, e.g. to halt once a
- * sequience of instructions has been encountered.
+ * sequence of instructions has been encountered.
  */
 typedef int (*OPDIS_HANDLER) ( const opdis_insn_t * i, void * arg );
+
+/*!
+ * \fn int opdis_default_handler( const opdis_insn_t *, void * )
+ * \ingroup configuration
+ * \brief The built-in opdis handler callback.
+ * The default handler returns true unless the instruction is invalid.
+ */
+int opdis_default_handler( const opdis_insn_t * i, void * arg );
 
 /*!
  * \typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg )
@@ -58,15 +66,24 @@ typedef int (*OPDIS_HANDLER) ( const opdis_insn_t * i, void * arg );
 typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg );
 
 /*!
- * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in, 
-			           opdis_insn_t * out,
-			           const opdis_byte_t * start, 
-			           opdis_off_t length )
+ * \fn void opdis_default_display ( const opdis_insn_t *, void * )
+ * \ingroup configuration
+ * \brief  The built-in opdis display callback
+ * This callback writes the instruction \e ascii field to STDOUT.
+ */
+void opdis_default_display ( const opdis_insn_t * i, void * arg );
+
+/*!
+ * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t, 
+			           opdis_insn_t *,
+			           const opdis_buf_t, opdis_off_t,
+			           opdis_off_t )
  * \ingroup configuration
  * \brief Callback used to fill an opdis_insn_t from an opdis_insn_buf_t
  * \param in The opdis_insn_buf_t containing the libopcodes output.
  * \param out Pointer to the opdis_insn_t to fill.
- * \param start Pointer to the first byte of the instruction.
+ * \param buf Buffer containing the instruction
+ * \param offset Offset of start of instruction in \e buf.
  * \param length Size of instruction in bytes.
  * \return 0 on failure, nonzero on success. 
  * \details This function is invoked after libopcodes has finished 
@@ -79,11 +96,28 @@ typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg );
  * \sa \ref sec_supported_arch
  * \note The caller will only need to provide a decoder callback if they
  *       are disassembling an architecture not supported by Opdis.
+ * \note The default decoder, opdis_default_decoder, should be used by
+ *       all decoder callbacks to set the basic instruction info
+ *       (ascii, offset, address, bytes, size).
  */
-typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in, 
+typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in, 
 			       opdis_insn_t * out,
-			       const opdis_byte_t * start, 
+			       const opdis_buf_t buf, opdis_off_t offset,
 			       opdis_off_t length );
+
+/*!
+ * \fn int opdis_default_decoder( const opdis_insn_buf_t, opdis_insn_t *,
+			          const opdis_byte_t *, opdis_off_t,
+				  opdis_off_t )
+ * \ingroup configuration
+ * \brief The built-in opdis instruction decoder
+ * This callback fills the \e ascii, \e offset, \e address, \e bytes,
+ * and \e size fields of the output instruction object. It is recommended 
+ * that all other decoders invoke this callback directly to fill these fields.
+ */
+int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
+			   const opdis_buf_t buf, opdis_off_t offset,
+			   opdis_off_t length );
 
 /*!
  * \typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
@@ -104,6 +138,14 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t * in,
  *          resolver only handled relative addresses.
  */
 typedef opdis_addr_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
+
+/*!
+ * \fn opdis_addr_t opdis_default_resolver( const opdis_insn_t *, void * )
+ * \ingroup configuration
+ * \brief The built-in opdis resolver callback.
+ * This callback returns OPDIS_INVALID_ADDR for all addresses.
+ */
+opdis_addr_t opdis_default_resolver( const opdis_insn_t * i, void * arg );
 
 /*!
  * \enum opdis_error_t
@@ -128,6 +170,14 @@ enum opdis_error_t { opdis_error_unknown,
  *          disassembler. The default error handler writes to STDERR.
  */
 typedef void (*OPDIS_ERROR) ( enum opdis_error_t error, const char * msg,
+			      void * arg );
+
+/*!
+ * \fn 
+ * \ingroup configuration
+ * \brief 
+ */
+void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 			      void * arg );
 
 /* ---------------------------------------------------------------------- */
@@ -183,7 +233,7 @@ typedef struct {
 	/*! \var buf
 	 *  \brief buffer for storing libopcodes strings as they are emitted.
 	 */
-	opdis_insn_buf_t * buf;
+	opdis_insn_buf_t buf;
 
 } opdis_info_t;
 
@@ -424,6 +474,8 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
  * \param buf The buffer to disassemble
  * \param offset The offset into the buffer to start disassembly at.
  * \param length The number of bytes to disassemble.
+ * \note If \e length is zero, then all bytes from \e offset to the end of
+ *       the buffer will be disassembled.
  */
 int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
 				 opdis_off_t length );

@@ -17,6 +17,19 @@
         #define LIBCALL
 #endif
 
+/*! \enum opdis_insn_status_t
+ *  \ingroup model
+ *  \brief
+ *  \sa opdis_insn_t
+ */
+enum opdis_insn_decode_t {
+	opdis_decode_invalid = 0,	/*!< invalid instruction */
+	opdis_decode_basic = 1,		/*!< ascii, offset, address, bytes */
+	opdis_decode_mnem = 2,		/*!< mnemonic, prefixes parsed */
+	opdis_decode_ops = 4,		/*!< operands parsed */
+	opdis_decode_mnem_flags = 8,	/*!< insn flags decoded */
+	opdis_decode_op_flags = 16	/*!< operand flags decoded */
+};
 
 /* ---------------------------------------------------------------------- */
 /* OPERAND */
@@ -67,6 +80,7 @@ typedef struct {
  * \sa opdis_op_t
  */
 typedef struct {
+	enum opdis_insn_decode_t status;/*!< Result of decoding */
 	const char * ascii;		/*!< String representation of insn */
 
 	opdis_off_t offset;		/*!< Offset of instruction in buffer */

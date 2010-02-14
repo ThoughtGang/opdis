@@ -12,20 +12,24 @@
 /* ---------------------------------------------------------------------- */
 /* Default callbacks */
 
-static int default_handler( const opdis_insn_t * insn, void * arg ) {
+int opdis_default_handler( const opdis_insn_t * insn, void * arg ) {
 	// add to internal list
 	// if already present, return false
-	// return true
+	// return true unless invalid insn
 	return 1;
 }
 
-static opdis_addr_t default_resolver( const opdis_insn_t * insn, void * arg ) {
+void opdis_default_display( const opdis_insn_t * i, void * arg ) {
+	printf( "%s\n", i->ascii );
+}
+
+opdis_addr_t opdis_default_resolver( const opdis_insn_t * insn, void * arg ) {
 	// resolve address if relative
 	return OPDIS_INVALID_ADDR;
 }
 
-static void default_opdis_error( enum opdis_error_t error, const char * msg,
-				 void * arg ) {
+void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
+				   void * arg ) {
 	char * str;
 
 	switch (error) {
@@ -46,11 +50,17 @@ static void default_opdis_error( enum opdis_error_t error, const char * msg,
 /* ---------------------------------------------------------------------- */
 /* Built-in decoders */
 
-static int default_decoder( const opdis_insn_buf_t * in, opdis_insn_t * out,
-		            const opdis_byte_t * start, opdis_off_t length ) {
-	// fill out
-	// handler must put bytes into buffer as well?
-	return 0;
+int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
+		           const opdis_buf_t buf, opdis_off_t offset,
+			   opdis_off_t length ) {
+	opdis_insn_set_ascii( out, in->string );
+
+	out->bytes = &buf->data[offset];
+	out->size = length;
+	out->offset = out->address = offset;
+
+	out->status |= opdis_decode_basic;
+	return 1;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -109,10 +119,11 @@ opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
 // NOTE: void disassembler_usage (FILE *);
 
 void LIBCALL opdis_set_defaults( opdis_t o ) {
-	opdis_set_handler( o, default_handler, NULL );
-	opdis_set_resolver( o, default_resolver, NULL );
-	opdis_set_error_reporter( o, default_opdis_error, NULL );
-
+	opdis_set_handler( o, opdis_default_handler, NULL );
+	opdis_set_display( o, opdis_default_display, NULL );
+	opdis_set_resolver( o, opdis_default_resolver, NULL );
+	opdis_set_error_reporter( o, opdis_default_error_reporter, NULL );
+	/* note: this sets the decoder */
 	opdis_set_x86_syntax( o, opdis_x86_syntax_intel );
 }
 
@@ -124,7 +135,8 @@ void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options ) {
 
 void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 	disassembler_ftype fn = print_insn_i386_intel;
-	OPDIS_DECODER d_fn = default_decoder; // intel
+	// TODO: x86 intel decoder
+	OPDIS_DECODER d_fn = opdis_default_decoder; // intel
 
 	if (! o ) {
 		return;
@@ -132,7 +144,8 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 
 	if ( syntax == opdis_x86_syntax_att ) {
 		fn = print_insn_i386_att;
-		d_fn = default_decoder; // att
+		// TODO: x86 att decoder
+		d_fn = opdis_default_decoder; // att
 	}
 
 	opdis_set_arch( o, bfd_arch_i386, fn );
@@ -149,7 +162,8 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 	o->config.arch = arch;
 	disassemble_init_for_target( &o->config );
 
-	opdis_set_decoder( o, default_decoder, NULL );
+	// TODO: set appropriate decoder!
+	opdis_set_decoder( o, opdis_default_decoder, NULL );
 }
 
 void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg ) {
@@ -252,8 +266,28 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 
 int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
 				 opdis_off_t length ) {
-	//cont = o.handler( insn, o.handler_arg );
-	return 0;
+	opdis_insn_t * i;
+	int cont = 1;
+	unsigned int count = 0;
+	opdis_off_t idx = 0;
+	opdis_off_t pos = offset;
+	length = (length == 0) ? buf->len : length;
+	
+	// TODO: verify these
+	i = opdis_insn_alloc_fixed( 128, 32, 16, 32 );
+	if (! i ) {
+		return 0;
+	}
+
+	while ( cont && idx < length && pos < buf->len ) {
+		unsigned int size = opdis_disasm_insn( o, buf, pos, i ); 
+		pos += size;
+		idx += size;
+		count++;
+		cont = o->handler( i, o->handler_arg );
+	}
+
+	return count;
 }
 
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 

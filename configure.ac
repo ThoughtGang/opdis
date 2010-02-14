@@ -19,7 +19,10 @@ AC_CHECK_LIB([libbfd.so], [bfd_init])
 AC_CHECK_LIB([libopcodes.so], [init_disassemble_info])
 
 # Checks for header files.
+AC_CHECK_HEADERS([sys/types.h])
+AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([string.h])
+AC_CHECK_HEADERS([argp.h])
 AC_CHECK_HEADERS([bfd.h])
 AC_CHECK_HEADERS([dis-asm.h])
 

@@ -19,9 +19,10 @@ static const char help_str[] =
 "\v" /* delim */ 
 /* detailed documentation:  */
 "Disassembler that uses libopcodes in a less sucky way than objdump.\n"
-"  jobspec = cflow|linear[[:target]:offset:rva:size]\n"
+"  memspec = [target]:offset|@rva[+size]\n"
+"  jobspec = cflow|linear[memspec]\n"
 "  bfdspec = symbols|sections|all-sections|entry|symbol:name|section:name\n"
-"  mapspec = [target:]offset:size:rva\n"
+"  mapspec = [target]:offset@rva[+size]\n"
 "  fmtspec = asm|dump|delim|xml|custom:fmt_str\n"
 "Targets...(bytes). at least one target must be specified\n"
 "Actions... If no actions specified, linear disasm is performed on each tgt.\n"
