@@ -77,7 +77,6 @@ static int build_insn_fprintf( void * stream, const char * format, ... ) {
 	/* hack to get around libopcodes' fprintf-only output */
 	opdis_t o = (opdis_t) stream;
 
-printf("FPRINTF stream %p\n", stream);
 	va_list args;
 	va_start (args, format);
 	rv = vsnprintf( str, OPDIS_MAX_ITEM_SIZE - 1, format, args );
@@ -102,7 +101,8 @@ opdis_t LIBCALL opdis_init( void ) {
 	if ( o ) {
 		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
 		init_disassemble_info ( &o->config, o, build_insn_fprintf );
-		o->config.fprintf_func = build_insn_fprintf;
+		o->config.application_data = (void *) o;
+		// TODO : read memory error fn
 		opdis_set_defaults( o );
 	}
 
@@ -153,19 +153,21 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 		d_fn = opdis_default_decoder; // att
 	}
 
-	//o->config.endian = BFD_ENDIAN_LITTLE;
-	opdis_set_arch( o, bfd_arch_i386, fn );
+	// TODO: verify this mach value : should be bfd_mach_x86_64 ?
+	// bfd_mach_i386_i386_intel_syntax bfd_mach_x86_64_intel_syntax
+	opdis_set_arch( o, bfd_arch_i386, bfd_mach_i386_i386, fn );
 	opdis_set_decoder( o, d_fn, NULL );
 }
 
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
-			     disassembler_ftype fn ) {
+			     unsigned long mach, disassembler_ftype fn ) {
 	if (! o ) {
 		return;
 	}
 
 	o->disassembler = fn;
 	o->config.arch = arch;
+	o->config.mach = mach;
 	disassemble_init_for_target( &o->config );
 
 	// TODO: set appropriate decoder!
@@ -229,7 +231,6 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_buf_t buf,
 					opdis_vma_t vma, opdis_insn_t * insn ) {
 	unsigned int size;
 
-printf("DSI: O %p BUF %p VMA %p INSN %p\n", o, buf, (void *) vma, insn);
 	o->config.insn_info_valid = 0;
 	o->buf->item_count = 0;
 	o->buf->string[0] = '\0';
@@ -272,7 +273,7 @@ unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
 		return 0;
 	}
 
-	o->config.stream = buf->data;
+	o->config.stream = o;
 	size = o->disassembler( vma, &o->config );
 	
 	o->config.fprintf_func = fn;
@@ -283,7 +284,6 @@ static void set_opdis_buffer( opdis_t o, opdis_buf_t buf ) {
 	o->config.buffer_vma = buf->vma;
 	o->config.buffer = (bfd_byte *) buf->data;
 	o->config.buffer_length = buf->len;
-	o->config.stream = (void *) o;
 }
 
 // disasm single insn at address
@@ -325,7 +325,6 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 
 	set_opdis_buffer( o, buf );
 	while ( cont && idx < length && pos < max_pos ) {
-printf("LIN: O %p BUF %p VMA %p INSN %p\n", o, buf, (void *) pos, insn);
 		unsigned int size = disasm_single_insn( o, buf, pos, insn );
 		pos += size;
 		idx += size;

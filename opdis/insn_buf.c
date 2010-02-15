@@ -12,6 +12,8 @@
 opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items, 
 					       unsigned int max_item_size,
 					       unsigned int max_insn_str ) {
+	int i;
+
 	opdis_insn_buf_t buf = (opdis_insn_buf_t) calloc( 1,
 						sizeof(opdis_insn_buffer_t) );
 	if (! buf ) {
@@ -23,11 +25,20 @@ opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items,
 					     max_item_size;
 	max_insn_str = (max_insn_str == 0) ? OPDIS_MAX_INSN_STR : max_insn_str;
 
-	buf->items = (char **) calloc( max_items, max_item_size );
+	buf->items = (char **) calloc( max_items, sizeof(char *));
 	if (! buf->items ) {
 		free(buf);
 		return NULL;
 	}
+	for ( i = 0; i < max_items; i++ ) {
+		buf->items[i] = calloc( 1, max_item_size );
+		if (! buf->items[i] ) {
+			buf->max_item_count = i;
+			opdis_insn_buf_free( buf );
+			return NULL;
+		}
+	}
+			
 	buf->max_item_count = max_items;
 	buf->max_item_size = max_item_size;
 
@@ -45,8 +56,7 @@ int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item ) {
 	char *dest;
 	unsigned int len;
 
-	if (! buf || ! buf->items || ! dest ||
-	      buf->item_count == buf->max_item_count ) {
+	if (! buf || ! buf->items || buf->item_count == buf->max_item_count ) {
 		return 0;
 	}
 
@@ -55,6 +65,7 @@ int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item ) {
 		strncpy( dest, item, buf->max_item_size );
 		buf->item_count++;
 	}
+
 	len = buf->max_string_size - strlen(buf->string) - 1;
 	strncat( buf->string, item, len );
 
@@ -67,6 +78,14 @@ void LIBCALL opdis_insn_buf_free( opdis_insn_buf_t buf ) {
 	}
 
 	if ( buf->items ) {
+		int i;
+		for ( i = 0; i < buf->max_item_count; i++ ) {
+			if ( buf->items[i] ) {
+				free( buf->items[i] );
+				buf->items[i] = NULL;
+			}
+		}
+
 		free(buf->items);
 	}
 

@@ -331,14 +331,16 @@ enum opdis_x86_syntax_t {
 void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax );
 
 /*!
- * \fn opdis_set_arch( opdis_t, enum bfd_architecture, disassembler_ftype )
+ * \fn opdis_set_arch( opdis_t, enum bfd_architecture, unsigned long mach,
+ * 		       disassembler_ftype )
  * \ingroup configuration
  * \brief Set the architecture and disassembler routine for libopcodes
  * \details This will set architecture of the libopcodes target to a BFD 
  *          architecture, and specify the libopcodes print_insn routine
  *          that will be used for disassembly.
  * \param o opdis disassembler to configure.
- * \param arch A valid BFD architecture from /usr/include/bfd.h .
+ * \param arch A valid BFD architecture from /usr/include/bfd.h.
+ * \param mach A valid bfd_mach definition from /usr/include/bfd.h.
  * \param fn A valid libopcodes print_insn routine from /usr/include/dis-asm.h .
  * \note If the disassembler_ftype parameter is NULL, the default disassembler
  *       for the architecture will be selected. On x86 targets, this is
@@ -348,7 +350,7 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax );
  *       calling this routine.
  */
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
-			     disassembler_ftype fn );
+			     unsigned long mach, disassembler_ftype fn );
 
 /*!
  * \fn opdis_set_disassembler_options( opdis_t, const char * )
