@@ -186,6 +186,16 @@ int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
 	return 1;
 }
 
+int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn ) {
+	// TODO : check flags for jcc, call
+	return 0;
+}
+
+int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn ) {
+	// TODO : check flags for ret. jmp
+	return 1;
+}
+
 opdis_op_t * LIBCALL opdis_op_alloc( void ) {
 	return (opdis_op_t *) calloc( 1, sizeof(opdis_op_t) );
 }

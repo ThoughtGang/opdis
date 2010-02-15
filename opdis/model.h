@@ -105,6 +105,11 @@ typedef struct {
 	opdis_off_t num_operands;	/*!< Number of operands in insn */
 	opdis_off_t alloc_operands;	/*!< Number of allocated operands */
 	opdis_op_t ** operands;		/*!< Array of operand objects */
+
+	/* accessors for special operands */
+	opdis_op_t * target;		/*!< Branch target */
+	opdis_op_t * dest;		/*!< Destination operand */
+	opdis_op_t * src;		/*!< Source operand */
 } opdis_insn_t;
 
 /* ---------------------------------------------------------------------- */
@@ -219,6 +224,14 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
  *       allocated operands in \e i, no realloc is performed.
  */
 int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
+
+// does insn have a branch target?
+// only valid if insn flags have been decoded
+// if so, check insn->target for what to resolve
+int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn );
+// does insn fallthrough?
+// only valid if insn flags have been decoded
+int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
 
 /*!
  * \fn opdis_op_t * opdis_op_alloc()
