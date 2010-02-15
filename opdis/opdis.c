@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <opdis/opdis.h>
 
@@ -37,6 +38,8 @@ void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 			str = "memory bounds exceeded"; break;
 		case opdis_error_invalid_insn:
 			str = "invalid instruction"; break;
+		case opdis_error_decode_insn:
+			str = "unable to decode instruction"; break;
 		case opdis_error_max_items:
 			str = "max insn items exceeded"; break;
 		case opdis_error_unknown:
@@ -51,35 +54,36 @@ void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 /* Built-in decoders */
 
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
-		           const opdis_buf_t buf, opdis_off_t offset,
+		           const opdis_buf_t buf, opdis_vma_t vma,
 			   opdis_off_t length ) {
+	opdis_off_t offset = vma - buf->vma;
 	opdis_insn_set_ascii( out, in->string );
 
-	out->bytes = &buf->data[offset];
+	out->bytes = &buf->data[offset ];
 	out->size = length;
-	out->offset = out->vma = offset;
+	out->offset = offset;
+	out->vma = vma;
 
 	out->status |= opdis_decode_basic;
 	return 1;
 }
 
 /* ---------------------------------------------------------------------- */
-/* fprintf handler */
+/* libopcodes callbacks */
 
 static int build_insn_fprintf( void * stream, const char * format, ... ) {
-	char buf[OPDIS_MAX_ITEM_SIZE];
+	char str[OPDIS_MAX_ITEM_SIZE];
 	int rv;
 	/* hack to get around libopcodes' fprintf-only output */
 	opdis_t o = (opdis_t) stream;
 
+printf("FPRINTF stream %p\n", stream);
 	va_list args;
 	va_start (args, format);
-	rv = vsnprintf( buf, OPDIS_MAX_ITEM_SIZE - 1, format, args );
+	rv = vsnprintf( str, OPDIS_MAX_ITEM_SIZE - 1, format, args );
 	va_end (args);
 
-	/* TODO: handle buf */
-	// append to tmp
-	// append to insn.ascii
+	opdis_insn_buf_append( o->buf, str );
 
 	return rv;
 }
@@ -89,7 +93,6 @@ static int null_fprintf( void * f, const char * str, ... ) {
 	return 0;
 }
 
-
 /* ---------------------------------------------------------------------- */
 /* OPDIS MGT */
 
@@ -97,7 +100,9 @@ opdis_t LIBCALL opdis_init( void ) {
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	
 	if ( o ) {
+		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
 		init_disassemble_info ( &o->config, o, build_insn_fprintf );
+		o->config.fprintf_func = build_insn_fprintf;
 		opdis_set_defaults( o );
 	}
 
@@ -148,6 +153,7 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 		d_fn = opdis_default_decoder; // att
 	}
 
+	//o->config.endian = BFD_ENDIAN_LITTLE;
 	opdis_set_arch( o, bfd_arch_i386, fn );
 	opdis_set_decoder( o, d_fn, NULL );
 }
@@ -204,11 +210,11 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg ) {
 /* ---------------------------------------------------------------------- */
 /* Disassemble instruction */
 
-static int buffer_check( opdis_buf_t buf, opdis_off_t offset ) {
-	if ( offset >= buf->len ) {
+static int buffer_check( opdis_buf_t buf, opdis_vma_t vma ) {
+	if ( vma >= buf->vma + buf->len ) {
 		char msg[64];
 		snprintf( msg, 63, "Offset %d exceeds buffer length %d\n",
-			 (int) offset, (int) buf->len );
+			 (int) (vma - buf->vma), (int) buf->len );
 
 		//opdis_error( o, opdis_error_bounds, buf );
 		return 0;
@@ -217,46 +223,82 @@ static int buffer_check( opdis_buf_t buf, opdis_off_t offset ) {
 	return 1;
 }
 
+/* Internal wrapper for libopcodes disassembler used by the three main
+ * disasm functions: disasm_insn, disasm_linear, disasm_cflow. */
+static unsigned int disasm_single_insn( opdis_t o, opdis_buf_t buf, 
+					opdis_vma_t vma, opdis_insn_t * insn ) {
+	unsigned int size;
+
+printf("DSI: O %p BUF %p VMA %p INSN %p\n", o, buf, (void *) vma, insn);
+	o->config.insn_info_valid = 0;
+	o->buf->item_count = 0;
+	o->buf->string[0] = '\0';
+
+	size = o->disassembler( (bfd_vma) vma, &o->config );
+	if (! size ) {
+		char msg[32];
+		snprintf( msg, 31, "VMA %p: %02X\n", (void *) vma, 
+			  buf->data[(vma - buf->vma)] );
+		opdis_error( o, opdis_error_invalid_insn, msg );
+		return 0;
+	}
+
+	o->buf->insn_info_valid = o->config.insn_info_valid;
+	o->buf->branch_delay_insns = o->config.branch_delay_insns;
+	o->buf->data_size = o->config.data_size;
+	o->buf->insn_type = o->config.insn_type;
+	o->buf->target = o->config.target;
+	o->buf->target2 = o->config.target2;
+
+	if (! o->decoder( o->buf, insn, buf, vma, size ) ) {
+		char msg[64];
+		snprintf( msg, 63, "VMA %p: '%s'\n", (void *) vma,
+			  o->buf->string );
+		opdis_error( o, opdis_error_decode_insn, msg );
+		// Note: this is a warning, not an error
+	}
+
+	return size;
+}
+
 // size of single insn at address
 unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
-					     opdis_off_t offset ){
+					     opdis_vma_t vma ){
 	size_t size;
 	fprintf_ftype fn = o->config.fprintf_func;
 	o->config.fprintf_func = null_fprintf;
 
-	if (! o || ! buf ||! buffer_check( buf, offset ) ) {
+	if (! o || ! buf ||! buffer_check( buf, vma ) ) {
 		return 0;
 	}
 
 	o->config.stream = buf->data;
-	size = o->disassembler( offset, &o->config );
+	size = o->disassembler( vma, &o->config );
 	
 	o->config.fprintf_func = fn;
 	return size;
 }
 
+static void set_opdis_buffer( opdis_t o, opdis_buf_t buf ) {
+	o->config.buffer_vma = buf->vma;
+	o->config.buffer = (bfd_byte *) buf->data;
+	o->config.buffer_length = buf->len;
+	o->config.stream = (void *) o;
+}
+
 // disasm single insn at address
 unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
-					opdis_off_t offset, 
+					opdis_vma_t vma, 
 					opdis_insn_t * insn ) {
 	size_t size;
 
-	if (! o || ! buf ||! buffer_check( buf, offset ) ) {
+	if (! o || ! buf ||! buffer_check( buf, vma ) ) {
 		return 0;
 	}
 
-
-	o->config.stream = buf->data;
-	size = o->disassembler( offset, &o->config );
-
-	if (! size ) {
-		char msg[64];
-		snprintf( msg, 63, "Invalid insn at offset %d\n", (int) offset);
-		opdis_error( o, opdis_error_bounds, msg );
-		return 0;
-	}
-
-	// o.decoder( o.raw, insn, &buf->data[offset], size );
+	set_opdis_buffer( o, buf );
+	size = disasm_single_insn( o, buf, vma, insn );
+	o->display( insn, o->display_arg );
 
 	return size;
 }
@@ -264,34 +306,40 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 /* ---------------------------------------------------------------------- */
 /* Disassembler algorithms */
 
-int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
+int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 				 opdis_off_t length ) {
-	opdis_insn_t * i;
+	opdis_insn_t * insn;
 	int cont = 1;
 	unsigned int count = 0;
 	opdis_off_t idx = 0;
-	opdis_off_t pos = offset;
+	opdis_off_t pos = vma;
+	opdis_off_t max_pos = buf->vma + buf->len;
 	length = (length == 0) ? buf->len : length;
 	
 	// TODO: verify these
-	i = opdis_insn_alloc_fixed( 128, 32, 16, 32 );
-	if (! i ) {
+	insn = opdis_insn_alloc_fixed( 128, 32, 16, 32 );
+	if (! insn ) {
+		fprintf( stderr, "Unable to alloc insn\n" );
 		return 0;
 	}
 
-	while ( cont && idx < length && pos < buf->len ) {
-		unsigned int size = opdis_disasm_insn( o, buf, pos, i ); 
+	set_opdis_buffer( o, buf );
+	while ( cont && idx < length && pos < max_pos ) {
+printf("LIN: O %p BUF %p VMA %p INSN %p\n", o, buf, (void *) pos, insn);
+		unsigned int size = disasm_single_insn( o, buf, pos, insn );
 		pos += size;
 		idx += size;
 		count++;
-		cont = o->handler( i, o->handler_arg );
+		o->display( insn, o->display_arg );
+		cont = o->handler( insn, o->handler_arg );
 	}
 
 	return count;
 }
 
-int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
-				opdis_off_t offset ) {
+int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
+	set_opdis_buffer( o, buf );
+	// o->display( i, o->display_arg );
 	//cont = o.handler( insn, o.handler_arg );
 	//addr = o.resolver(insn)
 	return 0;

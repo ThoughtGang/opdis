@@ -23,7 +23,7 @@ opdis_insn_buf_t LIBCALL opdis_insn_buf_alloc( unsigned int max_items,
 					     max_item_size;
 	max_insn_str = (max_insn_str == 0) ? OPDIS_MAX_INSN_STR : max_insn_str;
 
-	buf->items = (char *) calloc( max_items, max_item_size );
+	buf->items = (char **) calloc( max_items, max_item_size );
 	if (! buf->items ) {
 		free(buf);
 		return NULL;
@@ -50,9 +50,11 @@ int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item ) {
 		return 0;
 	}
 
-	dest = buf->items[buf->item_count];
-	strncpy( dest, item, buf->max_item_size );
-	buf->item_count++;
+	if ( buf->item_count < buf->max_item_count ) {
+		dest = buf->items[buf->item_count];
+		strncpy( dest, item, buf->max_item_size );
+		buf->item_count++;
+	}
 	len = buf->max_string_size - strlen(buf->string) - 1;
 	strncat( buf->string, item, len );
 

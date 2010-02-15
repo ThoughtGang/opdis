@@ -55,6 +55,7 @@ typedef bfd_vma opdis_vma_t;
  */
 typedef struct {
 	opdis_off_t 	len;	/*!< Number of bytes in buffer. */
+	opdis_vma_t	vma;	/*!< Load address of buffer. */
 	opdis_byte_t * 	data;	/*!< Contents of buffer. */
 } opdis_buffer_t;
 
@@ -77,12 +78,13 @@ extern "C"
  * \brief Allocate an opdis buffer
  * \details Allocates an opdis_buffer_t of specified size. The buffer contents
  *          are initialized to zero.
- * \param size
+ * \param size Size of buffer in bytes.
+ * \param addr Load address (vma) of buffer or 0.
  * \return The allocated opdis buffer.
  * \sa opdis_buf_read opdis_buf_free
  */
 
-opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size );
+opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size, opdis_vma_t addr );
 
 /*!
  * \fn opdis_buf_t opdis_buf_read( FILE *, opdis_off_t )
@@ -94,12 +96,14 @@ opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size );
  *          if \e size is 0. 
  * \param f The file to read from.
  * \param size The number of bytes to read from the file, or 0.
+ * \param addr Load address (vma) of buffer or 0.
  * \return The allocated opdis buffer.
  * \sa opdis_buf_alloc opdis_buf_free
  * \note The current position of the file will be increased by \e size
  *       bytes upon return.
  */
-opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size );
+opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size, 
+				    opdis_vma_t addr );
 
 /*!
  * \fn int opdis_buf_fill( opdis_buf_t, opdis_off_t, void *, opdis_off_t )

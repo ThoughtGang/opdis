@@ -583,7 +583,7 @@ void LIBCALL opdis_vma_tree_free( opdis_vma_tree_t tree ) {
 static void * insn_key_fn (void * item) {
 	if ( item ) {
 		opdis_insn_t * i = (opdis_insn_t *) item;
-		return (void *) i->address;
+		return (void *) i->vma;
 	}
 
 	return NULL;

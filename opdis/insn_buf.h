@@ -15,6 +15,8 @@
         #define LIBCALL
 #endif
 
+#include <bfd.h>
+#include <dis-asm.h>
 
 /* NOTE: These defaults amount to ~4K of space at runtime. Overkill for x86,
  *       but should be safe for all architectures that libopcodes supports.
@@ -57,6 +59,13 @@ typedef struct {
 	char **items;				/*!< Array of stored items */
 	char *string;				/*!< Raw instruction string */
 	unsigned int max_string_size;		/*!< Max insn string length */
+	/* instruction info from libopcodes disassemble_info struct */
+	char insn_info_valid;			/*!< Nonzero if info is set */
+	char branch_delay_insns;		/*!< Branch delay insn count */
+	char data_size;				/*!< Size of insn data ref */
+	enum dis_insn_type insn_type;		/*!< Type of insn */
+	bfd_vma target;				/*!< Target addr of branch */
+	bfd_vma target2;			/*!< Second addr ref */
 } opdis_insn_buffer_t;
 
 /*! \typedef opdis_insn_buf_t

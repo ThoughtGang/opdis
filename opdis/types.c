@@ -9,13 +9,14 @@
 
 #include <opdis/types.h>
 
-opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size ) {
+opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size, opdis_vma_t addr ) {
 	opdis_buf_t buf = (opdis_buf_t) calloc( 1, sizeof(opdis_buffer_t) );
 	if (! buf ) {
 		return NULL;
 	}
 
 	buf->len = size;
+	buf->vma = addr;
 	buf->data = (opdis_byte_t *) calloc( 1, size );
 
 	if (! buf->data ) {
@@ -41,7 +42,8 @@ static opdis_off_t get_read_length( FILE * f ) {
 	return size;
 }
 
-opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size ) {
+opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size, 
+				    opdis_vma_t addr ) {
 	opdis_buf_t buf;
 
 	if (! size ) {
@@ -51,7 +53,7 @@ opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size ) {
 		}
 	}
 
-	buf = opdis_buf_alloc( size );
+	buf = opdis_buf_alloc( size, addr );
 	if (! buf ) {
 		return NULL;
 	}

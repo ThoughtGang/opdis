@@ -61,6 +61,7 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 		}
 	}
 
+	return insn;
 }
 
 opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {

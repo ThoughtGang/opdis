@@ -76,14 +76,14 @@ void opdis_default_display ( const opdis_insn_t * i, void * arg );
 /*!
  * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t, 
 			           opdis_insn_t *,
-			           const opdis_buf_t, opdis_off_t,
+			           const opdis_buf_t, opdis_vma_t,
 			           opdis_off_t )
  * \ingroup configuration
  * \brief Callback used to fill an opdis_insn_t from an opdis_insn_buf_t
  * \param in The opdis_insn_buf_t containing the libopcodes output.
  * \param out Pointer to the opdis_insn_t to fill.
  * \param buf Buffer containing the instruction
- * \param offset Offset of start of instruction in \e buf.
+ * \param vma Address (vma) of start of instruction in \e buf.
  * \param length Size of instruction in bytes.
  * \return 0 on failure, nonzero on success. 
  * \details This function is invoked after libopcodes has finished 
@@ -102,12 +102,12 @@ void opdis_default_display ( const opdis_insn_t * i, void * arg );
  */
 typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in, 
 			       opdis_insn_t * out,
-			       const opdis_buf_t buf, opdis_off_t offset,
+			       const opdis_buf_t buf, opdis_vma_t vma,
 			       opdis_off_t length );
 
 /*!
  * \fn int opdis_default_decoder( const opdis_insn_buf_t, opdis_insn_t *,
-			          const opdis_byte_t *, opdis_off_t,
+			          const opdis_byte_t *, opdis_vma_t,
 				  opdis_off_t )
  * \ingroup configuration
  * \brief The built-in opdis instruction decoder
@@ -116,7 +116,7 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in,
  * that all other decoders invoke this callback directly to fill these fields.
  */
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
-			   const opdis_buf_t buf, opdis_off_t offset,
+			   const opdis_buf_t buf, opdis_vma_t vma,
 			   opdis_off_t length );
 
 /*!
@@ -155,6 +155,7 @@ opdis_vma_t opdis_default_resolver( const opdis_insn_t * i, void * arg );
 enum opdis_error_t { opdis_error_unknown, 
 		     opdis_error_bounds,	/*!< Buffer bounds exceeded */ 
 		     opdis_error_invalid_insn,	/*!< Invalid instruction */
+		     opdis_error_decode_insn,	/*!< Decoding error */
 		     opdis_error_max_items	/*!< Instruction > insn_buf */ 
 		   };
 
@@ -448,10 +449,11 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg );
  * \brief Return the size of the instruction at an offset in the buffer.
  * \param o opdis disassembler
  * \param buf The buffer to disassemble
- * \param offset The offset into the buffer to disassemble.
+ * \param vma The address (VMA) in the buffer to disassemble.
+ * \note If the vma of \e buf is 0, then \e vma is the offset into the buffer.
  */
 unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
-					     opdis_off_t offset );
+					     opdis_vma_t vma );
 
 /*!
  * \fn opdis_disasm_insn(opdis_t, opdis_buf_t, opdis_off_t, opdis_insn_t * )
@@ -459,11 +461,12 @@ unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
  * \brief Disassemble a single instruction in the buffer
  * \param o opdis disassembler
  * \param buf The buffer to disassemble
- * \param offset The offset into the buffer to disassemble.
+ * \param vma The address (VMA) in the buffer to disassemble.
  * \param insn The op_insn_t to fill with the disassembled instruction
+ * \note If the vma of \e buf is 0, then \e vma is the offset into the buffer.
  */
 unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
-					opdis_off_t offset, 
+					opdis_vma_t vma, 
 					opdis_insn_t * insn );
 
 /*!
@@ -472,12 +475,13 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
  * \brief Disassemble a sequence of instructions in order.
  * \param o opdis disassembler
  * \param buf The buffer to disassemble
- * \param offset The offset into the buffer to start disassembly at.
+ * \param vma The address (VMA) in the buffer to start disassembly at.
  * \param length The number of bytes to disassemble.
+ * \note If the vma of \e buf is 0, then \e vma is the offset into the buffer.
  * \note If \e length is zero, then all bytes from \e offset to the end of
  *       the buffer will be disassembled.
  */
-int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
+int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 				 opdis_off_t length );
 /*!
  * \fn opdis_disasm_cflow( opdis_t, opdis_buf_t, opdis_off_t )
@@ -485,10 +489,11 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_off_t offset,
  * \brief Disassemble a buffer following flow of control.
  * \param o opdis disassembler
  * \param buf The buffer to disassemble
- * \param offset The offset of the entry point in the buffer
+ * \param vma The address (VMA) of the entry point in the buffer
+ * \note If the vma of \e buf is 0, then \e vma is the offset into the buffer.
  */
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
-				opdis_off_t offset );
+				opdis_vma_t vma );
 
 /*!
  * \fn opdis_error( opdis_t, enum opdis_error_t, const char * )
