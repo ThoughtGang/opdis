@@ -15,12 +15,16 @@ int main( int argc, char ** argv ) {
 	opdis_t o;
 	opdis_buf_t buf;
 	opdis_off_t offset = 0;
+	opdis_off_t length = 0;
 
 	if ( argc < 2 ) {
-		printf( "Usage: %s file [offset]\n", argv[0] );
+		printf( "Usage: %s file [offset [len]]\n", argv[0] );
 		return 1;
 	} else if ( argc >= 3 ) {
 		offset = (opdis_off_t) strtoul( argv[2], NULL, 0 );
+		if ( argc >= 4 ) {
+			length = (opdis_off_t) strtoul( argv[3], NULL, 0 );
+		}
 	}
 
 	f = fopen( argv[1], "r" );
@@ -35,7 +39,7 @@ int main( int argc, char ** argv ) {
 	fclose( f );
 
 	o = opdis_init();
-	opdis_disasm_linear( o, buf, (opdis_vma_t) offset, 0 );
+	opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
 	opdis_term( o );
 	
 	return 0;
