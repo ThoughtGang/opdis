@@ -30,10 +30,16 @@ static const char help_str[] =
 "BFD...\n"
 ;
 
+// const bfd_arch_info_type *bfd_scan_arch (const char *string)
+// const char **bfd_arch_list (void)
 static struct argp_option options[] = {
 	{ 0, 0, 0, OPTION_DOC, "Basic Options:" },
-	{ "action", 'a', "jobspec", 0, 
-	  "Action to perform" },
+	{ "cflow", 'c', "memspec", 0,
+	  "Control flow disassemble starting at address" },
+	{ "linear", 'l', "[memspec]", 0,
+	  "Linear disassembly starting at address" },
+	{ "architecture", 'a', "name", 0, 
+	  "Machine architecture to disassemble for" },
 	{ "syntax", 's', "name", 0, 
 	  "Assembly language syntax : att|intel" },
 	{ "format", 'F', "fmtspec", 0, 
@@ -45,9 +51,19 @@ static struct argp_option options[] = {
 	  "Map offset to memory address." },
 	{ "bytes", 'b', "string", 0, 
 	  "List of input bytes in hex or octal" },
-	{ "bfd", 'B', "bfdspec", OPTION_ARG_OPTIONAL, 
+	{ "disassembler-options", 'O', "string", 0,
+	  "Apply specific options to disassembler"},
+	{ "bfd", 'B', "[target]", OPTION_ARG_OPTIONAL, 
 	  "Use BFD library to load and manage target"},
-	{ "dry-run", 1, 0, 0, 
+	{ "bfd-symbol", 'N', "name", 0,
+	  "Perform control flow disassembly on symbol"},
+	{ "bfd-section", 'S', "name", 0,
+	  "Perform linear disassembly on section"},
+	{ "list-architectures", 1, 0, 0, 
+	  "Print available machine architectures"},
+	{ "list-disassembler-options", 2, 0, 0, 
+	  "Print available disassembler options"},
+	{ "dry-run", 3, 0, 0, 
 	  "Print out disasm jobs and exit"},
 	{0}
 };
