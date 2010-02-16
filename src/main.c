@@ -91,9 +91,9 @@ static struct argp_option options[] = {
 };
 
 struct opdis_options {
-	void *		jobs;
-	void *		maps;
-	void *		targets;
+	job_list_t	jobs;
+	mem_map_t	map;
+	tgt_list_t	targets;
 
 	unsigned int		mach;
 	enum opdis_x86_syntax_t syntax;
@@ -113,6 +113,10 @@ struct opdis_options {
 };
 
 static set_defaults( struct opdis_options * opts ) {
+	opts->jobs = job_list_alloc();
+	opts->map = mem_map_alloc();
+	opts->targets = tgt_list_alloc();
+
 	/* use 64-bit detection? */
 	opts->mach = bfd_mach_i386_i386;
 	opts->syntax = opdis_x86_syntax_att;
@@ -121,6 +125,23 @@ static set_defaults( struct opdis_options * opts ) {
 
 /* ---------------------------------------------------------------------- */
 /* ARGUMENT HANDLING */
+
+static int parse_memspec( const char * memspec, unsigned int * target,
+			  opdis_off_t * offset, opdis_off_t * size,
+			  opdis_vma_t * vma ) {
+	// memspec = [target]:offset|@rva[+size]\n"
+	// mapspec = [target]:offset@rva[+size]\n"
+	// NOTE: caller enforces requirements of mapspec
+	return 0;
+}
+
+static int parse_bfdname( const char * bfdname, unsigned int * target,
+		          char * name ) {
+	//  bfdname = [target:]name\n"
+	return 0;
+}
+
+// TODO : asm format module for printing stuff
 
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 	struct opdis_options * opts = state->input;
@@ -255,9 +276,10 @@ int main( int argc, char ** argv ) {
 		return 0;
 	}
 
-	// if no targets,
+	if (! opts.targets->num_items ) {
 	// 	help
-	// 	exit
+		return 1;
+	}
 
 	// load all targets in arguments
 	// create buffers for all maps?
