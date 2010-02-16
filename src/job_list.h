@@ -32,7 +32,7 @@ typedef struct JOB_LIST_ITEM {
 
 typedef struct JOB_LIST_HEAD {
 	unsigned int	num_jobs;
-	job_list_item * head;
+	job_list_item_t * head;
 } * job_list_t;
 
 /* ---------------------------------------------------------------------- */
@@ -52,7 +52,7 @@ unsigned int job_list_add( job_list_t, enum job_type_t type,
 unsigned int job_list_add_bfd( job_list_t, enum job_type_t type, 
 			       unsigned int target, const char * bfd_name );
 
-typedef void (*JOB_LIST_FOREACH_FN) ( job_list_item *, void * );
+typedef void (*JOB_LIST_FOREACH_FN) ( job_list_item_t *, void * );
 
 /* invoke a callback for every job in list */
 void job_list_foreach( job_list_t, JOB_LIST_FOREACH_FN, void * arg );

@@ -7,6 +7,8 @@
 #ifndef TARGET_LIST_H
 #define TARGET_LIST_H
 
+#include <opdis/types.h>
+
 /* Type of target: The target string is either a filename or an ASCII string of
  *                 bytes in hex/octal/etc */
 enum target_type_t {
@@ -55,7 +57,7 @@ opdis_off_t tgt_list_data( tgt_list_t, unsigned int id );
 /* return the name for the specified target ID */
 const char * tgt_list_ascii( tgt_list_t, unsigned int id );
 
-typedef void (*TGT_LIST_FOREACH_FN) (tgt_list_item *, void *);
+typedef void (*TGT_LIST_FOREACH_FN) (tgt_list_item_t *, void *);
 
 /* invoke callback for every item in list */
 void tgt_list_foreach( tgt_list_t, TGT_LIST_FOREACH_FN, void * arg );

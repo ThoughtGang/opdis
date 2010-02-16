@@ -9,20 +9,16 @@
 
 #include <opdis/opdis.h>
 
+#include "job_list.h"
+#include "map.h"
+#include "target_list.h"
+
 enum asm_format_t {
 	asmfmt_custom,
 	asmfmt_asm,
 	asmfmt_dump,
 	asmfmt_delim,
 	asmfmt_xml
-};
-
-enum job_type_t {
-	job_unknown,
-	job_cflow,
-	job_linear,
-	job_bfd_symbol,
-	job_bfd_section
 };
 
 /* ---------------------------------------------------------------------- */
@@ -170,7 +166,7 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			// note: if not bfd, set bfd to 1
 			break;
 
-		case 'q': ops->quiet = 1; break;
+		case 'q': opts->quiet = 1; break;
 		case 1: opts->list_arch = 1; break;
 		case 2: opts->list_disasm_opt = 1; break;
 		case 3: opts->list_syntax = 1; break;
