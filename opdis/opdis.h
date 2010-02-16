@@ -74,16 +74,16 @@ typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg );
 void opdis_default_display ( const opdis_insn_t * i, void * arg );
 
 /*!
- * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t, 
-			           opdis_insn_t *,
-			           const opdis_buf_t, opdis_vma_t,
-			           opdis_off_t )
+ * \typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t, opdis_insn_t *,
+			           opdis_byte_t *, opdis_off_t, opdis_vma_t, 
+				   opdis_off_t )
  * \ingroup configuration
  * \brief Callback used to fill an opdis_insn_t from an opdis_insn_buf_t
  * \param in The opdis_insn_buf_t containing the libopcodes output.
  * \param out Pointer to the opdis_insn_t to fill.
  * \param buf Buffer containing the instruction
- * \param vma Address (vma) of start of instruction in \e buf.
+ * \param offset Offset of start of instruction in \e buf.
+ * \param vma Address (vma) of start of instruction.
  * \param length Size of instruction in bytes.
  * \return 0 on failure, nonzero on success. 
  * \details This function is invoked after libopcodes has finished 
@@ -102,13 +102,15 @@ void opdis_default_display ( const opdis_insn_t * i, void * arg );
  */
 typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in, 
 			       opdis_insn_t * out,
-			       const opdis_buf_t buf, opdis_vma_t vma,
+			       const opdis_byte_t * buf, 
+			       opdis_off_t offset,
+			       opdis_vma_t vma,
 			       opdis_off_t length );
 
 /*!
  * \fn int opdis_default_decoder( const opdis_insn_buf_t, opdis_insn_t *,
-			          const opdis_byte_t *, opdis_vma_t,
-				  opdis_off_t )
+			          const opdis_byte_t *, opdis_off_t, 
+				  opdis_vma_t, opdis_off_t )
  * \ingroup configuration
  * \brief The built-in opdis instruction decoder
  * This callback fills the \e ascii, \e offset, \e vma, \e bytes,
@@ -116,8 +118,8 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in,
  * that all other decoders invoke this callback directly to fill these fields.
  */
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
-			   const opdis_buf_t buf, opdis_vma_t vma,
-			   opdis_off_t length );
+			   const opdis_byte_t * buf, opdis_off_t,
+			   opdis_vma_t vma, opdis_off_t length );
 
 /*!
  * \typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
@@ -348,6 +350,19 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax );
  * \note This sets the decoder to the appropriate built-in decoder for the
  *       architecture. To override the decoder, call opdis_set_decoder after
  *       calling this routine.
+ * \note The \e arch parameter is only used when calling
+ *       \e disassemble_init_for_target to initialize the libopcodes
+ *       \e disassemble_info structure. The \e mach parameter is used by the
+ *       disassembler to determine how to decode the instructions. For x86
+ *       and x86-64 platforms, \e arch is always \e bfd_arch_i386, and
+ *       \e mach is one of the following:
+ *       	- bfd_mach_i386_i386
+ *       	- bfd_mach_i386_i8086
+ *       	- bfd_mach_i386_i386_intel_syntax
+ *       	- bfd_mach_x86_64
+ *       	- bfd_mach_x86_64_intel_syntax
+ *       It is not necessary to specify the Intel syntax in \e mach;
+ *       this can be done with \e opdis_set_x86_syntax.
  */
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
 			     unsigned long mach, disassembler_ftype fn );
@@ -362,6 +377,8 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
  *          routine listed in /usr/include/dis-asm.h .
  * \param o opdis disassembler to configure.
  * \param options The options string for the disassembler.
+ * \note The libopcodes disassembler options override the settings applied
+ *       by opdis_set_syntax.
  */
 void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options );
 
@@ -457,6 +474,10 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg );
 unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf, 
 					     opdis_vma_t vma );
 
+// TODO: opdis_disam_invariant
+//       * wraps decoder
+//       * after decode, find addr arguments in insns bytes (search backwards
+//         from end) and wildcard them out of bytes to create signature
 /*!
  * \fn opdis_disasm_insn(opdis_t, opdis_buf_t, opdis_off_t, opdis_insn_t * )
  * \ingroup disassembly

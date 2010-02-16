@@ -87,7 +87,7 @@ typedef struct {
 	opdis_vma_t vma;		/*!< Virtual memory address of insn */
 
 	opdis_off_t size;		/*!< Size (# bytes) of insn */
-	opdis_byte_t * bytes;		/*!< Pointer to insn bytes in buffer */
+	const opdis_byte_t * bytes;	/*!< Pointer to insn bytes in buffer */
 
 	/* instruction  */
 	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */

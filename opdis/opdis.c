@@ -54,12 +54,11 @@ void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 /* Built-in decoders */
 
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
-		           const opdis_buf_t buf, opdis_vma_t vma,
-			   opdis_off_t length ) {
-	opdis_off_t offset = vma - buf->vma;
+		           const opdis_byte_t * buf, opdis_off_t offset,
+			   opdis_vma_t vma, opdis_off_t length ) {
 	opdis_insn_set_ascii( out, in->string );
 
-	out->bytes = &buf->data[offset ];
+	out->bytes = &buf[offset ];
 	out->size = length;
 	out->offset = offset;
 	out->vma = vma;
@@ -136,6 +135,12 @@ void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options ) {
 	if (! o ) {
 		return;
 	}
+
+	if ( o->config.disassembler_options ) {
+		free( o->config.disassembler_options );
+	}
+
+	o->config.disassembler_options = strdup( options );
 }
 
 void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
@@ -153,9 +158,10 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 		d_fn = opdis_default_decoder; // att
 	}
 
-	// TODO: verify this mach value : should be bfd_mach_x86_64 ?
-	// bfd_mach_i386_i386_intel_syntax bfd_mach_x86_64_intel_syntax
-	opdis_set_arch( o, bfd_arch_i386, bfd_mach_i386_i386, fn );
+	if ( o->config.arch != bfd_arch_i386 ) {
+		opdis_set_arch( o, bfd_arch_i386, bfd_mach_i386_i386, fn );
+	}
+
 	opdis_set_decoder( o, d_fn, NULL );
 }
 
@@ -227,8 +233,9 @@ static int buffer_check( opdis_buf_t buf, opdis_vma_t vma ) {
 
 /* Internal wrapper for libopcodes disassembler used by the three main
  * disasm functions: disasm_insn, disasm_linear, disasm_cflow. */
-static unsigned int disasm_single_insn( opdis_t o, opdis_buf_t buf, 
-					opdis_vma_t vma, opdis_insn_t * insn ) {
+// NOTE: This requires that opdis_set_buffer() have been called
+static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma, 
+					opdis_insn_t * insn ) {
 	unsigned int size;
 
 	o->config.insn_info_valid = 0;
@@ -239,7 +246,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_buf_t buf,
 	if (! size ) {
 		char msg[32];
 		snprintf( msg, 31, "VMA %p: %02X\n", (void *) vma, 
-			  buf->data[(vma - buf->vma)] );
+			  o->config.buffer[(vma - o->config.buffer_vma)] );
 		opdis_error( o, opdis_error_invalid_insn, msg );
 		return 0;
 	}
@@ -251,7 +258,8 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_buf_t buf,
 	o->buf->target = o->config.target;
 	o->buf->target2 = o->config.target2;
 
-	if (! o->decoder( o->buf, insn, buf, vma, size ) ) {
+	if (! o->decoder( o->buf, insn, o->config.buffer, 
+			  o->config.buffer_vma - vma, vma, size ) ) {
 		char msg[64];
 		snprintf( msg, 63, "VMA %p: '%s'\n", (void *) vma,
 			  o->buf->string );
@@ -297,7 +305,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 	}
 
 	set_opdis_buffer( o, buf );
-	size = disasm_single_insn( o, buf, vma, insn );
+	size = disasm_single_insn( o, vma, insn );
 	o->display( insn, o->display_arg );
 
 	return size;
@@ -305,6 +313,11 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 
 /* ---------------------------------------------------------------------- */
 /* Disassembler algorithms */
+
+static inline opdis_insn_t * alloc_fixed_insn() {
+	// TODO: verify these
+	return opdis_insn_alloc_fixed( 128, 32, 16, 32 );
+}
 
 int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 				 opdis_off_t length ) {
@@ -316,8 +329,7 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 	opdis_off_t max_pos = buf->vma + buf->len;
 	length = (length == 0) ? buf->len : length;
 	
-	// TODO: verify these
-	insn = opdis_insn_alloc_fixed( 128, 32, 16, 32 );
+	insn = alloc_fixed_insn();
 	if (! insn ) {
 		fprintf( stderr, "Unable to alloc insn\n" );
 		return 0;
@@ -325,7 +337,8 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 
 	set_opdis_buffer( o, buf );
 	while ( cont && idx < length && pos < max_pos ) {
-		unsigned int size = disasm_single_insn( o, buf, pos, insn );
+		// TODO: clear insn
+		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
 		idx += size;
 		count++;
@@ -336,12 +349,53 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 	return count;
 }
 
+static int disasm_cflow(opdis_t o, opdis_insn_t * insn, opdis_vma_t vma) {
+	int cont = 1;
+	unsigned int count = 0;
+	opdis_off_t pos = vma;
+	opdis_off_t max_pos = o->config.buffer_vma + o->config.buffer_length;
+
+	while ( cont && pos < max_pos ) {
+		// TODO: clear insn
+		unsigned int size = disasm_single_insn( o, pos, insn );
+		pos += size;
+		count++;
+
+		o->display( insn, o->display_arg );
+
+		// NOTE : handler determines if an address has already been
+		//        visited, and if not it adds the insn to the addr
+		//        list. this means that the first insn of a branch could
+		//        be disassemled, but will not be added. a bit
+		//        inefficient, but not too troubling.
+		cont = o->handler( insn, o->handler_arg );
+
+		if (! opdis_insn_fallthrough( insn ) ) {
+			cont = 0;
+		}
+
+		if ( opdis_insn_is_branch( insn ) ) {
+			opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
+			/* recurse on branch target */
+			if ( vma != OPDIS_INVALID_ADDR ) {
+				count +=  disasm_cflow( o, insn, vma );
+			}
+		}
+	}
+
+	return count;
+}
+
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
+	opdis_insn_t * insn = alloc_fixed_insn();
+	if (! insn ) {
+		fprintf( stderr, "Unable to alloc insn\n" );
+		return 0;
+	}
+
 	set_opdis_buffer( o, buf );
-	// o->display( i, o->display_arg );
-	//cont = o.handler( insn, o.handler_arg );
-	//addr = o.resolver(insn)
-	return 0;
+
+	return disasm_cflow( o, insn, vma );
 }
 
 /* ---------------------------------------------------------------------- */
