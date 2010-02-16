@@ -1,7 +1,5 @@
-/*!
- * \file main.c
- * \brief Startup routine for opdis command-line utility
- * \author thoughtgang.org
+/* main.c
+ * Startup routine for opdis command-line utility
  */
 
 #include <argp.h>		/* glibc command line option parser */
@@ -19,6 +17,14 @@ enum asm_format_t {
 	asmfmt_xml
 };
 
+enum job_type_t {
+	job_unknown,
+	job_cflow,
+	job_linear,
+	job_bfd_symbol,
+	job_bfd_section
+};
+
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
@@ -32,7 +38,9 @@ static const char help_str[] =
 /* detailed documentation:  */
 "Disassembler that uses libopcodes in a less sucky way than objdump.\n"
 "  memspec = [target]:offset|@rva[+size]\n"
+"  bfdname = [target:]name\n"
 "  mapspec = [target]:offset@rva[+size]\n"
+"  target  = ID (#) of target; use --dry-run to see IDs\n" 
 "  fmtspec = asm|dump|delim|xml|fmt_str\n"
 "Targets...(bytes). at least one target must be specified\n"
 "Actions... If no actions specified, linear disasm is performed on each tgt.\n"
@@ -40,8 +48,10 @@ static const char help_str[] =
 "BFD...\n"
 ;
 
-// const bfd_arch_info_type *bfd_scan_arch (const char *string)
-// const char **bfd_arch_list (void)
+
+/* ---------------------------------------------------------------------- */
+/* RUNTIME OPTIONS */
+
 static struct argp_option options[] = {
 	{ 0, 0, 0, OPTION_DOC, "Basic Options:" },
 	{ "cflow", 'c', "memspec", 0,
@@ -56,6 +66,8 @@ static struct argp_option options[] = {
 	  "Output format" },
 	{ "output", 'o', "filename", 0, 
 	  "File to output to"},
+	{ "quiet", 'q', 0, 0, 
+	  "Suppress status messages"},
 	{ 0, 0, 0, OPTION_DOC, "Advanced Options:" },
 	{ "map", 'm', "mapspec", 0, 
 	  "Map offset to memory address." },
@@ -65,9 +77,9 @@ static struct argp_option options[] = {
 	  "Apply specific options to disassembler"},
 	{ "bfd", 'B', "[target]", OPTION_ARG_OPTIONAL, 
 	  "Use BFD library to load and manage target"},
-	{ "bfd-symbol", 'N', "name", 0,
+	{ "bfd-symbol", 'N', "bfdname", 0,
 	  "Perform control flow disassembly on symbol"},
-	{ "bfd-section", 'S', "name", 0,
+	{ "bfd-section", 'S', "bfdname", 0,
 	  "Perform linear disassembly on section"},
 	{ "list-architectures", 1, 0, 0, 
 	  "Print available machine architectures"},
@@ -81,9 +93,6 @@ static struct argp_option options[] = {
 	  "Print out disasm jobs and exit"},
 	{0}
 };
-
-/* ---------------------------------------------------------------------- */
-/* ARGUMENT PARSING */
 
 struct opdis_options {
 	void *		jobs;
@@ -104,6 +113,7 @@ struct opdis_options {
 	int		list_syntax;
 	int		list_format;
 	int		dry_run;
+	int		quiet;
 };
 
 static set_defaults( struct opdis_options * opts ) {
@@ -113,35 +123,54 @@ static set_defaults( struct opdis_options * opts ) {
 	opts->format = asmfmt_dump;
 }
 
+/* ---------------------------------------------------------------------- */
+/* ARGUMENT HANDLING */
+
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 	struct opdis_options * opts = state->input;
 
 	switch ( key ) {
-		case 'c':
-			// add job
-		case 'l':
-			// add job
-		case 'a':
-			// set arch
-		case 's':
-			// set syntax
-		case 'f':
-			// set format
-		case 'o':
-			// set output
-		case 'b':
-			// add target
-		case 'm':
-			// map buffer
-		case 'O':
-			// set disasm options
-		case 'B':
-			// set BFD target (or 0)
-		case 'N':
-			// add job
-		case 'S':
-			// add job
+		case 'c': 		// add job
+			// add_job( opts, cflow, arg )
 			break;
+		case 'l': 		// add job
+			// add_job( opts, linear, arg )
+			break;
+		case 'a': 		// set arch
+			// set_arch( opts, arg )
+			break;
+		case 's': 		// set syntax
+		// const bfd_arch_info_type *bfd_scan_arch (const char *string)
+			// set_syntax( opts, arg )
+			break;
+		case 'f': 		// set format
+			// set_format( opts, arg )
+			break;
+		case 'o': 		// set output
+			// set output( opts, arg )
+			break;
+		case 'b': 		// add target
+			// add_target( opts, arg )
+			break;
+		case 'm': 		// map buffer
+			// add_map( opts, arg )
+			break;
+		case 'O': 		// set disasm options
+			// set_disasm_options( opts, arg )
+			break;
+		case 'B': 		// set BFD target (or 0)
+			// set_bfd_target
+			break;
+		case 'N': 		// add job
+			// add_job( opts, symbol, arg )
+			// note: if not bfd, set bfd to 1
+			break;
+		case 'S': 		// add job
+			// add_job( opts, section, arg )
+			// note: if not bfd, set bfd to 1
+			break;
+
+		case 'q': ops->quiet = 1; break;
 		case 1: opts->list_arch = 1; break;
 		case 2: opts->list_disasm_opt = 1; break;
 		case 3: opts->list_syntax = 1; break;
@@ -171,10 +200,16 @@ static void dry_run( struct opdis_options * opts ) {
 static void list_arch() {
 	const char ** arch_list = bfd_arch_list();
 	const char ** a;
+	const char * first = NULL;
+
 	for ( a = arch_list; *a; a++ ) {
+		if (! first ) {
+			first = *a;
+		}
 		printf( "\t%s\n", *a );
 	}
 
+	printf("Default architecture is '%s'\n", first );
 	free(arch_list);
 }
 
@@ -224,7 +259,12 @@ int main( int argc, char ** argv ) {
 		return 0;
 	}
 
+	// if no targets,
+	// 	help
+	// 	exit
+
 	// load all targets in arguments
+	// create buffers for all maps?
 
 	if ( opts.dry_run ) {
 		dry_run( & opts );
