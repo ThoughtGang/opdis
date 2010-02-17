@@ -52,12 +52,16 @@ unsigned int tgt_list_add( tgt_list_t, enum target_type_t type,
 unsigned int tgt_list_id( tgt_list_t, const char * ascii );
 
 /* return the data for the specified target ID */
-opdis_off_t tgt_list_data( tgt_list_t, unsigned int id );
+opdis_buf_t tgt_list_data( tgt_list_t, unsigned int id );
 
 /* return the name for the specified target ID */
 const char * tgt_list_ascii( tgt_list_t, unsigned int id );
 
-typedef void (*TGT_LIST_FOREACH_FN) (tgt_list_item_t *, void *);
+/* return the bfd for the specified target ID, or NULL */
+bfd * tgt_list_bfd( tgt_list_t, unsigned int id );
+
+typedef void (*TGT_LIST_FOREACH_FN) (tgt_list_item_t *, unsigned int id, 
+				     void *);
 
 /* invoke callback for every item in list */
 void tgt_list_foreach( tgt_list_t, TGT_LIST_FOREACH_FN, void * arg );
