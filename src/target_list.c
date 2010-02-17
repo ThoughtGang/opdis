@@ -56,6 +56,10 @@ static opdis_buf_t load_file( const char * path ) {
 	}
 
 	buf = opdis_buf_read( f, 0, 0 );
+	if (! buf ) {
+		fprintf( stderr, "Unable to read %s into buffer\n", path );
+	}
+
 	fclose( f );
 
 	return buf;

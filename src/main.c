@@ -14,6 +14,7 @@
 #include "map.h"
 #include "target_list.h"
 
+// TODO: move to asm_fmt
 enum asm_format_t {
 	asmfmt_custom,
 	asmfmt_asm,
@@ -97,12 +98,14 @@ struct opdis_options {
 	tgt_list_t	targets;
 	opdis_t		opdis;
 
-	unsigned int		mach;
+	unsigned int		arch;
+	const char *		arch_str;
 	enum opdis_x86_syntax_t syntax;
-	enum asm_format_t	format;
-	const char * 		fmt_str;
+	const char *		syntax_str;
+	const char * 		asm_fmt;
 	const char *		output;
 
+	// TODO : list of bfd targets or bfd all
 	int		bfd_target;
 	const char *	disasm_opts;
 
@@ -114,78 +117,161 @@ struct opdis_options {
 	int		quiet;
 };
 
-static set_defaults( struct opdis_options * opts ) {
+static void set_defaults( struct opdis_options * opts ) {
 	opts->jobs = job_list_alloc();
 	opts->map = mem_map_alloc();
 	opts->targets = tgt_list_alloc();
 	opts->opdis = opdis_init();
 
-	/* use 64-bit detection? */
-	opts->mach = bfd_mach_i386_i386;
+	/* TODO: use 64-bit detection? */
+	opts->arch_str = "i386";
+	opts->arch = bfd_mach_i386_i386;
+
+	opts->syntax_str = "att";
 	opts->syntax = opdis_x86_syntax_att;
-	opts->format = asmfmt_dump;
+
+	opts->asm_fmt = "dump";
+
+	opts->disasm_opts = "";
 }
 
 /* ---------------------------------------------------------------------- */
 /* ARGUMENT HANDLING */
 
-static int parse_memspec( const char * memspec, unsigned int * target,
+static int set_arch( struct opdis_options * opts, const char * arg ) {
+	//const bfd_arch_info_type arch = bfd_scan_arch( arg );
+	int arch = bfd_scan_arch( arg );
+	if (! arch ) {
+		fprintf( stderr, "Unsupported architecture: '%s'\n", arg );
+		return 0;
+	}
+
+	opts->arch = arch;
+	opts->arch_str = arg;
+
+	return 1;
+}
+
+static int set_syntax( struct opdis_options * opts, const char * arg ) {
+	if (! strcmp( "att", arg ) ) {
+		opts->syntax = opdis_x86_syntax_att;
+	} else if (! strcmp( "intel", arg ) ) {
+		opts->syntax = opdis_x86_syntax_intel;
+	} else {
+		fprintf( stderr, "Unreognized syntax : '%s'\n", arg );
+		return 0;
+	}
+
+	opts->syntax_str = arg;
+	return 1;
+}
+
+static void parse_memspec( const char * memspec, unsigned int * target,
 			  opdis_off_t * offset, opdis_off_t * size,
 			  opdis_vma_t * vma ) {
-	// memspec = [target]:offset|@rva[+size]\n"
-	// mapspec = [target]:offset@rva[+size]\n"
-	// NOTE: caller enforces requirements of mapspec
-	return 0;
+	const char * o_start, *s_start, *v_start;
+
+	*target = 1;	/* default to first target */
+	*offset = OPDIS_INVALID_ADDR;
+	*vma = OPDIS_INVALID_ADDR;
+	*size = 0;
+
+	o_start = strchr( memspec, ':' );
+	v_start = strchr( memspec, '@' );
+	s_start = strchr( memspec, '+' );
+
+	if ( o_start != memspec && v_start != memspec && s_start != memspec ) {
+		*target = strtoul( memspec, NULL, 0);
+	}
+
+	if ( o_start ) {
+		*offset = strtoul( o_start + 1, NULL, 0);
+	}
+	if ( v_start ) {
+		*vma = strtoul( v_start + 1, NULL, 0);
+	}
+	if ( s_start ) {
+		*size = strtoul( s_start + 1, NULL, 0);
+	}
 }
 
-static int parse_bfdname( const char * bfdname, unsigned int * target,
-		          char * name ) {
-	//  bfdname = [target:]name\n"
-	return 0;
+static void parse_bfdname( const char * bfdname, unsigned int * target,
+		           const char ** name ) {
+	const char * n_start = strchr( bfdname, ':' );
+
+	if ( n_start ) {
+		*target = strtoul( bfdname, NULL, 0);
+		*name = n_start + 1;
+	} else {
+		*name = bfdname;
+	}
 }
 
-// TODO : asm format module for printing stuff
+static int add_job( job_list_t jobs, enum job_type_t type, const char * arg ) {
+	unsigned int target;
+	opdis_off_t offset, size;
+	opdis_vma_t vma;
+
+	parse_memspec( arg, &target, &offset, &size, &vma );
+	if ( offset == OPDIS_INVALID_ADDR && vma == OPDIS_INVALID_ADDR ) {
+		fprintf( stderr, "Invalid memspec '%s' : no VMA or offset\n",
+			 arg );
+		return 0;
+	}
+
+	return job_list_add( jobs, type, arg, target, offset, vma, size );
+}
 
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 	struct opdis_options * opts = state->input;
 
 	switch ( key ) {
-		case 'c': 		// add job
-			// add_job( opts, cflow, arg )
+		case 'c':
+			if (! add_job( opts->jobs, job_cflow, arg ) ) {
+				argp_error( state, "Invalid argument for -c" );
+			}
 			break;
-		case 'l': 		// add job
-			// add_job( opts, linear, arg )
+		case 'l':
+			if (! add_job( opts->jobs, job_linear, arg ) ) {
+				argp_error( state, "Invalid argument for -l" );
+			}
 			break;
-		case 'a': 		// set arch
-			// set_arch( opts, arg )
+		case 'a':
+			if (! set_arch( opts, arg ) ) {
+				argp_error( state, "Invalid argument for -s" );
+			}
 			break;
-		case 's': 		// set syntax
-		// const bfd_arch_info_type *bfd_scan_arch (const char *string)
-			// set_syntax( opts, arg )
+		case 's':
+			if (! set_syntax( opts, arg ) ) {
+				argp_error( state, "Invalid argument for -s" );
+			}
 			break;
 		case 'f': 		// set format
-			// set_format( opts, arg )
+			opts->asm_fmt = arg;
 			break;
 		case 'o': 		// set output
-			// set output( opts, arg )
+			opts->output = arg;
 			break;
 		case 'b': 		// add target
-			// add_target( opts, arg )
+			tgt_list_add( opts->targets, tgt_bytes, arg );
 			break;
 		case 'm': 		// map buffer
+			//parse_memspec( arg, &target, &offset, &size, &vma );
 			// add_map( opts, arg )
 			break;
-		case 'O': 		// set disasm options
-			// set_disasm_options( opts, arg )
+		case 'O': 
+			opts->disasm_opts = arg;
 			break;
 		case 'B': 		// set BFD target (or 0)
 			// set_bfd_target
 			break;
 		case 'N': 		// add job
+			//parse_bfdname( arg, &target, &name );
 			// add_job( opts, symbol, arg )
 			// note: if not bfd, set bfd to 1
 			break;
 		case 'S': 		// add job
+			//parse_bfdname( arg, &target, &name );
 			// add_job( opts, section, arg )
 			// note: if not bfd, set bfd to 1
 			break;
@@ -224,7 +310,12 @@ static void configure_opdis( struct opdis_options * opts ) {
 }
 
 static void dry_run( struct opdis_options * opts ) {
-	// TODO: print disassembler, syntax, etc
+	printf( "Architecture: %s\n", opts->arch_str );
+	printf( "Disassembler options: %s\n", opts->disasm_opts );
+	printf( "Syntax: %s\n", opts->syntax_str );
+	printf( "Format: %s\n", opts->asm_fmt );
+	printf( "Output: %s\n", opts->output ? opts->output : "STDOUT" );
+
 
 	printf( "Targets:\n" );
 	tgt_list_print( opts->targets, stdout );
@@ -300,14 +391,23 @@ int main( int argc, char ** argv ) {
 		return 0;
 	}
 
-	if (! opts.targets->num_items ) {
-		fprintf( stderr, "No targets specified! Use -? for help.\n" );
-		return 1;
+	if (! opts.jobs->num_items ) {
+		/* if no jobs were requested, do a linear disasm of all */
+		int i;
+		for ( i = 0; i < opts.targets->num_items; i++ ) {
+			job_list_add( opts.jobs, job_linear, "(default)", 
+				      i + 1, 0, OPDIS_INVALID_ADDR, 0 );
+		}
 	}
 
 	if ( opts.dry_run ) {
 		dry_run( & opts );
 		return 0;
+	}
+
+	if (! opts.targets->num_items ) {
+		fprintf( stderr, "No targets specified! Use -? for help.\n" );
+		return 1;
 	}
 
 	load_bfd_targets( & opts );
