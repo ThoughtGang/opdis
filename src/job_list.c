@@ -223,6 +223,6 @@ static void print_job( job_list_item_t * item, unsigned int id, void * arg ) {
 	
 }
 
-void print_job_list( job_list_t jobs, FILE * f ) {
+void job_list_print( job_list_t jobs, FILE * f ) {
 	job_list_foreach( jobs, print_job, f );
 }

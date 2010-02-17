@@ -67,5 +67,5 @@ int job_list_perform( job_list_t, unsigned int id, tgt_list_t,
 int job_list_perform_all( job_list_t, tgt_list_t, mem_map_t, opdis_t,
 			  int quiet );
 
-void print_job_list( job_list_t, FILE * f );
+void job_list_print( job_list_t, FILE * f );
 #endif
