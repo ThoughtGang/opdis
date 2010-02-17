@@ -192,12 +192,30 @@ void tgt_list_foreach( tgt_list_t targets, TGT_LIST_FOREACH_FN fn, void * arg ){
 }
 
 static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
+	const char *bfd_str = "";
 	FILE * f = (FILE *) arg;
 	if (! f ) {
 		return;
 	}
 
-	//TODO
+	printf("%d\t", id);
+	if ( item->tgt_bfd ) {
+		bfd_str = " [BFD]";
+	}
+
+	switch (item->type) {
+		case tgt_bytes:
+			// TODO: fix to use length of byte buf
+			printf( "Byte String of %d bytes: '%32s'%s\n",
+				(int) strlen(item->ascii), item->ascii, 
+				bfd_str );
+			break;
+		case tgt_file:
+			printf( "File '%s'%s\n", item->ascii, bfd_str );
+			break;
+		default:
+			printf("Unknown target type for '%s'\n", item->ascii );
+	}
 }	
 
 /* print target list to f */
