@@ -109,7 +109,22 @@ static int perform_job( job_list_item_t * job, tgt_list_t targets,
 		return 0;
 	}
 
-	// TODO: switch on job type
+	switch (job->type) {
+		case job_cflow:
+			// control for job args
+			break;
+		case job_linear:
+			// cflow for job args
+			break;
+		case job_bfd_symbol:
+			// get symbol vma, buf for vma, do cflow
+			break;
+		case job_bfd_section:
+			// get section vma and size, buf for vma, do linear
+			break;
+		default:
+			break;
+	}
 	return 0;
 }
 
@@ -152,13 +167,60 @@ int job_list_perform_all( job_list_t jobs , tgt_list_t targets, mem_map_t map,
 	return rv;
 }
 
-static void print_job( job_list_item_t * job, unsigned int id, void * arg ) {
+static void print_details( FILE * f, job_list_item_t * item ) {
+	if ( item->size ) {
+		fprintf( f, "%d bytes at ", item->size );
+	}
+
+	if ( item->offset != OPDIS_INVALID_ADDR ) {
+		fprintf( f, "offset %p ", (void *) item->offset );
+	}
+
+	if ( item->vma != OPDIS_INVALID_ADDR ) {
+		fprintf( f, "VMA %p", (void *) item->vma );
+	}
+
+	if ( item->vma == OPDIS_INVALID_ADDR && 
+	     item->offset == OPDIS_INVALID_ADDR ) {
+		fprintf( f, "Invalid Address" );
+	}
+}
+
+static void print_job( job_list_item_t * item, unsigned int id, void * arg ) {
 	FILE * f = (FILE *) arg;
 	if (! f ) {
 		return;
 	}
+
+	fprintf( f, "%d\tTarget %d:", id, item->target );
+
+	switch ( item->type ) {
+		case job_cflow:
+			fprintf( f, "Control Flow disassembly of " );
+			print_details( f, item );
+			fprintf( f, "\n" );
+			break;
+
+		case job_linear:
+			fprintf( f, "Linear disassembly of " );
+			print_details( f, item );
+			fprintf( f, "\n" );
+			break;
+
+		case job_bfd_section:
+			fprintf( f, "Linear disassembly of BFD section '%s'\n", 
+				item->bfd_name );
+			break;
+
+		case job_bfd_symbol:
+			fprintf( f, 
+				"Control Flow disassembly of BFD symbol '%s'\n",
+				item->bfd_name );
+			break;
+		default:
+			fprintf( f, "Unknown job type for '%s'\n", item->spec );
+	}
 	
-	// TODO
 }
 
 void print_job_list( job_list_t jobs, FILE * f ) {
