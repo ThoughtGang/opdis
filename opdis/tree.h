@@ -182,6 +182,9 @@ void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
  * \fn void * opdis_tree_closest( opdis_tree_t, void * )
  * \ingroup tree
  * \brief Find closest match to data in a tree.
+ * This returns the item that matches the key, or the item that is closest to
+ * (but less than) the key, or NULL if there is no item less than or equal to
+ * the key.
  * \param tree The AVL tree.
  * \param key The key of the item to match.
  * \return The item that is the closest match, or NULL.

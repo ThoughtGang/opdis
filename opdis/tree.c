@@ -489,10 +489,6 @@ void * opdis_tree_closest( opdis_tree_t tree, void * key ) {
 		}
 	}
 
-	if (! closest) {
-		closest = first;
-	}
-
 	if ( closest ) {
 		return closest->data;
 	}
