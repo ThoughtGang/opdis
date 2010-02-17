@@ -472,20 +472,43 @@ void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key ) {
 }
 
 void * opdis_tree_closest( opdis_tree_t tree, void * key ) {
-	opdis_tree_node_t *node, *next, *closest = NULL, *first = NULL;
+	opdis_tree_node_t *node, *next, *closest = NULL;
 
 	for ( node = tree->root; node; node = next ) {
 		int lr;
 
 		lr = tree->cmp_fn( key, tree->key_fn(node->data) );
 		if (lr < 0) {
-			first = node;
 			next = node->left;
 		} else if (lr > 0) {
 			closest = node;
 			next = node->right;
 		} else {
 			return node->data;
+		}
+	}
+
+	if ( closest ) {
+		return closest->data;
+	}
+
+	return NULL;
+}
+
+void * opdis_tree_next( opdis_tree_t tree, void * key ) {
+	opdis_tree_node_t *node, *next, *closest = NULL;
+
+	for ( node = tree->root; node; node = next ) {
+		int lr;
+
+		lr = tree->cmp_fn( key, tree->key_fn(node->data) );
+		if (lr < 0) {
+			closest = node;
+			next = node->left;
+		} else if (lr > 0) {
+			next = node->right;
+		} else {
+			next = node->right;
 		}
 	}
 

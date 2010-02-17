@@ -192,6 +192,19 @@ void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
 void * LIBCALL opdis_tree_closest( opdis_tree_t tree, void * key );
 
 /*!
+ * \fn void * opdis_tree_next( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief Find the data succeeding the key in a tree.
+ * This returns the item that occurs immediately after \e key in the tree, or
+ * immediately after where \e key would be if it were in the tree. If there
+ * are no items greater than \e key in the tree, this returns NULL.
+ * \param tree The AVL tree.
+ * \param key The key of the item to match.
+ * \return The item that is next, or NULL.
+ */
+void * LIBCALL opdis_tree_next( opdis_tree_t tree, void * key );
+
+/*!
  * \typedef int (*OPDIS_TREE_FOREACH_FN) (void *, void *)
  * \ingroup tree
  * \brief Callback invoked by opdis_tree_foreach.
