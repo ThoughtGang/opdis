@@ -31,12 +31,20 @@ int mem_map_add( mem_map_t memmap, unsigned int target, opdis_off_t offset,
 	map_t * m = opdis_tree_closest( (opdis_tree_t) memmap, (void *) vma );
 	if ( m && vma < (m->vma + m->size) ) {
 		/* VMA is inside a memory block */
+		fprintf( stderr, "Unable to map %p bytes at VMA %p: ",
+			 (void *) size, (void *) vma );
+		fprintf( stderr, "Region in contained in block %p (%p bytes)\n",
+			 (void *) m->vma, (void *) m->size );
 		return 0;
 	}
 
 	m = opdis_tree_next( (opdis_tree_t) memmap, (void *) vma );
 	if ( m && (vma + size) - 1 >= m->vma ) {
 		/* VMA extends into the next memory block */
+		fprintf( stderr, "Unable to map %p bytes at VMA %p: ",
+			 (void *) size, (void *) vma );
+		fprintf( stderr, "Region overlaps block %p\n", 
+			 (void *) m->vma );
 		return 0;
 	}
 	
