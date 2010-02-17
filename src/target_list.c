@@ -198,7 +198,7 @@ static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
 		return;
 	}
 
-	printf("%d\t", id);
+	fprintf( f, "%d\t", id );
 	if ( item->tgt_bfd ) {
 		bfd_str = " [BFD]";
 	}
@@ -206,15 +206,16 @@ static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
 	switch (item->type) {
 		case tgt_bytes:
 			// TODO: fix to use length of byte buf
-			printf( "Byte String of %d bytes: '%32s'%s\n",
+			fprintf( f, "Byte String of %d bytes: '%32s'%s\n",
 				(int) strlen(item->ascii), item->ascii, 
 				bfd_str );
 			break;
 		case tgt_file:
-			printf( "File '%s'%s\n", item->ascii, bfd_str );
+			fprintf( f, "File '%s'%s\n", item->ascii, bfd_str );
 			break;
 		default:
-			printf("Unknown target type for '%s'\n", item->ascii );
+			fprintf( f, "Unknown target type for '%s'\n", 
+				 item->ascii );
 	}
 }	
 
