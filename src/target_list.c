@@ -25,6 +25,14 @@ void tgt_list_free( tgt_list_t targets ) {
 
 	for ( item = targets->head; item; item = next ) {
 		next = item->next;
+		if ( item->data ) {
+			opdis_buf_free( item->data );
+		}
+
+		if ( item->tgt_bfd ) {
+			// bfd_close ?
+		}
+
 		free( item );
 	}
 
@@ -63,6 +71,9 @@ unsigned int tgt_list_add( tgt_list_t targets, enum target_type_t type,
 	}
 
 	item = (tgt_list_item_t *) calloc( 1, sizeof(tgt_list_item_t) );
+	if (! item ) {
+		return 0;
+	}
 
 	item->type = type;
 	item->ascii = ascii;
