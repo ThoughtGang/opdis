@@ -6,6 +6,7 @@
 #include <bfd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <opdis/opdis.h>
 
@@ -94,6 +95,7 @@ struct opdis_options {
 	job_list_t	jobs;
 	mem_map_t	map;
 	tgt_list_t	targets;
+	opdis_t		opdis;
 
 	unsigned int		mach;
 	enum opdis_x86_syntax_t syntax;
@@ -116,6 +118,7 @@ static set_defaults( struct opdis_options * opts ) {
 	opts->jobs = job_list_alloc();
 	opts->map = mem_map_alloc();
 	opts->targets = tgt_list_alloc();
+	opts->opdis = opdis_init();
 
 	/* use 64-bit detection? */
 	opts->mach = bfd_mach_i386_i386;
@@ -193,6 +196,11 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 		case 3: opts->list_syntax = 1; break;
 		case 4: opts->list_format = 1; break;
 		case 5: opts->dry_run = 1; break;
+
+		case ARGP_KEY_ARG:
+			tgt_list_add( opts->targets, tgt_file, arg );
+			break;
+
 	}
 	return 0;
 }
@@ -209,9 +217,25 @@ static struct argp argp_cfg = {
 
 /* ---------------------------------------------------------------------- */
 
-static void dry_run( struct opdis_options * opts ) {
-	// print all targets, maps, jobs, syntax, etc
+static void load_bfd_targets( struct opdis_options * opts ) {
 }
+
+static void configure_opdis( struct opdis_options * opts ) {
+}
+
+static void dry_run( struct opdis_options * opts ) {
+	// TODO: print disassembler, syntax, etc
+
+	printf( "Targets:\n" );
+	tgt_list_print( opts->targets, stdout );
+
+	printf( "Memory Map:\n" );
+	mem_map_print( opts->map, stdout );
+
+	printf( "Jobs:\n" );
+	job_list_print( opts->jobs, stdout );
+}
+
 /* ---------------------------------------------------------------------- */
 
 static void list_arch() {
@@ -277,19 +301,21 @@ int main( int argc, char ** argv ) {
 	}
 
 	if (! opts.targets->num_items ) {
-	// 	help
+		fprintf( stderr, "No targets specified! Use -? for help.\n" );
 		return 1;
 	}
-
-	// load all targets in arguments
-	// create buffers for all maps?
 
 	if ( opts.dry_run ) {
 		dry_run( & opts );
 		return 0;
 	}
 
-	// foreach job...
+	load_bfd_targets( & opts );
+
+	configure_opdis( & opts );
+
+	job_list_perform_all( opts.jobs, opts.targets, opts.map, opts.opdis,
+			      opts.quiet );
 
 	return 0;
 }
