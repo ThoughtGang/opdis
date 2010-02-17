@@ -9,7 +9,6 @@
 
 /* ---------------------------------------------------------------------- */
 // maps are stored in a tree keyed by vma
-// need key fn
 
 static void * map_key( void * data ) {
 	map_t * map = (map_t *) data;
@@ -29,14 +28,34 @@ void mem_map_free( mem_map_t memmap ) {
 /* map 'size' bytes at 'offset' into 'target' to load address 'vma' */
 int mem_map_add( mem_map_t memmap, unsigned int target, opdis_off_t offset,
 		 opdis_off_t size, opdis_vma_t vma ) {
-	// get closest
-	// if vma <= closest->vma + closest size
-	// 	error
-	// get next
-	// if vma + size >= next->vma
-	// 	error
-	// add
-	return 0;
+	map_t * m = opdis_tree_closest( (opdis_tree_t) memmap, (void *) vma );
+	if ( m && vma < (m->vma + m->size) ) {
+		/* VMA is inside a memory block */
+		return 0;
+	}
+
+	m = opdis_tree_next( (opdis_tree_t) memmap, (void *) vma );
+	if ( m && (vma + size) - 1 >= m->vma ) {
+		/* VMA extends into the next memory block */
+		return 0;
+	}
+	
+	m = (map_t *) calloc( 1, sizeof(map_t) );
+	if (! m ) {
+		return 0;
+	}
+
+	m->target = target;
+	m->offset = offset;
+	m->vma = vma;
+	m->size = size;
+
+	if (! opdis_tree_add( (opdis_tree_t) memmap, m ) ) {
+		free(m);
+		return 0;
+	}
+
+	return 1;
 }
 
 /* Invoke callback for each mapping */
@@ -50,7 +69,10 @@ static int print_memmap( map_t * map, void * arg ) {
 	if (! f ) {
 		return;
 	}
-	// TODO
+
+	printf( "%p - %p : Target %d [%p:%p]\n", (void *) map->vma,
+		(void *) (map->vma + map->size - 1), map->target,
+		(void *) map->offset, (void *) map->size );
 }
 
 /* print memory map to f */
