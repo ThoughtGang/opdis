@@ -70,9 +70,9 @@ static int print_memmap( map_t * map, void * arg ) {
 		return;
 	}
 
-	printf( "%p - %p : Target %d [%p:%p]\n", (void *) map->vma,
-		(void *) (map->vma + map->size - 1), map->target,
-		(void *) map->offset, (void *) map->size );
+	fprintf( f, "%p - %p : Target %d [%p:%p]\n", (void *) map->vma,
+		 (void *) (map->vma + map->size - 1), map->target,
+		 (void *) map->offset, (void *) map->size );
 }
 
 /* print memory map to f */
