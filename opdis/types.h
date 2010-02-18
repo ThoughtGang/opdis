@@ -73,7 +73,7 @@ extern "C"
 #endif
 
 /*!
- * \fn opdis_buf_t opdis_buf_alloc( opdis_off_t )
+ * \fn opdis_buf_t opdis_buf_alloc( opdis_off_t, opdis_vma_t )
  * \ingroup types
  * \brief Allocate an opdis buffer
  * \details Allocates an opdis_buffer_t of specified size. The buffer contents
@@ -85,6 +85,17 @@ extern "C"
  */
 
 opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size, opdis_vma_t addr );
+
+/*!
+ * \fn void opdis_buf_set_vma( opdis_buf_t, opdis_vma_t )
+ * \ingroup types
+ * \brief Set the VMA for a buffer
+ * \param buf The opdis buffer.
+ * \param addr Load address (vma) of buffer or 0.
+ */
+
+void LIBCALL opdis_buf_set_vma( opdis_buf_t buf, opdis_vma_t addr );
+
 
 /*!
  * \fn opdis_buf_t opdis_buf_read( FILE *, opdis_off_t )

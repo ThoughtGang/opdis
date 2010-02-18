@@ -27,6 +27,12 @@ opdis_buf_t LIBCALL opdis_buf_alloc( opdis_off_t size, opdis_vma_t addr ) {
 	return buf;
 }
 
+void LIBCALL opdis_buf_set_vma( opdis_buf_t buf, opdis_vma_t addr ) {
+	if ( buf ) {
+		buf->vma = addr;
+	}
+}
+
 static opdis_off_t get_read_length( FILE * f ) {
 	opdis_off_t size;
 	long pos = ftell(f);
