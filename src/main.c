@@ -139,14 +139,13 @@ static void set_defaults( struct opdis_options * opts ) {
 /* ARGUMENT HANDLING */
 
 static int set_arch( struct opdis_options * opts, const char * arg ) {
-	//const bfd_arch_info_type arch = bfd_scan_arch( arg );
-	int arch = bfd_scan_arch( arg );
+	const bfd_arch_info_type * arch = bfd_scan_arch( arg );
 	if (! arch ) {
 		fprintf( stderr, "Unsupported architecture: '%s'\n", arg );
 		return 0;
 	}
 
-	opts->arch = arch;
+	opts->arch = arch->mach;
 	opts->arch_str = arg;
 
 	return 1;
@@ -222,6 +221,22 @@ static int add_job( job_list_t jobs, enum job_type_t type, const char * arg ) {
 	return job_list_add( jobs, type, arg, target, offset, vma, size );
 }
 
+static int add_map( mem_map_t map, const char * arg ) {
+	unsigned int target;
+	opdis_off_t offset, size;
+	opdis_vma_t vma;
+
+	parse_memspec( arg, &target, &offset, &size, &vma );
+	if ( offset == OPDIS_INVALID_ADDR || vma == OPDIS_INVALID_ADDR ) {
+		fprintf( stderr, 
+			"Invalid map memspec '%s' : VMA and offset required\n",
+			 arg );
+		return 0;
+	}
+
+	return mem_map_add( map, target, offset, size, vma );
+}
+
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 	struct opdis_options * opts = state->input;
 
@@ -246,18 +261,22 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 				argp_error( state, "Invalid argument for -s" );
 			}
 			break;
-		case 'f': 		// set format
+		case 'f':
+			if (! is_supported_format(arg) ) {
+				argp_error( state, "Invalid argument for -f" );
+			}
 			opts->asm_fmt = arg;
 			break;
-		case 'o': 		// set output
+		case 'o':
 			opts->output = arg;
 			break;
-		case 'b': 		// add target
+		case 'b':
 			tgt_list_add( opts->targets, tgt_bytes, arg );
 			break;
-		case 'm': 		// map buffer
-			//parse_memspec( arg, &target, &offset, &size, &vma );
-			// add_map( opts, arg )
+		case 'm':
+			if (! add_map( opts->map, arg ) ) {
+				argp_error( state, "Invalid argument for -m" );
+			}
 			break;
 		case 'O': 
 			opts->disasm_opts = arg;
