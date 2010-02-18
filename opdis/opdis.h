@@ -367,6 +367,15 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 			     unsigned long mach, disassembler_ftype fn );
 
 /*!
+ * \fn opdis_set_disassembler( opdis_t, disassembler_ftype )
+ * \ingroup configuration
+ * \brief Set the libopcodes print_insn function to use.
+ * \param o opdis disassembler to configure.
+ * \param fn The libopcodes print_insn function.
+ */
+void LIBCALL opdis_set_disassembler( opdis_t o, disassembler_ftype fn);
+
+/*!
  * \fn opdis_set_disassembler_options( opdis_t, const char * )
  * \ingroup configuration
  * \brief Set libopcodes disassembler options
