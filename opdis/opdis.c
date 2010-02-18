@@ -162,8 +162,9 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 	/* force x86 architecture */
 	o->config.arch = bfd_arch_i386;
 
+	o->disassembler = fn;
+
 	opdis_set_decoder( o, d_fn, NULL );
-	opdis_set_disassembler( o, fn );
 }
 
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
@@ -179,12 +180,6 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 
 	// TODO: set appropriate decoder for arch!
 	opdis_set_decoder( o, opdis_default_decoder, NULL );
-}
-
-void LIBCALL opdis_set_disassembler( opdis_t o, disassembler_ftype fn) {
-	if ( o && fn ) {
-		o->disassembler = fn;
-	}
 }
 
 void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg ) {
