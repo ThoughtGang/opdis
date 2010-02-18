@@ -10,18 +10,10 @@
 
 #include <opdis/opdis.h>
 
+#include "asm_format.h"
 #include "job_list.h"
 #include "map.h"
 #include "target_list.h"
-
-// TODO: move to asm_fmt
-enum asm_format_t {
-	asmfmt_custom,
-	asmfmt_asm,
-	asmfmt_dump,
-	asmfmt_delim,
-	asmfmt_xml
-};
 
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
