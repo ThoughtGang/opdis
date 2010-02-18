@@ -42,4 +42,11 @@ void mem_map_foreach( mem_map_t, MEM_MAP_FOREACH_FN fn, void * arg );
 /* print memory map to f */
 void mem_map_print( mem_map_t, FILE * f );
 
+/* return vma for offset 0 in target. if offset is nonzero, then the vma
+ * for that offset into target is found, and the value of offset subtracted
+ * from it to return a base vma for the target.
+ */
+opdis_vma_t mem_map_vma_for_target( mem_map_t, unsigned int target, 
+				    opdis_off_t offset );
+
 #endif

@@ -15,6 +15,9 @@
 #include "map.h"
 #include "target_list.h"
 
+// TODO: resolver
+//       handler (inckuding tree of insns
+//       display
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
@@ -320,6 +323,22 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 }
 
 static void configure_opdis( struct opdis_options * opts ) {
+	opdis_t o = opts->opdis;
+
+	opdis_set_x86_syntax( o, opts->syntax );
+
+	// if init_from_bfd...
+	// else...
+	opdis_set_x86_arch( o, opts->arch );
+
+	if ( opts->disasm_opts && opts->disasm_opts[0] ) {
+		opdis_set_disassembler_options( o, opts->disasm_opts );
+	}
+
+	// based on format
+	// opdis_set_display( o )
+	// opdis_set_handler( o )
+	// opdis_set_resolver( o )
 }
 
 static void dry_run( struct opdis_options * opts ) {
@@ -327,8 +346,7 @@ static void dry_run( struct opdis_options * opts ) {
 	printf( "Disassembler options: %s\n", opts->disasm_opts );
 	printf( "Syntax: %s\n", opts->syntax_str );
 	printf( "Format: %s\n", opts->asm_fmt );
-	printf( "Output: %s\n", opts->output ? opts->output : "STDOUT" );
-
+	printf( "Output: %s\n\n", opts->output ? opts->output : "STDOUT" );
 
 	printf( "Targets:\n" );
 	tgt_list_print( opts->targets, stdout );

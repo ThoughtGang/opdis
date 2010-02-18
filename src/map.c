@@ -81,9 +81,41 @@ static int print_memmap( map_t * map, void * arg ) {
 	fprintf( f, "\t%p - %p : Target %d [%p:%p]\n", (void *) map->vma,
 		 (void *) (map->vma + map->size - 1), map->target,
 		 (void *) map->offset, (void *) map->size );
+
+	return 1;
 }
 
 /* print memory map to f */
 void mem_map_print( mem_map_t memmap, FILE * f ) {
 	mem_map_foreach( memmap, print_memmap, f );
+}
+
+static int vma_search( map_t * map, void * arg ) {
+	map_t * request = (map_t *) arg;
+
+	if ( map->target != request->target ) {
+		return 1;
+	}
+
+	if ( request->offset >= map->offset && 
+	     request->offset < (map->offset + map->size) ) {
+		request->vma = map->vma;
+		return 0;
+	}
+
+	return 1;
+}
+
+opdis_vma_t mem_map_vma_for_target( mem_map_t memmap, unsigned int target, 
+				    opdis_off_t offset ) {
+	map_t request = { target, offset, OPDIS_INVALID_ADDR, 0 };
+
+	mem_map_foreach( memmap, vma_search, &request );
+	if ( request.vma == OPDIS_INVALID_ADDR && offset > 0 ) {
+		/* There is no map for offset; return base VMA for target */
+		request.offset = 0;
+		mem_map_foreach( memmap, vma_search, &request );
+	}
+
+	return request.vma;
 }
