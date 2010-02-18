@@ -127,6 +127,7 @@ void LIBCALL opdis_set_defaults( opdis_t o ) {
 	opdis_set_display( o, opdis_default_display, NULL );
 	opdis_set_resolver( o, opdis_default_resolver, NULL );
 	opdis_set_error_reporter( o, opdis_default_error_reporter, NULL );
+	opdis_set_arch( o, bfd_arch_i386, bfd_mach_i386_i386, NULL );
 	/* note: this sets the decoder */
 	opdis_set_x86_syntax( o, opdis_x86_syntax_intel );
 }
@@ -156,10 +157,6 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 		fn = print_insn_i386_att;
 		// TODO: x86 att decoder
 		d_fn = opdis_default_decoder; // att
-	}
-
-	if ( o->config.arch != bfd_arch_i386 ) {
-		opdis_set_arch( o, bfd_arch_i386, bfd_mach_i386_i386, fn );
 	}
 
 	opdis_set_decoder( o, d_fn, NULL );

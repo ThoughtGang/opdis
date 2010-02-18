@@ -323,8 +323,7 @@ enum opdis_x86_syntax_t {
  * \fn opdis_set_x86_syntax( opdis_t, enum opdis_x86_syntax_t )
  * \ingroup configuration
  * \brief Configure the disassembler to use Intel or AT&T syntax.
- * \details Invokes opdist_set_arch() to force the architecture to i386,
- *          and sets the libopcodes print instruction to either
+ * \details Sets the libopcodes print instruction to either
  *          print_insn_i386_intel or print_insn_i386_att.
  * \param o opdis disassembler to configure.
  * \param syntax The syntax option to use.
