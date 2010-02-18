@@ -40,8 +40,60 @@ void tgt_list_free( tgt_list_t targets ) {
 }
 
 static opdis_buf_t load_bytes( const char * bytes ) {
-	// TODO
-	return NULL;
+	char *str, * p, * tok, *err;
+	opdis_buf_t buf;
+	int i, count, base = 16;
+
+	if ( bytes[0] == '\\' ) {
+		switch ( bytes[1] ) {
+			case 'o': case 'O': base = 8; break;
+			case 'x': case 'X': base = 16; break;
+			case 'd': case 'D': base = 10; break;
+			case 'b': case 'B': base = 2; break;
+			default:
+				base = (int) ((unsigned char) bytes[1]);
+		}
+	
+		bytes = &bytes[2];
+	}
+
+	/* get number of bytes in string */
+	for ( i = 0, count = 1; ; i++ ) {
+		if ( bytes[i] == ' ' ) {
+			count ++;
+		} else if ( bytes[i] == '\0' ) {
+			break;
+		}
+	}
+
+	buf = opdis_buf_alloc( count, 0 );
+	if (! buf ) {
+		fprintf( stderr, "Unable to allocate buffer\n" );
+		return NULL;
+	}
+
+	str = strdup( bytes );
+	for ( p = str, i = 0; i < buf->len; p = NULL, err = NULL, i++ ) {
+		tok = strtok( p, " " );
+		if (! tok ) {
+			break;
+		}
+
+		buf->data[i] = (opdis_byte_t) strtoul( tok, &err, base );
+		if ( err && *err != '\0' ) {
+			fprintf( stderr, "Invalid number %s for base %d\n", 
+				 tok, base );
+			break;
+		}
+	}
+	free(str);
+
+	if ( err ) {
+		opdis_buf_free( buf );
+		return NULL;
+	}
+
+	return buf;
 }
 
 static opdis_buf_t load_file( const char * path ) {
@@ -196,7 +248,8 @@ void tgt_list_foreach( tgt_list_t targets, TGT_LIST_FOREACH_FN fn, void * arg ){
 }
 
 static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
-	const char *bfd_str = "";
+	int i, max;
+	const char *bfd_str = "", *etc = "";
 	FILE * f = (FILE *) arg;
 	if (! f ) {
 		return;
@@ -209,10 +262,15 @@ static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
 
 	switch (item->type) {
 		case tgt_bytes:
-			// TODO: fix to use length of byte buf
-			fprintf( f, "Byte String of %d bytes: '%32s'%s\n",
-				(int) strlen(item->ascii), item->ascii, 
-				bfd_str );
+			fprintf( f, "Byte String of %d bytes: ", 
+				 (unsigned int) item->data->len );
+
+			max = (item->data->len > 8) ? 8 : item->data->len;
+			etc = (item->data->len > 8) ? "..." : etc;
+			for ( i = 0; i < max; i++ ) {
+				fprintf( f, "%02X ", item->data->data[i] );
+			}
+			fprintf( f, "%s%s\n", etc, bfd_str );
 			break;
 		case tgt_file:
 			fprintf( f, "File '%s'%s\n", item->ascii, bfd_str );
