@@ -87,6 +87,11 @@ static struct argp_option options[] = {
 	{0}
 };
 
+struct BFD_TARGET {
+	unsigned int id;
+	struct BFD_TARGET * next;
+};
+
 struct opdis_options {
 	job_list_t	jobs;
 	mem_map_t	map;
@@ -100,9 +105,9 @@ struct opdis_options {
 	const char * 		asm_fmt;
 	const char *		output;
 
-	// TODO : list of bfd targets or bfd all
-	int		bfd_target;
-	const char *	disasm_opts;
+	int			bfd_all_targets;
+	struct BFD_TARGET * 	bfd_targets;
+	const char *		disasm_opts;
 
 	int 		list_arch;
 	int 		list_disasm_opt;
@@ -192,11 +197,18 @@ static void parse_memspec( const char * memspec, unsigned int * target,
 static void parse_bfdname( const char * bfdname, unsigned int * target,
 		           const char ** name ) {
 	const char * n_start = strchr( bfdname, ':' );
+	char * err;
 
 	if ( n_start ) {
-		*target = strtoul( bfdname, NULL, 0);
+		*target = strtoul( bfdname, &err, 0);
+		if ( err && err != n_start ) {
+			fprintf( stderr, "Invalid target ID: %s\n", bfdname );
+			*target = 0;
+			return;
+		}
 		*name = n_start + 1;
 	} else {
+		*target = 1;
 		*name = bfdname;
 	}
 }
@@ -216,6 +228,52 @@ static int add_job( job_list_t jobs, enum job_type_t type, const char * arg ) {
 	return job_list_add( jobs, type, arg, target, offset, vma, size );
 }
 
+static int add_bfd_target( struct opdis_options * opts, unsigned int id ) {
+	struct BFD_TARGET * tgt, *ptr;
+
+	for ( ptr = opts->bfd_targets; ptr; ptr = ptr->next ) {
+		if ( ptr->id == id ) {
+			return 1;
+		}
+	}
+
+	tgt = (struct BFD_TARGET *) calloc( 1, sizeof(struct BFD_TARGET) );
+	if (! tgt ) {
+		fprintf( stderr, "Unable to allocate memory for BFD target\n" );
+		return 0;
+	}
+
+	tgt->id = id;
+	if (! opts->bfd_targets ) {
+		opts->bfd_targets = tgt;
+		return 1;
+	}
+
+	for ( ptr = opts->bfd_targets; ptr->next; ptr = ptr->next )
+		;
+	ptr->next = tgt;
+
+	return 1;
+}
+static int add_bfd_job( struct opdis_options * opts, enum job_type_t type, 
+			const char * arg ) {
+	unsigned int target;
+	const char * name;
+
+	parse_bfdname( arg, &target, &name );
+	if (! target || ! name || ! strlen(name) ) {
+		return 0;
+	}
+
+	if (! opts->bfd_all_targets ) {
+		if(! add_bfd_target( opts, target ) ) {
+			return 0;
+		}
+	}
+
+	return job_list_add_bfd( opts->jobs, type, arg, target, name );
+}
+
 static int add_map( mem_map_t map, const char * arg ) {
 	unsigned int target;
 	opdis_off_t offset, size;
@@ -230,6 +288,25 @@ static int add_map( mem_map_t map, const char * arg ) {
 	}
 
 	return mem_map_add( map, target, offset, size, vma );
+}
+
+static int set_bfd_target( struct opdis_options * opts, const char * arg ) {
+	unsigned int id;
+	char * err;
+	struct BFD_TARGET * tgt, *ptr;
+
+	if (! arg ) {
+		opts->bfd_all_targets = 1;
+		return 1;
+	}
+
+	id = strtoul( arg, &err, 0 );
+	if ( err && *err ) {
+		fprintf( stderr, "Not a valid target ID: %s\n", arg );
+		return 0;
+	}
+
+	return add_bfd_target( opts, id );
 }
 
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
@@ -278,18 +355,20 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 		case 'O': 
 			opts->disasm_opts = arg;
 			break;
-		case 'B': 		// set BFD target (or 0)
-			// set_bfd_target
+		case 'B':
+			if (! set_bfd_target( opts, arg ) ) {
+				argp_error( state, "Invalid argument for -B" );
+			}
 			break;
-		case 'N': 		// add job
-			//parse_bfdname( arg, &target, &name );
-			// add_job( opts, symbol, arg )
-			// note: if not bfd, set bfd to 1
+		case 'N':
+			if (! add_bfd_job( opts, job_bfd_symbol, arg ) ) {
+				argp_error( state, "Invalid argument for -N" );
+			}
 			break;
-		case 'S': 		// add job
-			//parse_bfdname( arg, &target, &name );
-			// add_job( opts, section, arg )
-			// note: if not bfd, set bfd to 1
+		case 'S':
+			if (! add_bfd_job( opts, job_bfd_section, arg ) ) {
+				argp_error( state, "Invalid argument for -N" );
+			}
 			break;
 
 		case 'q': opts->quiet = 1; break;
@@ -302,6 +381,9 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 		case ARGP_KEY_ARG:
 			tgt_list_add( opts->targets, tgt_file, arg );
 			break;
+
+		default:
+			return ARGP_ERR_UNKNOWN;
 
 	}
 	return 0;
@@ -319,7 +401,30 @@ static struct argp argp_cfg = {
 
 /* ---------------------------------------------------------------------- */
 
+static void bfd_load(  tgt_list_item_t * target, unsigned int id, void * arg ) {
+	struct opdis_options * opts = (struct opdis_options *) arg;
+
+	tgt_list_make_bfd( target );
+}
+
 static void load_bfd_targets( struct opdis_options * opts ) {
+	int load_individually = 1;
+		struct BFD_TARGET * tgt;
+	if ( opts->bfd_all_targets ) {
+		tgt_list_foreach( opts->targets, bfd_load, opts );
+		load_individually = 0;
+	}
+
+	for ( tgt = opts->bfd_targets; tgt; tgt = opts->bfd_targets ) {
+		if ( load_individually ) {
+			tgt_list_item_t * target = tgt_list_find( opts->targets,
+								  tgt->id );
+			bfd_load( target, tgt->id, opts );
+		}
+
+		opts->bfd_targets = tgt->next;
+		free( tgt );
+	}
 }
 
 static void configure_opdis( struct opdis_options * opts ) {
@@ -432,6 +537,8 @@ int main( int argc, char ** argv ) {
 		}
 	}
 
+	load_bfd_targets( & opts );
+
 	if ( opts.dry_run ) {
 		dry_run( & opts );
 		return 0;
@@ -441,8 +548,6 @@ int main( int argc, char ** argv ) {
 		fprintf( stderr, "No targets specified! Use -? for help.\n" );
 		return 1;
 	}
-
-	load_bfd_targets( & opts );
 
 	configure_opdis( & opts );
 

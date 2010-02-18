@@ -162,6 +162,14 @@ unsigned int tgt_list_add( tgt_list_t targets, enum target_type_t type,
 	return targets->num_items;
 }
 
+void tgt_list_make_bfd( tgt_list_item_t * tgt ) {
+	if (! tgt ) {
+		return;
+	}
+
+	tgt->tgt_bfd = (bfd *) calloc( 1, sizeof(bfd) );
+}
+
 /* return the ID of the specified target */
 /* note: ID is implicit : it is offset of item in list + 1 */
 unsigned int tgt_list_id( tgt_list_t targets, const char * ascii ) {
@@ -180,8 +188,7 @@ unsigned int tgt_list_id( tgt_list_t targets, const char * ascii ) {
 	return 0;
 }
 
-/* return the data for the specified target ID */
-opdis_buf_t tgt_list_data( tgt_list_t targets, unsigned int id ) {
+tgt_list_item_t * tgt_list_find( tgt_list_t targets, unsigned int id ) {
 	tgt_list_item_t* item;
 	unsigned int curr_id = 1;
 
@@ -191,8 +198,18 @@ opdis_buf_t tgt_list_data( tgt_list_t targets, unsigned int id ) {
 
 	for ( item = targets->head; item; item = item->next, curr_id++ ) {
 		if ( id == curr_id ) {
-			return item->data;
+			return item;
 		}
+	}
+
+	return NULL;
+}
+
+/* return the data for the specified target ID */
+opdis_buf_t tgt_list_data( tgt_list_t targets, unsigned int id ) {
+	tgt_list_item_t * item = tgt_list_find( targets, id );
+	if ( item ) {
+		return item->data;
 	}
 
 	return NULL;
@@ -200,17 +217,9 @@ opdis_buf_t tgt_list_data( tgt_list_t targets, unsigned int id ) {
 
 /* return the name for the specified target ID */
 const char * tgt_list_ascii( tgt_list_t targets, unsigned int id ) {
-	tgt_list_item_t* item;
-	unsigned int curr_id = 1;
-
-	if (! targets ) {
-		return;
-	}
-
-	for ( item = targets->head; item; item = item->next, curr_id++ ) {
-		if ( id == curr_id ) {
-			return item->ascii;
-		}
+	tgt_list_item_t * item = tgt_list_find( targets, id );
+	if ( item ) {
+		return item->ascii;
 	}
 
 	return NULL;
