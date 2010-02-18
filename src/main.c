@@ -263,7 +263,9 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			opts->output = arg;
 			break;
 		case 'b':
-			tgt_list_add( opts->targets, tgt_bytes, arg );
+			if (! tgt_list_add( opts->targets, tgt_bytes, arg ) ) {
+				argp_error( state, "Invalid argument for -b" );
+			}
 			break;
 		case 'm':
 			if (! add_map( opts->map, arg ) ) {
