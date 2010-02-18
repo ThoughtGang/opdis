@@ -48,7 +48,7 @@ unsigned int tgt_list_add( tgt_list_t, enum target_type_t type,
 			   const char * name );
 
 // convert a target to a BFD target
-void tgt_list_make_bfd( tgt_list_item_t * tgt );
+int tgt_list_make_bfd( tgt_list_item_t * tgt );
 
 /* return the ID of the specified target */
 /* note: ID is implicit : it is offset of item in list + 1 */

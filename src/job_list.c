@@ -127,39 +127,80 @@ static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf,
 	return vma;
 }
 
+static struct bfd_symbol * find_bfd_symbol( bfd * abfd, const char * name ) {
+	// TODO
+	return NULL;
+}
+
+static struct bfd_section * find_bfd_section( bfd * abfd, const char * name ) {
+	// TODO
+	return NULL;
+}
+
 static int perform_job( job_list_item_t * job, tgt_list_t targets,
 			mem_map_t map, opdis_t o ) {
+	int rv;
 	opdis_vma_t vma;
-	opdis_buf_t target;
+	tgt_list_item_t * target;
+	struct bfd_symbol * symbol;
+	struct bfd_section * section;
+
 	if (! job || ! targets || ! map || ! o ) {
 		return 0;
 	}
 
-	target = tgt_list_data( targets, job->target );
+	target = tgt_list_find( targets, job->target );
 
 	switch (job->type) {
 		case job_cflow:
 			set_buffer_vma( job->target, job->offset, map );
-			vma = get_job_vma( job, target, map );
-			opdis_disasm_cflow( o, target, vma );
+			vma = get_job_vma( job, target->data, map );
+			rv = opdis_disasm_cflow( o, target->data, vma );
 			break;
 		case job_linear:
 			set_buffer_vma( job->target, job->offset, map );
-			vma = get_job_vma( job, target, map );
-			opdis_disasm_linear( o, target, vma, job->size );
+			vma = get_job_vma( job, target->data, map );
+			rv = opdis_disasm_linear( o, target->data, vma, 
+						  job->size );
 			break;
 		case job_bfd_symbol:
-			// get symbol vma, buf for vma, do cflow
-			// opdis_disasm_cflow( o, target, vma );
+			if (! target->tgt_bfd ) {
+				fprintf( stderr, "No BFD for target %d!\n",
+					 job->target );
+				return 0;
+			}
+			symbol = find_bfd_symbol( target->tgt_bfd, 
+						  job->bfd_name );
+			if (! symbol ) {
+				fprintf( stderr, "Cannot find BFD symbol %s\n",
+					 job->bfd_name );
+				return 0;
+			}
+
+			rv = opdis_disasm_cflow( o, target->tgt_bfd->iostream,
+						 symbol->value );
 			break;
 		case job_bfd_section:
-			// get section vma and size, buf for vma, do linear
-			// opdis_disasm_linear( o, target, vma, job->size );
+			if (! target->tgt_bfd ) {
+				fprintf( stderr, "No BFD for target %d!\n",
+					 job->target );
+				return 0;
+			}
+			section = find_bfd_section( target->tgt_bfd, 
+						    job->bfd_name );
+			if (! section ) {
+				fprintf( stderr, "Cannot find BFD section %s\n",
+					 job->bfd_name );
+				return 0;
+			}
+			rv = opdis_disasm_linear( o, target->tgt_bfd->iostream,
+						  section->vma,
+						  (opdis_off_t) section->size );
 			break;
 		default:
 			break;
 	}
-	return 0;
+	return rv;
 }
 
 /* perform the specified job */

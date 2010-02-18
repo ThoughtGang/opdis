@@ -162,12 +162,21 @@ unsigned int tgt_list_add( tgt_list_t targets, enum target_type_t type,
 	return targets->num_items;
 }
 
-void tgt_list_make_bfd( tgt_list_item_t * tgt ) {
+int tgt_list_make_bfd( tgt_list_item_t * tgt ) {
 	if (! tgt ) {
 		return;
 	}
 
-	tgt->tgt_bfd = (bfd *) calloc( 1, sizeof(bfd) );
+	tgt->tgt_bfd = bfd_openr( tgt->ascii, NULL );
+	if (! tgt->tgt_bfd ) {
+		fprintf( stderr, "Unable to create BFD for %s\n", tgt->ascii );
+		fprintf( stderr, "Will continue using non-BFD target\n" );
+		return 0;
+	}
+	
+	// TODO: delete data
+
+	return 1;
 }
 
 /* return the ID of the specified target */
