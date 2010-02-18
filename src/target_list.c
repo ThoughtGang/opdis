@@ -202,7 +202,7 @@ static void print_item( tgt_list_item_t * item, unsigned int id, void * arg ) {
 		return;
 	}
 
-	fprintf( f, "%d\t", id );
+	fprintf( f, "\t%d\t", id );
 	if ( item->tgt_bfd ) {
 		bfd_str = " [BFD]";
 	}

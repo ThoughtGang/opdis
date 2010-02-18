@@ -192,7 +192,7 @@ static void print_job( job_list_item_t * item, unsigned int id, void * arg ) {
 		return;
 	}
 
-	fprintf( f, "%d\tTarget %d:", id, item->target );
+	fprintf( f, "\t%d\tTarget %d: ", id, item->target );
 
 	switch ( item->type ) {
 		case job_cflow:
