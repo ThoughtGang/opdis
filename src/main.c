@@ -324,16 +324,17 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 
 static void configure_opdis( struct opdis_options * opts ) {
 	opdis_t o = opts->opdis;
-
-	opdis_set_x86_syntax( o, opts->syntax );
+	const bfd_arch_info_type * arch_info = bfd_scan_arch( opts->arch_str );
 
 	// if init_from_bfd...
 	// else...
-	opdis_set_x86_arch( o, opts->arch );
+	opdis_set_arch( o, arch_info->arch, opts->arch, NULL );
 
 	if ( opts->disasm_opts && opts->disasm_opts[0] ) {
 		opdis_set_disassembler_options( o, opts->disasm_opts );
 	}
+
+	opdis_set_x86_syntax( o, opts->syntax );
 
 	// based on format
 	// opdis_set_display( o )
