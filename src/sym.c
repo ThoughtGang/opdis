@@ -125,3 +125,22 @@ const char * sym_tab_find_name( sym_tab_t s, opdis_vma_t vma ) {
 
 	return NULL;
 }
+
+static int print_symtab( void * item, void * arg ) {
+	sym_t * sym = (sym_t *) item;
+	FILE * f = (FILE *) arg;
+
+	if (! sym || ! f ) {
+		return;
+	}
+
+	fprintf( f, "\t%p: %s\n", (void *) sym->vma, sym->name );
+}
+
+void sym_tab_print( sym_tab_t s, FILE * f ) {
+	if (!  s ) {
+		return;
+	}
+
+	opdis_tree_foreach( (opdis_tree_t) s->by_vma, print_symtab, f );
+}

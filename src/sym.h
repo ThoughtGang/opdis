@@ -26,5 +26,6 @@ opdis_vma_t sym_tab_find_vma( sym_tab_t, const char * name );
 
 const char * sym_tab_find_name( sym_tab_t, opdis_vma_t vma );
 
+void sym_tab_print( sym_tab_t, FILE * );
 
 #endif

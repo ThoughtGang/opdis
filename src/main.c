@@ -447,6 +447,13 @@ static void configure_opdis( struct opdis_options * opts ) {
 	// opdis_set_resolver( o )
 }
 
+static void print_target_syms (tgt_list_item_t * t, unsigned int id, void * a) {
+	if ( t->symtab ) {
+		printf( "Target %d:\n", id );
+		sym_tab_print( t->symtab, stdout );
+	}
+}
+
 static void dry_run( struct opdis_options * opts ) {
 	printf( "Architecture: %s\n", opts->arch_str );
 	printf( "Disassembler options: %s\n", opts->disasm_opts );
@@ -454,14 +461,25 @@ static void dry_run( struct opdis_options * opts ) {
 	printf( "Format: %s\n", opts->asm_fmt );
 	printf( "Output: %s\n\n", opts->output ? opts->output : "STDOUT" );
 
-	printf( "Targets:\n" );
-	tgt_list_print( opts->targets, stdout );
+	if ( opts->targets->num_items ) {
+		printf( "Targets:\n" );
+		tgt_list_print( opts->targets, stdout );
+	}
 
-	printf( "Memory Map:\n" );
-	mem_map_print( opts->map, stdout );
+	if ( opts->map->num ) {
+		printf( "Memory Map:\n" );
+		mem_map_print( opts->map, stdout );
+	}
 
-	printf( "Jobs:\n" );
-	job_list_print( opts->jobs, stdout );
+	if ( opts->jobs->num_items ) {
+		printf( "Jobs:\n" );
+		job_list_print( opts->jobs, stdout );
+	}
+
+	if ( opts->bfd_all_targets || opts->bfd_targets ) {
+		printf( "BFD Symbols:\n" );
+		tgt_list_foreach( opts->targets, print_target_syms, NULL );
+	}
 }
 
 /* ---------------------------------------------------------------------- */
