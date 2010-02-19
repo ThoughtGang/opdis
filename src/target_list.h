@@ -1,5 +1,4 @@
 /* target_list.h
- *
  */
 
 #include <bfd.h>
@@ -8,6 +7,8 @@
 #define TARGET_LIST_H
 
 #include <opdis/types.h>
+
+#include "sym.h"
 
 /* Type of target: The target string is either a filename or an ASCII string of
  *                 bytes in hex/octal/etc */
@@ -24,6 +25,7 @@ typedef struct TARGET_LIST_ITEM {
 					   bytes */
 	opdis_buf_t data;		/* binary data for target */
 	bfd * tgt_bfd;			/* BFD for target, if applicable */
+	sym_tab_t symtab;		/* BFD symbols */
 	struct TARGET_LIST_ITEM * next;
 } tgt_list_item_t;
 

@@ -128,11 +128,81 @@ static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf,
 }
 
 static struct bfd_symbol * find_bfd_symbol( bfd * abfd, const char * name ) {
+#if 0
+if (!(bfd_get_file_flags (abfd) & HAS_SYMS))
+    {
+      symcount = 0;
+      return NULL;
+    }
+
+  storage = bfd_get_symtab_upper_bound (abfd);
+  if (storage < 0)
+    bfd_fatal (bfd_get_filename (abfd));
+  if (storage)
+    sy = (asymbol **) xmalloc (storage);
+
+  symcount = bfd_canonicalize_symtab (abfd, sy);
+  if (symcount < 0)
+asymbol **sy = NULL;
+  long storage;
+
+  storage = bfd_get_dynamic_symtab_upper_bound (abfd);
+  if (storage < 0)
+    {
+      if (!(bfd_get_file_flags (abfd) & DYNAMIC))
+        {
+          non_fatal (_("%s: not a dynamic object"), bfd_get_filename (abfd));
+          dynsymcount = 0;
+          return NULL;
+        }
+
+      bfd_fatal (bfd_get_filename (abfd));
+    }
+  if (storage)
+    sy = (asymbol **) xmalloc (storage);
+
+  dynsymcount = bfd_canonicalize_dynamic_symtab (abfd, sy);
+  if (dynsymcount < 0)
+
+    nsize = bfd_get_symtab_upper_bound (ibfd);
+    symtab = malloc(nsize);
+    nsyms = bfd_canonicalize_symtab(ibfd, symtab);
+
+    for (i = 0; i < nsyms; i++) {
+        if (strcmp(symtab[i]->name, symname) == 0) {
+            bfd_symbol_info(symtab[i], &syminfo);
+            return (long) syminfo.value;
+        }
+    }
+#endif
+
 	// TODO
 	return NULL;
 }
 
 static struct bfd_section * find_bfd_section( bfd * abfd, const char * name ) {
+	asection *bfd_get_section_by_name (bfd *abfd, const char *name);
+
+#if 0
+	bfd_map_over_sections( bfd, find_rva, &rva_info );
+		if ( ! rva_info.section ) 
+			return;
+		size = bfd_section_size( bfd, rva_info.section );
+		buf = calloc( size, 1 );
+		/* we're gonna be mean here and only free the mem at exit() */
+		if ( ! bfd_get_section_contents( bfd, rva_info.section, buf, 0, 
+								size ) )
+
+void bfd_map_over_sections                                                      
+   (bfd *abfd,
+    void (*func) (bfd *abfd, asection *sect, void *obj),
+    void *obj);
+
+bfd_boolean bfd_get_section_contents                                            
+   (bfd *abfd, asection *section, void *location, file_ptr offset,
+    bfd_size_type count);
+
+#endif
 	// TODO
 	return NULL;
 }
@@ -142,7 +212,6 @@ static int perform_job( job_list_item_t * job, tgt_list_t targets,
 	int rv;
 	opdis_vma_t vma;
 	tgt_list_item_t * target;
-	struct bfd_symbol * symbol;
 	struct bfd_section * section;
 
 	if (! job || ! targets || ! map || ! o ) {
@@ -169,16 +238,15 @@ static int perform_job( job_list_item_t * job, tgt_list_t targets,
 					 job->target );
 				return 0;
 			}
-			symbol = find_bfd_symbol( target->tgt_bfd, 
-						  job->bfd_name );
-			if (! symbol ) {
+			vma = sym_tab_find_vma( target->symtab, job->bfd_name );
+			if ( vma == OPDIS_INVALID_ADDR ) {
 				fprintf( stderr, "Cannot find BFD symbol %s\n",
 					 job->bfd_name );
 				return 0;
 			}
 
 			rv = opdis_disasm_cflow( o, target->tgt_bfd->iostream,
-						 symbol->value );
+						 vma );
 			break;
 		case job_bfd_section:
 			if (! target->tgt_bfd ) {
@@ -186,13 +254,15 @@ static int perform_job( job_list_item_t * job, tgt_list_t targets,
 					 job->target );
 				return 0;
 			}
-			section = find_bfd_section( target->tgt_bfd, 
-						    job->bfd_name );
+			section = bfd_get_section_by_name( target->tgt_bfd, 
+							   job->bfd_name );
 			if (! section ) {
 				fprintf( stderr, "Cannot find BFD section %s\n",
 					 job->bfd_name );
 				return 0;
 			}
+			// TODO : bfd entry
+			// TODO : bfd_get_section_contents ?
 			rv = opdis_disasm_linear( o, target->tgt_bfd->iostream,
 						  section->vma,
 						  (opdis_off_t) section->size );

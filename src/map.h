@@ -21,8 +21,6 @@ typedef struct {
 typedef opdis_tree_t mem_map_t;
 
 /* ---------------------------------------------------------------------- */
-// maps are stored in a tree keyed by vma
-// need key fn
 
 /* allocate a memory map */
 mem_map_t mem_map_alloc( void );

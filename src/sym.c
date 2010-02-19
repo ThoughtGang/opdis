@@ -16,12 +16,12 @@ typedef struct {
 
 static void * sym_key_vma( void * data ) {
 	sym_t * sym = (sym_t *) data;
-	return sym ? sym->vma : NULL;
+	return sym ? (void *) sym->vma : NULL;
 }
 
 static void * sym_key_name( void * data ) {
 	sym_t * sym = (sym_t *) data;
-	return sym ? sym->name : NULL;
+	return sym ? (void *) sym->name : NULL;
 }
 
 static int name_cmp(void *a, void * b) {
@@ -64,6 +64,10 @@ void sym_tab_free( sym_tab_t s ) {
 int sym_tab_add( sym_tab_t s, const char * name, opdis_vma_t vma ) {
 	sym_t * sym;
 
+	if (! s || ! name ) {
+		return 0;
+	}
+
 	if ( opdis_tree_find( (opdis_tree_t) s->by_name, (void *) name ) ) {
 		fprintf( stderr, "Symbol for name %s already exists\n", name );
 		return 0;
@@ -78,6 +82,8 @@ int sym_tab_add( sym_tab_t s, const char * name, opdis_vma_t vma ) {
 	if (! sym ) {
 		return 0;
 	}
+	sym->name = name;
+	sym->vma = vma;
 
 	if (! opdis_tree_add( (opdis_tree_t) s->by_vma, sym ) ) {
 		free(sym);
@@ -85,7 +91,7 @@ int sym_tab_add( sym_tab_t s, const char * name, opdis_vma_t vma ) {
 	}
 
 	if (! opdis_tree_add( (opdis_tree_t) s->by_name, sym ) ) {
-		opdis_tree_delete( (opdis_tree_t) s->by_vma, vma );
+		opdis_tree_delete( (opdis_tree_t) s->by_vma, (void *) vma );
 		return 0;
 	}
 
@@ -93,7 +99,12 @@ int sym_tab_add( sym_tab_t s, const char * name, opdis_vma_t vma ) {
 }
 
 opdis_vma_t sym_tab_find_vma( sym_tab_t s, const char * name ) {
-	sym_t * sym = opdis_tree_find( (opdis_tree_t) s->by_name, name ); 
+	sym_t * sym;
+	if (! s || ! name ) {
+		return OPDIS_INVALID_ADDR;
+	}
+
+	sym = opdis_tree_find( (opdis_tree_t) s->by_name, (void *) name ); 
 	if ( sym ) {
 		return sym->vma;
 	}
@@ -101,9 +112,16 @@ opdis_vma_t sym_tab_find_vma( sym_tab_t s, const char * name ) {
 }
 
 const char * sym_tab_find_name( sym_tab_t s, opdis_vma_t vma ) {
-	sym_t * sym = opdis_tree_find( (opdis_tree_t) s->by_vma, vma ); 
+	sym_t * sym;
+	
+	if (! s ) {
+		return NULL;
+	}
+
+	sym = opdis_tree_find( (opdis_tree_t) s->by_vma, (void *) vma );
 	if ( sym ) {
 		return sym->name;
 	}
-	return OPDIS_INVALID_ADDR;
+
+	return NULL;
 }

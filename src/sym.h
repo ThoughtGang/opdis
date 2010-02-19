@@ -20,8 +20,7 @@ sym_tab_t sym_tab_alloc( void );
 
 void sym_tab_free( sym_tab_t );
 
-int sym_tab_add( sym_tab_t, const char * name, opdis_off_t offset,
-		 opdis_vma_t vma );
+int sym_tab_add( sym_tab_t, const char * name, opdis_vma_t vma );
 
 opdis_vma_t sym_tab_find_vma( sym_tab_t, const char * name );
 

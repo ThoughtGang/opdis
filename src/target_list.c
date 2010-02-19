@@ -162,18 +162,71 @@ unsigned int tgt_list_add( tgt_list_t targets, enum target_type_t type,
 	return targets->num_items;
 }
 
+static void load_bfd_symbols( sym_tab_t symtab, asymbol ** syms, 
+			      unsigned int num_syms ) {
+	unsigned int i;
+	symbol_info info;
+
+	for ( i = 0; i < num_syms; i++ ) {
+		bfd_symbol_info( syms[i], &info );
+printf("Add symbol %s\n", info.name );
+		// TODO: check symbol type
+		sym_tab_add( symtab, info.name, info.value );
+	}
+}
+
+static void load_symbols( bfd * abfd, sym_tab_t symtab ) {
+	size_t size;
+	unsigned int num;
+	asymbol ** syms;
+
+	if (! bfd_get_file_flags(abfd) & HAS_SYMS ) {
+		return;
+	}
+
+	size = bfd_get_dynamic_symtab_upper_bound( abfd );
+	if ( size > 0 ) {
+		syms = (asymbol **) malloc(size);
+		if ( syms ) {
+			num = bfd_canonicalize_dynamic_symtab( abfd, syms );
+			load_bfd_symbols( symtab, syms, num );
+		}
+	}
+
+	size = bfd_get_symtab_upper_bound( abfd );
+	if ( size > 0 ) {
+		syms = (asymbol **) malloc(size);
+		if ( syms ) {
+			num = bfd_canonicalize_symtab( abfd, syms );
+			load_bfd_symbols( symtab, syms, num );
+		}
+	}
+}
+
 int tgt_list_make_bfd( tgt_list_item_t * tgt ) {
 	if (! tgt ) {
 		return;
 	}
 
 	tgt->tgt_bfd = bfd_openr( tgt->ascii, NULL );
-	if (! tgt->tgt_bfd ) {
+	if (! tgt->tgt_bfd  ) {
 		fprintf( stderr, "Unable to create BFD for %s\n", tgt->ascii );
 		fprintf( stderr, "Will continue using non-BFD target\n" );
 		return 0;
 	}
-	
+
+	if ( bfd_get_flavour( tgt->tgt_bfd ) == bfd_target_unknown_flavour ) {
+		fprintf( stderr, "WARNING: unknown BFD flavor\n" );
+	}
+
+	tgt->symtab = sym_tab_alloc();
+
+	if ( bfd_check_format( tgt->tgt_bfd, bfd_object ) ) {
+printf("loading symbols\n");
+		/* only object file will have symbols */
+		load_symbols( tgt->tgt_bfd, tgt->symtab );
+	}
+
 	// TODO: delete data
 
 	return 1;
