@@ -1,0 +1,31 @@
+/* sym.h
+ * tree of symbols in a bfd target
+ */
+
+#ifndef OPDIS_SYM_H
+#define OPDIS_SYM_H
+
+#include <opdis/tree.h>
+
+typedef struct {
+	opdis_tree_t by_name;
+	opdis_tree_t by_vma;
+} sym_table_t;
+
+typedef sym_table_t * sym_tab_t;
+
+/* ---------------------------------------------------------------------- */
+
+sym_tab_t sym_tab_alloc( void );
+
+void sym_tab_free( sym_tab_t );
+
+int sym_tab_add( sym_tab_t, const char * name, opdis_off_t offset,
+		 opdis_vma_t vma );
+
+opdis_vma_t sym_tab_find_vma( sym_tab_t, const char * name );
+
+const char * sym_tab_find_name( sym_tab_t, opdis_vma_t vma );
+
+
+#endif

@@ -30,7 +30,7 @@ EXTRA_DIST = config doc/doxy_input doc/examples doc/html doc/man
 # OPDIS TARGET
 
 dist_opdis_SOURCES = src/main.c src/job_list.c src/map.c src/target_list.c \
-		     src/asm_format.c
+		     src/asm_format.c src/sym.c
 dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes 
 
 
