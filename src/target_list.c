@@ -189,6 +189,7 @@ static void load_symbols( bfd * abfd, sym_tab_t symtab ) {
 		if ( syms ) {
 			num = bfd_canonicalize_dynamic_symtab( abfd, syms );
 			load_bfd_symbols( symtab, syms, num );
+			free(syms);
 		}
 	}
 
@@ -198,6 +199,7 @@ static void load_symbols( bfd * abfd, sym_tab_t symtab ) {
 		if ( syms ) {
 			num = bfd_canonicalize_symtab( abfd, syms );
 			load_bfd_symbols( symtab, syms, num );
+			free(syms);
 		}
 	}
 }
