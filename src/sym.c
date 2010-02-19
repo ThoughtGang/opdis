@@ -69,12 +69,12 @@ int sym_tab_add( sym_tab_t s, const char * name, opdis_vma_t vma ) {
 	}
 
 	if ( opdis_tree_find( (opdis_tree_t) s->by_name, (void *) name ) ) {
-		fprintf( stderr, "Symbol for name %s already exists\n", name );
+//		fprintf( stderr, "Symbol for name %s already exists\n", name );
 		return 0;
 	}
 	if ( opdis_tree_find( (opdis_tree_t) s->by_vma, (void *) vma ) ) {
-		fprintf( stderr, "Symbol for VMA %p already exists\n", 
-			 (void *) vma );
+//		fprintf( stderr, "Symbol for VMA %p already exists\n", 
+//			 (void *) vma );
 		return 0;
 	}
 

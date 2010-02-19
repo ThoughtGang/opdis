@@ -169,7 +169,6 @@ static void load_bfd_symbols( sym_tab_t symtab, asymbol ** syms,
 
 	for ( i = 0; i < num_syms; i++ ) {
 		bfd_symbol_info( syms[i], &info );
-printf("Add symbol %s\n", info.name );
 		// TODO: check symbol type
 		sym_tab_add( symtab, info.name, info.value );
 	}
@@ -222,7 +221,6 @@ int tgt_list_make_bfd( tgt_list_item_t * tgt ) {
 	tgt->symtab = sym_tab_alloc();
 
 	if ( bfd_check_format( tgt->tgt_bfd, bfd_object ) ) {
-printf("loading symbols\n");
 		/* only object file will have symbols */
 		load_symbols( tgt->tgt_bfd, tgt->symtab );
 	}
