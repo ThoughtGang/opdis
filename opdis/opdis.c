@@ -401,9 +401,36 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
 }
 
 /* ---------------------------------------------------------------------- */
+/* BFD interface */
+
+int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
+				     opdis_off_t length ) {
+	return 0;
+}
+
+int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
+	return 0;
+}
+
+
+int LIBCALL opdis_disasm_bfd_section( opdis_t o, a_section * sec ) {
+	return 0;
+}
+
+
+int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, a_symbol * sym ) {
+	return 0;
+}
+
+
+int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd ) {
+	return 0;
+}
+
+
+/* ---------------------------------------------------------------------- */
 void LIBCALL opdis_error( opdis_t o, enum opdis_error_t error, 
 			  const char * msg ) {
 	if ( o ) o->error_reporter(error, msg, o->error_reporter_arg );
 }
-
 

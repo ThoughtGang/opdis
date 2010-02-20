@@ -492,7 +492,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 					opdis_insn_t * insn );
 
 /*!
- * \fn opdis_disasm_linear( opdis_t, opdis_buf_t, opdis_off_t, opdis_off_t )
+ * \fn opdis_disasm_linear( opdis_t, opdis_buf_t, opdis_vma_t, opdis_off_t )
  * \ingroup disassembly
  * \brief Disassemble a sequence of instructions in order.
  * \param o opdis disassembler
@@ -516,6 +516,55 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
  */
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
 				opdis_vma_t vma );
+/*!
+ * \fn opdis_disasm_bfd_linear( opdis_t, bfd *, opdis_vma_t, opdis_off_t )
+ * \ingroup disassembly
+ * \brief Disassemble a sequence of instructions in a BFD.
+ * \param o opdis disassembler
+ * \param abfd The BFD to disassemble
+ * \param vma The address (VMA) in the BFD to start disassembly at.
+ * \param length The number of bytes to disassemble.
+ * \note If \e length is zero, then all bytes from \e offset to the end of
+ *       the BFD will be disassembled.
+ */
+int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
+				     opdis_off_t length );
+/*!
+ * \fn opdis_disasm_bfd_cflow( opdis_t, bfd *, opdis_off_t )
+ * \ingroup disassembly
+ * \brief Disassemble a contents of a BFD following flow of control.
+ * \param o opdis disassembler
+ * \param abfd The BFD to disassemble
+ * \param vma The address (VMA) of the entry point in the BFD
+ */
+int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma );
+
+/*!
+ * \fn opdis_disasm_bfd_section( opdis_t, asection * )
+ * \ingroup disassembly
+ * \brief Disassemble a the contents of a BFD section using linear disassembly.
+ * \param o opdis disassembler
+ * \param sec The section to disassemble
+ */
+int LIBCALL opdis_disasm_bfd_section( opdis_t o, a_section * sec );
+
+/*!
+ * \fn opdis_disasm_bfd_symbol( opdis_t, asymbol * )
+ * \ingroup disassembly
+ * \brief Disassemble a BFD following flow of control from a symbol.
+ * \param o opdis disassembler
+ * \param sym The BFD symbol to start disassembly at.
+ */
+int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, a_symbol * sym );
+
+/*!
+ * \fn opdis_disasm_bfd_entry( opdis_t, bfd * )
+ * \ingroup disassembly
+ * \brief Disassemble a BFD following flow of control from entry point (_start).
+ * \param o opdis disassembler
+ * \param abfd The BFD to disassemble
+ **/
+int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd );
 
 /*!
  * \fn opdis_error( opdis_t, enum opdis_error_t, const char * )
