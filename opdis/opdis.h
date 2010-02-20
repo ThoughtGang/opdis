@@ -546,7 +546,7 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma );
  * \param o opdis disassembler
  * \param sec The section to disassemble
  */
-int LIBCALL opdis_disasm_bfd_section( opdis_t o, a_section * sec );
+int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec );
 
 /*!
  * \fn opdis_disasm_bfd_symbol( opdis_t, asymbol * )
@@ -555,7 +555,7 @@ int LIBCALL opdis_disasm_bfd_section( opdis_t o, a_section * sec );
  * \param o opdis disassembler
  * \param sym The BFD symbol to start disassembly at.
  */
-int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, a_symbol * sym );
+int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym );
 
 /*!
  * \fn opdis_disasm_bfd_entry( opdis_t, bfd * )

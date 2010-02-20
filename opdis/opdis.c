@@ -413,12 +413,12 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 }
 
 
-int LIBCALL opdis_disasm_bfd_section( opdis_t o, a_section * sec ) {
+int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec ) {
 	return 0;
 }
 
 
-int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, a_symbol * sym ) {
+int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 	return 0;
 }
 
