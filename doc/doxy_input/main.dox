@@ -95,5 +95,12 @@ platforms:
 - \ref faq
 <BR>
 
+<HR>
+\section License
+
+Both \e opdis and \e libopdis are covered by the GNU Public License, version 3.
+See the file COPYING included in the distribution, or 
+http://www.gnu.org/licenses/gpl.txt .
+
 */
 
