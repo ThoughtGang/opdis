@@ -1,5 +1,9 @@
 /* main.c
  * Startup routine for opdis command-line utility
+ * Copyright (c) 2010 ThoughtGang
+ * Written by TG Community Developers <community@thoughtgang.org>
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #include <argp.h>		/* glibc command line option parser */

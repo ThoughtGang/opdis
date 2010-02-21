@@ -3,7 +3,10 @@
  * \brief AVL trees for storing opdis addresses and instructions.
  * \details This provides balanced binary (AVL) trees which store opdis 
  *          address or instruction objects order by address.
- * \author thoughtgang.org
+ * \author TG Community Developers <community@thoughtgang.org>
+ * \note Copyright (c) 2010 ThoughtGang.
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #ifndef OPDIS_INSNTREE_H

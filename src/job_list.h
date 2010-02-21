@@ -1,5 +1,8 @@
 /* job_list.h
- * 
+ * Copyright (c) 2010 ThoughtGang
+ * Written by TG Community Developers <community@thoughtgang.org>
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #ifndef JOB_LIST_H
@@ -68,4 +71,5 @@ int job_list_perform_all( job_list_t, tgt_list_t, mem_map_t, opdis_t,
 			  int quiet );
 
 void job_list_print( job_list_t, FILE * f );
+
 #endif

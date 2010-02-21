@@ -2,7 +2,10 @@
  * \file model.h
  * \brief Data model for libopdis.
  * \details This defines the data model for libopdis.
- * \author thoughtgang.org
+ * \author TG Community Developers <community@thoughtgang.org>
+ * \note Copyright (c) 2010 ThoughtGang.
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #ifndef OPDIS_MODEL_H

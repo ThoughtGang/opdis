@@ -2,7 +2,10 @@
  * \file types.h
  * \brief Base types used by opdis
  * \details This defines the types used by the opdis disassembler.
- * \author thoughtgang.org
+ * \author TG Community Developers <community@thoughtgang.org>
+ * \note Copyright (c) 2010 ThoughtGang.
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #ifndef OPDIS_TYPES_H

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.64])
-AC_INIT([opdis], [0.1], [dev@thoughtgang.org])
+AC_INIT([opdis], [0.1], [community@thoughtgang.org])
 AM_INIT_AUTOMAKE([1.9 gnu])
 
 AC_CONFIG_MACRO_DIR([m4])

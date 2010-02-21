@@ -3,7 +3,10 @@
  * \brief Buffer for building Opdis instructions from libopcodes output.
  * \details This defines the buffer data structure used by libopdis
  *          to capture libopcodes output.
- * \author thoughtgang.org
+ * \author TG Community Developers <community@thoughtgang.org>
+ * \note Copyright (c) 2010 ThoughtGang.
+ * Released under the GNU Public License, version 3.
+ * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
 #ifndef OPDIS_INSN_BUF_H
