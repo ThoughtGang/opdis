@@ -1,11 +1,14 @@
 /*!
+ \defgroup bfd BFD
+  API for use with the GNU BFD library. 
+
  \defgroup configuration Configuration
   API for opdis configuration.
 
  \defgroup disassembly Disassembly
   API for disassembly.
 
- \defgroup internal
+ \defgroup internal Internal
   Internal types and functions.
 
  \defgroup model Data Model
