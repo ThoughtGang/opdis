@@ -451,7 +451,7 @@ static void vma_in_section( bfd * abfd, asection *s, PTR data ){
 	}
 }
 
-static int section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
+static int load_section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
 	int size;
 	unsigned char * buf;
 	struct BFD_VMA_SECTION req = { vma, NULL };
@@ -473,7 +473,7 @@ static int section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
 int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 				     opdis_off_t length ) {
 	int count;
-	if (! section_for_vma(o, abfd, vma) ) {
+	if (! load_section_for_vma(o, abfd, vma) ) {
 		// TODO: Error
 		return 0;
 	}
@@ -509,8 +509,7 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 
 
 int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd ) {
-	//bfd_get_start_address( abfd )
-	return 0;
+	return opdis_disasm_bfd_cflow( o, abfd, bfd_get_start_address(abfd) );
 }
 
 
