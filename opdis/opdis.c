@@ -118,7 +118,17 @@ void LIBCALL opdis_term( opdis_t o ) {
 }
 
 opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
-	return NULL;
+	opdis_t o = opdis_init();
+	
+	if ( o ) {
+		o->config.flavour = bfd_get_flavour(abfd);
+		o->config.endian = abfd->xvec->byteorder;
+
+		opdis_set_arch( o, bfd_get_arch(abfd), bfd_get_mach(abfd),
+				disassembler(abfd) );
+	}
+
+	return o;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -324,34 +334,37 @@ static inline opdis_insn_t * alloc_fixed_insn() {
 	return opdis_insn_alloc_fixed( 128, 32, 16, 32 );
 }
 
-int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
-				 opdis_off_t length ) {
+static int disasm_linear( opdis_t o, opdis_vma_t vma, opdis_off_t length ) {
 	opdis_insn_t * insn;
 	int cont = 1;
 	unsigned int count = 0;
-	opdis_off_t idx = 0;
 	opdis_off_t pos = vma;
-	opdis_off_t max_pos = buf->vma + buf->len;
-	length = (length == 0) ? buf->len : length;
-	
+	length = (length == 0) ? o->config.buffer_length : length;
+	opdis_off_t max_pos = o->config.buffer_vma + length;
+
 	insn = alloc_fixed_insn();
 	if (! insn ) {
 		fprintf( stderr, "Unable to alloc insn\n" );
 		return 0;
 	}
 
-	set_opdis_buffer( o, buf );
-	while ( cont && idx < length && pos < max_pos ) {
+	while ( cont && pos < max_pos ) {
 		// TODO: clear insn
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
-		idx += size;
 		count++;
 		o->display( insn, o->display_arg );
 		cont = o->handler( insn, o->handler_arg );
 	}
 
 	return count;
+}
+
+int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
+				 opdis_off_t length ) {
+	set_opdis_buffer( o, buf );
+
+	return disasm_linear( o, vma, length );
 }
 
 static int disasm_cflow(opdis_t o, opdis_insn_t * insn, opdis_vma_t vma) {
@@ -406,9 +419,71 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
 /* ---------------------------------------------------------------------- */
 /* BFD interface */
 
+struct BFD_VMA_SECTION {
+	bfd_vma vma;
+	asection * sec;
+};
+
+static int load_section( opdis_t o, asection * s ) {
+	int size;
+	unsigned char *buf;
+
+	size = bfd_section_size( s->owner, s );
+	buf = calloc( size, 1 );
+	if (! buf || ! bfd_get_section_contents( s->owner, s, buf, 0, size ) ) {
+		// TODO: error
+		return 0;
+	}
+
+	o->config.section = s;
+	o->config.buffer = buf;
+	o->config.buffer_length = size;
+	o->config.buffer_vma = bfd_section_vma( s->owner, s );
+
+	return 1;
+}
+
+static void vma_in_section( bfd * abfd, asection *s, PTR data ){
+	struct BFD_VMA_SECTION * req = (struct BFD_VMA_SECTION *) data;
+	if ( req && req->vma >= s->vma && req->vma < 
+	     (s->vma + bfd_section_size(abfd, s)) ) {
+		req->sec = s;
+	}
+}
+
+static int section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
+	int size;
+	unsigned char * buf;
+	struct BFD_VMA_SECTION req = { vma, NULL };
+
+	bfd_map_over_sections( abfd, vma_in_section, & req );
+	if (! req.sec ) {
+		// TODO : error
+		return 0;
+	}
+
+	if (! load_section( o, req.sec ) ) {
+		// TODO : error
+		return 0;
+	}
+
+	return 1;
+}
+
 int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 				     opdis_off_t length ) {
-	return 0;
+	int count;
+	if (! section_for_vma(o, abfd, vma) ) {
+		// TODO: Error
+		return 0;
+	}
+
+	count = disasm_linear( o, vma, length );
+
+	free( o->config.buffer );
+	o->config.buffer = NULL;
+
+	return count;
 }
 
 int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
@@ -417,7 +492,14 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 
 
 int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec ) {
-	return 0;
+	int count = 0;
+
+	if ( load_section( o, sec ) ) {
+		count = disasm_linear( o, bfd_section_vma(sec->owner, sec), 0 );
+		free( o->config.buffer );
+		o->config.buffer = NULL;
+	}
+	return count;
 }
 
 
@@ -427,6 +509,7 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 
 
 int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd ) {
+	//bfd_get_start_address( abfd )
 	return 0;
 }
 

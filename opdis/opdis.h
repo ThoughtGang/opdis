@@ -272,7 +272,7 @@ opdis_t LIBCALL opdis_init( void );
 
 /*!
  * \fn opdis_init_from_bfd( bfd * )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Initialize an opdis disassembler based on a BFD object
  * \details Allocates an opdis_t using opdis_init(), then configures libopcodes 
  * based on information (e.g. the architecture) in the BFD.
@@ -521,7 +521,7 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
 				opdis_vma_t vma );
 /*!
  * \fn opdis_disasm_bfd_linear( opdis_t, bfd *, opdis_vma_t, opdis_off_t )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Disassemble a sequence of instructions in a BFD.
  * \param o opdis disassembler
  * \param abfd The BFD to disassemble
@@ -534,7 +534,7 @@ int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 				     opdis_off_t length );
 /*!
  * \fn opdis_disasm_bfd_cflow( opdis_t, bfd *, opdis_off_t )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Disassemble a contents of a BFD following flow of control.
  * \param o opdis disassembler
  * \param abfd The BFD to disassemble
@@ -544,7 +544,7 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma );
 
 /*!
  * \fn opdis_disasm_bfd_section( opdis_t, asection * )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Disassemble a the contents of a BFD section using linear disassembly.
  * \param o opdis disassembler
  * \param sec The section to disassemble
@@ -553,7 +553,7 @@ int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec );
 
 /*!
  * \fn opdis_disasm_bfd_symbol( opdis_t, asymbol * )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Disassemble a BFD following flow of control from a symbol.
  * \param o opdis disassembler
  * \param sym The BFD symbol to start disassembly at.
@@ -562,7 +562,7 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym );
 
 /*!
  * \fn opdis_disasm_bfd_entry( opdis_t, bfd * )
- * \ingroup disassembly
+ * \ingroup bfd
  * \brief Disassemble a BFD following flow of control from entry point (_start).
  * \param o opdis disassembler
  * \param abfd The BFD to disassemble
