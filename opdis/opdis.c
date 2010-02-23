@@ -109,6 +109,19 @@ static int null_fprintf( void * f, const char * str, ... ) {
 	return 0;
 }
 
+static void report_memory_error( int status, bfd_vma vma, 
+				 struct disassemble_info * info ) {
+	char msg[48];
+	opdis_t o = (opdis_t) info->application_data;
+	if (! o ) {
+		return;
+	}
+
+	snprintf( msg, 47, "VMA %p (status %d)\n", (void *) vma, status );
+
+	opdis_error( o, opdis_error_bounds, msg );
+}
+
 /* ---------------------------------------------------------------------- */
 /* OPDIS MGT */
 
@@ -120,7 +133,7 @@ opdis_t LIBCALL opdis_init( void ) {
 		o->visited_addr = opdis_vma_tree_init();
 		init_disassemble_info ( &o->config, o, build_insn_fprintf );
 		o->config.application_data = (void *) o;
-		// TODO : read memory error fn
+		o->config.memory_error_func = report_memory_error;
 		opdis_set_defaults( o );
 	}
 
@@ -249,19 +262,6 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg ) {
 /* ---------------------------------------------------------------------- */
 /* Disassemble instruction */
 
-static int buffer_check( opdis_buf_t buf, opdis_vma_t vma ) {
-	if ( vma >= buf->vma + buf->len ) {
-		char msg[64];
-		snprintf( msg, 63, "Offset %d exceeds buffer length %d\n",
-			 (int) (vma - buf->vma), (int) buf->len );
-
-		//opdis_error( o, opdis_error_bounds, buf );
-		return 0;
-	}
-
-	return 1;
-}
-
 /* Internal wrapper for libopcodes disassembler used by the three main
  * disasm functions: disasm_insn, disasm_linear, disasm_cflow. */
 // NOTE: This requires that opdis_set_buffer() have been called
@@ -313,7 +313,7 @@ unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
 	fprintf_ftype fn = o->config.fprintf_func;
 	o->config.fprintf_func = null_fprintf;
 
-	if (! o || ! buf ||! buffer_check( buf, vma ) ) {
+	if (! o || ! buf  ) {
 		return 0;
 	}
 
@@ -336,7 +336,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 					opdis_insn_t * insn ) {
 	size_t size;
 
-	if (! o || ! buf ||! buffer_check( buf, vma ) ) {
+	if (! o || ! buf  ) {
 		return 0;
 	}
 
@@ -370,7 +370,6 @@ static int disasm_linear( opdis_t o, opdis_vma_t vma, opdis_off_t length ) {
 	}
 
 	while ( cont && pos < max_pos ) {
-		// TODO: clear insn
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
 		count++;
