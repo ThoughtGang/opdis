@@ -5,6 +5,7 @@ NOTES:
 	* The man page for opdis is out of date in respect to the src
 	* output options (file, format) are not implemented
 	* control flow will not work until a proper decoder is written
+	* BFD jobs ignore user-provided options for -a. 
 
 BUILD
 -----
