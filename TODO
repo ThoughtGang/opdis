@@ -2,4 +2,3 @@
 * asm_format output module
 * x86 decoder
 * generic decoder: use libopcodes info to set jump flags, etc if avail
-* cflow: need address tree to track decoded addresses
