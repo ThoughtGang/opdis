@@ -46,9 +46,10 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 	}
 
 	insn->ascii = calloc( 1, ascii_sz );
+	insn->prefixes = calloc( 4, mnemonic_sz );
 	insn->mnemonic = calloc( 1, mnemonic_sz );
 
-	if (! insn->ascii || ! insn->mnemonic ) {
+	if (! insn->ascii || !insn->prefixes || ! insn->mnemonic ) {
 		opdis_insn_free( insn );
 		return NULL;
 	}
@@ -80,6 +81,7 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 	memcpy( new_insn, insn, sizeof(opdis_insn_t) );
 	new_insn->ascii = NULL;
 	new_insn->mnemonic = NULL;
+	new_insn->prefixes = NULL;
 	new_insn->operands = new_operands;
 
 	if ( insn->ascii ) {
@@ -88,6 +90,15 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 			opdis_insn_free(new_insn);
 			return NULL;
 		}
+	}
+
+	if ( insn->prefixes ) {
+		new_insn->prefixes = strdup(insn->prefixes);
+		if (! new_insn->prefixes ) {
+			opdis_insn_free(new_insn);
+			return NULL;
+		}
+		new_insn->num_prefixes = insn->num_prefixes;
 	}
 
 	if ( insn->mnemonic ) {
@@ -117,10 +128,10 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 void LIBCALL opdis_insn_clear( opdis_insn_t * i ) {
 	if ( i ) {
 		i->status = opdis_decode_invalid;
-		i->ascii[0] = '\0';
+		if (i->ascii) i->ascii[0] = '\0';
 		i->num_prefixes = 0;
-		i->prefixes[0] = '\0';
-		i->mnemonic[0] = '\0';
+		if (i->prefixes) i->prefixes[0] = '\0';
+		if (i->mnemonic) i->mnemonic[0] = '\0';
 		i->num_operands = 0;
 		i->target = i->dest = i->src = NULL;
 	}
