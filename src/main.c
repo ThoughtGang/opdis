@@ -19,9 +19,8 @@
 #include "map.h"
 #include "target_list.h"
 
-// TODO: resolver
-//       handler (inckuding tree of insns
-//       display
+// TODO: fix resolver callback
+//       fix display callback
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
@@ -122,6 +121,8 @@ struct opdis_options {
 	int		list_format;
 	int		dry_run;
 	int		quiet;
+
+	opdis_insn_tree_t	insn_tree;
 };
 
 static void set_defaults( struct opdis_options * opts ) {
@@ -129,8 +130,9 @@ static void set_defaults( struct opdis_options * opts ) {
 	opts->map = mem_map_alloc();
 	opts->targets = tgt_list_alloc();
 	opts->opdis = opdis_init();
+	opts->insn_tree = opdis_insn_tree_init( 1 );
 
-	/* TODO: use 64-bit detection? */
+	// TODO: use 64-bit detection?
 	opts->arch_str = "i386";
 	opts->arch = bfd_mach_i386_i386;
 
@@ -413,10 +415,51 @@ static struct argp argp_cfg = {
 };
 
 /* ---------------------------------------------------------------------- */
+/* CALLBACKS */
 
-static void bfd_load(  tgt_list_item_t * target, unsigned int id, void * arg ) {
+void opdis_display_cb ( const opdis_insn_t * insn, void * arg ) {
+	opdis_insn_t * i;
+	opdis_insn_tree_t tree = (opdis_insn_tree_t) arg;
+	if (! tree ) {
+		return;
+	}
+
+	i = opdis_insn_dupe( insn );
+	opdis_insn_tree_add( tree, i );
+}
+
+opdis_vma_t opdis_resolver_cb( const opdis_insn_t * i, void * arg ) {
+	mem_map_t map = (mem_map_t) arg;
+	opdis_vma_t vma = opdis_default_resolver( i, arg );
+	if ( vma != OPDIS_INVALID_ADDR ) {
+		return vma;
+	}
+
+	if (! map ) {
+		return OPDIS_INVALID_ADDR;
+	}
+
+	// TODO : check map for target operand
+	return OPDIS_INVALID_ADDR;
+}
+
+static int print_insn( opdis_insn_t * i, void * arg ) {
 	struct opdis_options * opts = (struct opdis_options *) arg;
 
+	if (! opts ) {
+		return;
+	}
+
+	// TODO : asm format based on opts
+
+	printf( "%p\t%s\n", (void *) i->vma, i->ascii );
+
+	return 1;
+}
+
+/* ---------------------------------------------------------------------- */
+
+static void bfd_load(  tgt_list_item_t * target, unsigned int id, void * arg ) {
 	tgt_list_make_bfd( target );
 }
 
@@ -424,7 +467,7 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 	int load_individually = 1;
 	struct BFD_TARGET * tgt;
 	if ( opts->bfd_all_targets ) {
-		tgt_list_foreach( opts->targets, bfd_load, opts );
+		tgt_list_foreach( opts->targets, bfd_load, NULL );
 		load_individually = 0;
 	}
 
@@ -432,7 +475,7 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 		if ( load_individually ) {
 			tgt_list_item_t * target = tgt_list_find( opts->targets,
 								  tgt->id );
-			bfd_load( target, tgt->id, opts );
+			bfd_load( target, tgt->id, NULL );
 		}
 
 		opts->bfd_targets = tgt->next;
@@ -452,10 +495,8 @@ static void configure_opdis( struct opdis_options * opts ) {
 
 	opdis_set_x86_syntax( o, opts->syntax );
 
-	// based on format
-	// opdis_set_display( o )
-	// opdis_set_handler( o )
-	// opdis_set_resolver( o )
+	opdis_set_display( o, opdis_display_cb, opts->insn_tree );
+	opdis_set_resolver( o, opdis_resolver_cb, opts->map );
 }
 
 static void set_job_opts( struct opdis_options * o, job_opts_t j ) {
@@ -534,7 +575,6 @@ static void list_format() {
 	printf( "\txml\t: XML representation\n" );
 	printf( "\t(format string)\n" );
 }
-
 /* ---------------------------------------------------------------------- */
 /* MAIN */
 int main( int argc, char ** argv ) {
@@ -589,6 +629,8 @@ int main( int argc, char ** argv ) {
 	configure_opdis( & opts );
 	set_job_opts( &opts, &job_opts );
 	job_list_perform_all( opts.jobs, &job_opts );
+
+	opdis_insn_tree_foreach( opts.insn_tree, print_insn, &opts );
 
 	return 0;
 }
