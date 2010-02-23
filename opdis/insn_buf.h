@@ -122,6 +122,15 @@ void LIBCALL opdis_insn_buf_free( opdis_insn_buf_t buf );
  */
 int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item );
 
+/*!
+ * \fn void opdis_insn_buf_clear( opdis_insn_buf_t )
+ * \ingroup internal
+ * \brief Clear the data in an opdis_insn_buffer_t.
+ * \param buf The instruction buffer to clear.
+ */
+void LIBCALL opdis_insn_buf_clear( opdis_insn_buf_t buf );
+
+
 #ifdef __cplusplus
 }
 #endif
