@@ -157,6 +157,10 @@ static int bfd_symbol_job( job_list_item_t * job, tgt_list_item_t * tgt,
 		return 0;
 	}
 
+	if (! o->quiet ) {
+		printf( "Control Flow disassembly of symbol %s\n", 
+			 job->bfd_name );
+	}
 	return opdis_disasm_bfd_cflow( o->bfd_opdis, tgt->tgt_bfd, vma );
 }
 
@@ -174,6 +178,9 @@ static int bfd_section_job( job_list_item_t * job, tgt_list_item_t * tgt,
 		return 0;
 	}
 
+	if (! o->quiet ) {
+		printf( "Linear disassembly of section %s\n", job->bfd_name );
+	}
 	return opdis_disasm_bfd_section( o->bfd_opdis, section );
 }
 
@@ -185,6 +192,9 @@ static int linear_job( job_list_item_t * job, tgt_list_item_t * tgt,
 		set_buffer_vma( job->target, tgt->data, o->map );
 	}
 
+	if (! o->quiet ) {
+		printf( "Linear disassembly of %p\n", (void *) vma );
+	}
 	return opdis_disasm_linear( o->opdis, tgt->data, vma, job->size );
 }
 
@@ -196,6 +206,9 @@ static int cflow_job( job_list_item_t * job, tgt_list_item_t * tgt,
 		set_buffer_vma( job->target, tgt->data, o->map );
 	}
 
+	if (! o->quiet ) {
+		printf( "Control Flow disassembly of %p\n", (void *) vma );
+	}
 	return opdis_disasm_cflow( o->opdis, tgt->data, vma );
 }
 
