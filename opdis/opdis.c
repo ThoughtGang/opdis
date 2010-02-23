@@ -256,6 +256,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 	o->config.insn_info_valid = 0;
 	o->buf->item_count = 0;
 	o->buf->string[0] = '\0';
+	opdis_insn_clear( insn );
 
 	size = o->disassembler( (bfd_vma) vma, &o->config );
 	if (! size ) {
@@ -266,6 +267,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 		return 0;
 	}
 
+	/* fill insn_buf with libopcodes meta-info */
 	o->buf->insn_info_valid = o->config.insn_info_valid;
 	o->buf->branch_delay_insns = o->config.branch_delay_insns;
 	o->buf->data_size = o->config.data_size;
@@ -281,6 +283,9 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 		opdis_error( o, opdis_error_decode_insn, msg );
 		// Note: this is a warning, not an error
 	}
+
+	/* clear insn buffer now that decoding has taken place */
+	opdis_insn_buf_clear( o->buf );
 
 	return size;
 }
@@ -367,26 +372,33 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 	return disasm_linear( o, vma, length );
 }
 
-static int disasm_cflow(opdis_t o, opdis_insn_t * insn, opdis_vma_t vma) {
+static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 	int cont = 1;
 	unsigned int count = 0;
 	opdis_off_t pos = vma;
 	opdis_off_t max_pos = o->config.buffer_vma + o->config.buffer_length;
+	opdis_insn_t * insn = alloc_fixed_insn();
+
+	if (! insn ) {
+		fprintf( stderr, "Unable to alloc insn\n" );
+		return 0;
+	}
 
 	while ( cont && pos < max_pos ) {
-		// TODO: clear insn
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
 		count++;
 
-		o->display( insn, o->display_arg );
-
 		// NOTE : handler determines if an address has already been
 		//        visited, and if not it adds the insn to the addr
 		//        list. this means that the first insn of a branch could
-		//        be disassemled, but will not be added. a bit
+		//        be disassembled, but will not be added. a bit
 		//        inefficient, but not too troubling.
 		cont = o->handler( insn, o->handler_arg );
+
+		if ( cont ) {
+			o->display( insn, o->display_arg );
+		}
 
 		if (! opdis_insn_fallthrough( insn ) ) {
 			cont = 0;
@@ -396,7 +408,7 @@ static int disasm_cflow(opdis_t o, opdis_insn_t * insn, opdis_vma_t vma) {
 			opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
 			/* recurse on branch target */
 			if ( vma != OPDIS_INVALID_ADDR ) {
-				count +=  disasm_cflow( o, insn, vma );
+				count +=  disasm_cflow( o, vma );
 			}
 		}
 	}
@@ -405,15 +417,10 @@ static int disasm_cflow(opdis_t o, opdis_insn_t * insn, opdis_vma_t vma) {
 }
 
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
-	opdis_insn_t * insn = alloc_fixed_insn();
-	if (! insn ) {
-		fprintf( stderr, "Unable to alloc insn\n" );
-		return 0;
-	}
 
 	set_opdis_buffer( o, buf );
 
-	return disasm_cflow( o, insn, vma );
+	return disasm_cflow( o, vma );
 }
 
 /* ---------------------------------------------------------------------- */
@@ -473,6 +480,10 @@ static int load_section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
 int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 				     opdis_off_t length ) {
 	int count;
+	if (! o || ! abfd ) {
+		return 0;
+	}
+
 	if (! load_section_for_vma(o, abfd, vma) ) {
 		// TODO: Error
 		return 0;
@@ -487,12 +498,30 @@ int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 }
 
 int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
-	return 0;
+	int count;
+	if (! o || ! abfd ) {
+		return 0;
+	}
+
+	if (! load_section_for_vma(o, abfd, vma) ) {
+		// TODO: Error
+		return 0;
+	}
+
+	count = disasm_cflow( o, vma );
+
+	free( o->config.buffer );
+	o->config.buffer = NULL;
+
+	return count;
 }
 
 
 int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec ) {
 	int count = 0;
+	if (! o || ! sec ) {
+		return 0;
+	}
 
 	if ( load_section( o, sec ) ) {
 		count = disasm_linear( o, bfd_section_vma(sec->owner, sec), 0 );
@@ -504,11 +533,25 @@ int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec ) {
 
 
 int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
-	return 0;
+	int count;
+	asection * sec = sym->section;
+	if (! o || ! sym || ! sec ) {
+		return 0;
+	}
+
+	if ( load_section( o, sec ) ) {
+		count = disasm_cflow( o, sym->value );
+		free( o->config.buffer );
+		o->config.buffer = NULL;
+	}
+	return count;
 }
 
 
 int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd ) {
+	if (! o || ! abfd ) {
+		return 0;
+	}
 	return opdis_disasm_bfd_cflow( o, abfd, bfd_get_start_address(abfd) );
 }
 
