@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.64])
 AC_INIT([opdis], [0.1], [community@thoughtgang.org])
-AM_INIT_AUTOMAKE([1.9 gnu])
+AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([opdis/opdis.c])
@@ -11,7 +11,7 @@ AC_CONFIG_SRCDIR([opdis/opdis.c])
 AC_CONFIG_FILES([Makefile])
 
 # Checks for programs.
-AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for libraries.

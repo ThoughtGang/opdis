@@ -1,4 +1,3 @@
-* change the object file output dir from . to .obj
 * Note in docs on not using opdis_t across threads
 * asm_format output module
 * x86 decoder
