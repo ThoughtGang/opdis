@@ -103,7 +103,7 @@ struct opdis_options {
 	job_list_t	jobs;
 	mem_map_t	map;
 	tgt_list_t	targets;
-	opdis_t		opdis, bfd_opdis;
+	opdis_t		opdis;
 
 	unsigned int		arch;
 	const char *		arch_str;
@@ -265,10 +265,13 @@ static int add_bfd_target( struct opdis_options * opts, unsigned int id ) {
 static int add_bfd_job( struct opdis_options * opts, enum job_type_t type, 
 			const char * arg ) {
 	unsigned int target;
-	const char * name;
+	const char * name = NULL;
 
-	parse_bfdname( arg, &target, &name );
-	if (! target || ! name || ! strlen(name) ) {
+	if ( arg ) {
+		parse_bfdname( arg, &target, &name );
+	}
+
+	if (! target || (arg && (! name || ! strlen(name))) ) {
 		return 0;
 	}
 
@@ -435,16 +438,12 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 		opts->bfd_targets = tgt->next;
 		free( tgt );
 	}
-
-	// TODO: init bfd_opdis 
 }
 
 static void configure_opdis( struct opdis_options * opts ) {
 	opdis_t o = opts->opdis;
 	const bfd_arch_info_type * arch_info = bfd_scan_arch( opts->arch_str );
 
-	// if init_from_bfd...
-	// else...
 	opdis_set_arch( o, arch_info->arch, opts->arch, NULL );
 
 	if ( opts->disasm_opts && opts->disasm_opts[0] ) {
@@ -463,7 +462,6 @@ static void set_job_opts( struct opdis_options * o, job_opts_t j ) {
 	j->targets = o->targets;
 	j->map = o->map;
 	j->opdis = o->opdis;
-	j->bfd_opdis = o->bfd_opdis;
 	j->quiet = o->quiet;
 }
 

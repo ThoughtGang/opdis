@@ -143,12 +143,36 @@ static int check_bfd_job( job_opts_t o, tgt_list_item_t * tgt ) {
 	return 1;
 }
 
+static opdis_t opdis_for_bfd( bfd * abfd, opdis_t orig ) {
+	opdis_t o = opdis_init_from_bfd( abfd );
+
+	o->error_reporter = orig->error_reporter;
+	o->error_reporter_arg = orig->error_reporter_arg;
+	o->display = orig->display;
+	o->display_arg = orig->display_arg;
+	o->handler = orig->handler;
+	o->handler_arg = orig->handler_arg;
+	o->resolver = orig->resolver;
+	o->resolver_arg = orig->resolver_arg;
+
+	/* if user has overridden syntax, defer to it */
+	if ( orig->config.arch == o->config.arch &&
+	     orig->disassembler != o->disassembler ) {
+		o->disassembler = orig->disassembler;
+	}
+
+	return o;
+}
+
 static int bfd_symbol_job( job_list_item_t * job, tgt_list_item_t * tgt, 
 			   job_opts_t o ) {
 	opdis_vma_t vma;
+	opdis_t opdis;
 	if (! check_bfd_job(o, tgt) ) {
 		return 0;
 	}
+
+	opdis = opdis_for_bfd( tgt->tgt_bfd, o->opdis );
 
 	vma = sym_tab_find_vma( tgt->symtab, job->bfd_name );
 	if ( vma == OPDIS_INVALID_ADDR ) {
@@ -161,15 +185,17 @@ static int bfd_symbol_job( job_list_item_t * job, tgt_list_item_t * tgt,
 		printf( "Control Flow disassembly of symbol %s\n", 
 			 job->bfd_name );
 	}
-	return opdis_disasm_bfd_cflow( o->bfd_opdis, tgt->tgt_bfd, vma );
+	return opdis_disasm_bfd_cflow( opdis, tgt->tgt_bfd, vma );
 }
 
 static int bfd_section_job( job_list_item_t * job, tgt_list_item_t * tgt, 
 			    job_opts_t o ) {
+	opdis_t opdis;
 	struct bfd_section * section;
 	if (! check_bfd_job(o, tgt) ) {
 		return 0;
 	}
+	opdis = opdis_for_bfd( tgt->tgt_bfd, o->opdis );
 
 	section = bfd_get_section_by_name( tgt->tgt_bfd, job->bfd_name );
 	if (! section ) {
@@ -181,7 +207,17 @@ static int bfd_section_job( job_list_item_t * job, tgt_list_item_t * tgt,
 	if (! o->quiet ) {
 		printf( "Linear disassembly of section %s\n", job->bfd_name );
 	}
-	return opdis_disasm_bfd_section( o->bfd_opdis, section );
+	return opdis_disasm_bfd_section( opdis, section );
+}
+
+static int bfd_entry_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+			    job_opts_t o ) {
+	opdis_t opdis;
+	if (! check_bfd_job(o, tgt) ) {
+		return 0;
+	}
+	opdis = opdis_for_bfd( tgt->tgt_bfd, o->opdis );
+	return opdis_disasm_bfd_entry( opdis, tgt->tgt_bfd );
 }
 
 static int linear_job( job_list_item_t * job, tgt_list_item_t * tgt, 
@@ -230,10 +266,7 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 			rv = linear_job( job, target, o );
 			break;
 		case job_bfd_entry:
-			if ( check_bfd_job(o, target) ) {
-				rv = opdis_disasm_bfd_entry( o->bfd_opdis, 
-							     target->tgt_bfd );
-			}
+			rv = bfd_entry_job( job, target, o );
 			break;
 		case job_bfd_symbol:
 			rv = bfd_symbol_job( job, target, o );
