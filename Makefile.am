@@ -38,7 +38,7 @@ dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes
 # LIBOPDIS TARGET
 
 dist_libopdis_la_SOURCES = opdis/insn_buf.c opdis/model.c opdis/opdis.c \
-		      opdis/tree.c opdis/types.c
+		      opdis/tree.c opdis/types.c opdis/x86_decoder.c
 
 # ----------------------------------------------------------------------
 # TEST PROGRAMS

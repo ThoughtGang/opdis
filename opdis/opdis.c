@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include <opdis/opdis.h>
+#include <opdis/x86_decoder.h>
 
 /* ---------------------------------------------------------------------- */
 /* Default callbacks */
@@ -188,8 +189,7 @@ void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options ) {
 
 void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 	disassembler_ftype fn = print_insn_i386_intel;
-	// TODO: x86 intel decoder
-	OPDIS_DECODER d_fn = opdis_default_decoder; // intel
+	OPDIS_DECODER d_fn = opdis_x86_intel_decoder;
 
 	if (! o ) {
 		return;
@@ -197,8 +197,7 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 
 	if ( syntax == opdis_x86_syntax_att ) {
 		fn = print_insn_i386_att;
-		// TODO: x86 att decoder
-		d_fn = opdis_default_decoder; // att
+		d_fn = opdis_x86_att_decoder;
 	}
 
 	/* force x86 architecture */
@@ -211,6 +210,8 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
 			     unsigned long mach, disassembler_ftype fn ) {
+	OPDIS_DECODER d_fn = opdis_default_decoder;
+
 	if (! o ) {
 		return;
 	}
@@ -220,8 +221,16 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 	o->config.mach = mach;
 	disassemble_init_for_target( &o->config );
 
-	// TODO: set appropriate decoder for arch!
-	opdis_set_decoder( o, opdis_default_decoder, NULL );
+	/* set appropriate decoder for architecture */
+	// TODO : move this detection into its own file?
+	switch ( arch ) {
+		case bfd_arch_i386:
+			opdis_x86_intel_decoder; break;
+		default:
+			break;
+	}
+
+	opdis_set_decoder( o, d_fn, NULL );
 }
 
 void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg ) {

@@ -25,6 +25,11 @@
 #endif
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 /*!
@@ -269,11 +274,6 @@ typedef struct {
 typedef opdis_info_t * opdis_t;
 
 /* ---------------------------------------------------------------------- */
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 /*!
  * \fn opdis_init()
