@@ -52,10 +52,10 @@ enum opdis_insn_decode_t {
  */
 
 typedef struct {
-	const char * ascii;		/*!< String representation of operand */
+	char * ascii;			/*!< String representation of operand */
 	enum opdis_op_cat_t category;	/*!< Type of operand */
 	union {
-		const char reg[OPDIS_REG_NAME_SZ];
+		char reg[OPDIS_REG_NAME_SZ];
 		// TODO
 	} value;
 } opdis_op_t;
@@ -84,7 +84,7 @@ typedef struct {
  */
 typedef struct {
 	enum opdis_insn_decode_t status;/*!< Result of decoding */
-	const char * ascii;		/*!< String representation of insn */
+	char * ascii;			/*!< String representation of insn */
 
 	opdis_off_t offset;		/*!< Offset of instruction in buffer */
 	opdis_vma_t vma;		/*!< Virtual memory address of insn */
@@ -94,9 +94,9 @@ typedef struct {
 
 	/* instruction  */
 	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */
-	const char * prefixes;		/*!< Array of prefix strings */
+	char * prefixes;		/*!< Array of prefix strings */
 
-	const char * mnemonic;		/*!< ASCII mnemonic for insn */
+	char * mnemonic;		/*!< ASCII mnemonic for insn */
 	enum opdis_insn_cat_t category;	/*!< Type of insn */
 	union {
 		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
@@ -173,6 +173,14 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
  * \sa opdis_insn_alloc
  */
 opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * i );
+
+/*!
+ * \fn void opdis_insn_clear( opdis_insn_t * )
+ * \ingroup model
+ * \brief Clear the contents of an instruction object.
+ * \param i The instruction to clear.
+ */
+void LIBCALL opdis_insn_clear( opdis_insn_t * i );
 
 /*!
  * \fn void opdis_insn_free( opdis_insn_t * )

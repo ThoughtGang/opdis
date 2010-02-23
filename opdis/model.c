@@ -114,6 +114,18 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 	return new_insn;
 }
 
+void LIBCALL opdis_insn_clear( opdis_insn_t * i ) {
+	if ( i ) {
+		i->status = opdis_decode_invalid;
+		i->ascii[0] = '\0';
+		i->num_prefixes = 0;
+		i->prefixes[0] = '\0';
+		i->mnemonic[0] = '\0';
+		i->num_operands = 0;
+		i->target = i->dest = i->src = NULL;
+	}
+}
+
 void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
 	int i; 
 	if (! insn ) {
