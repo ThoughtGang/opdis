@@ -131,65 +131,99 @@ static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf,
 	return vma;
 }
 
-static int perform_job( job_list_item_t * job, tgt_list_t targets,
-			mem_map_t map, opdis_t o ) {
-	int rv;
-	opdis_vma_t vma;
-	tgt_list_item_t * target;
-	struct bfd_section * section;
-
-	if (! job || ! targets || ! map || ! o ) {
+static int check_bfd_job( job_opts_t o, tgt_list_item_t * tgt ) {
+	if (! o->bfd_opdis ) {
+		fprintf( stderr, "No opdis_t for BFD targets\n" );
 		return 0;
 	}
 
-	target = tgt_list_find( targets, job->target );
+	if (! tgt->tgt_bfd ) {
+		fprintf( stderr, "No bfd created for target\n" );
+		return 0;
+	}
+
+	return 1;
+}
+
+static int bfd_symbol_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+			   job_opts_t o ) {
+	opdis_vma_t vma;
+	if (! check_bfd_job(o, tgt) ) {
+		return 0;
+	}
+
+	vma = sym_tab_find_vma( tgt->symtab, job->bfd_name );
+	if ( vma == OPDIS_INVALID_ADDR ) {
+		fprintf( stderr, "Cannot find BFD symbol %s\n",
+			 job->bfd_name );
+		return 0;
+	}
+
+	return opdis_disasm_bfd_cflow( o->bfd_opdis, tgt->tgt_bfd, vma );
+}
+
+static int bfd_section_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+			    job_opts_t o ) {
+	struct bfd_section * section;
+	if (! check_bfd_job(o, tgt) ) {
+		return 0;
+	}
+
+	section = bfd_get_section_by_name( tgt->tgt_bfd, job->bfd_name );
+	if (! section ) {
+		fprintf( stderr, "Cannot find BFD section %s\n",
+			 job->bfd_name );
+		return 0;
+	}
+
+	return opdis_disasm_bfd_section( o->bfd_opdis, section );
+}
+
+static int linear_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+		       job_opts_t o ) {
+	opdis_vma_t vma;
+	set_buffer_vma( job->target, job->offset, o->map );
+	vma = get_job_vma( job, tgt->data, o->map );
+	return opdis_disasm_linear( o->opdis, tgt->data, vma, job->size );
+}
+
+static int cflow_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+		      job_opts_t o ) {
+	opdis_vma_t vma;
+
+	set_buffer_vma( job->target, job->offset, o->map );
+	vma = get_job_vma( job, tgt->data, o->map );
+	return opdis_disasm_cflow( o->opdis, tgt->data, vma );
+}
+
+static int perform_job( job_list_item_t * job, job_opts_t o ) {
+	int rv;
+	tgt_list_item_t * target;
+
+	if (! job || ! o || ! o->targets || ! o->map ) {
+		return 0;
+	}
+
+	target = tgt_list_find( o->targets, job->target );
 
 	switch (job->type) {
 		case job_cflow:
-			set_buffer_vma( job->target, job->offset, map );
-			vma = get_job_vma( job, target->data, map );
-			rv = opdis_disasm_cflow( o, target->data, vma );
+			rv = cflow_job( job, target, o );
 			break;
 		case job_linear:
-			set_buffer_vma( job->target, job->offset, map );
-			vma = get_job_vma( job, target->data, map );
-			rv = opdis_disasm_linear( o, target->data, vma, 
-						  job->size );
+			rv = linear_job( job, target, o );
+			break;
+		case job_bfd_entry:
+			if ( check_bfd_job(o, target) ) {
+				rv = opdis_disasm_bfd_entry( o->bfd_opdis, 
+							     target->tgt_bfd );
+			}
 			break;
 		case job_bfd_symbol:
-			if (! target->tgt_bfd ) {
-				fprintf( stderr, "No BFD for target %d!\n",
-					 job->target );
-				return 0;
-			}
-			vma = sym_tab_find_vma( target->symtab, job->bfd_name );
-			if ( vma == OPDIS_INVALID_ADDR ) {
-				fprintf( stderr, "Cannot find BFD symbol %s\n",
-					 job->bfd_name );
-				return 0;
-			}
-
-			rv = opdis_disasm_cflow( o, target->tgt_bfd->iostream,
-						 vma );
+			rv = bfd_symbol_job( job, target, o );
 			break;
 		case job_bfd_section:
-			if (! target->tgt_bfd ) {
-				fprintf( stderr, "No BFD for target %d!\n",
-					 job->target );
-				return 0;
-			}
-			section = bfd_get_section_by_name( target->tgt_bfd, 
-							   job->bfd_name );
-			if (! section ) {
-				fprintf( stderr, "Cannot find BFD section %s\n",
-					 job->bfd_name );
-				return 0;
-			}
-			// TODO : bfd entry
-			// TODO : bfd_get_section_contents ?
-			rv = opdis_disasm_linear( o, target->tgt_bfd->iostream,
-						  section->vma,
-						  (opdis_off_t) section->size );
+			rv = bfd_section_job( job, target, o );
 			break;
 		default:
 			break;
@@ -198,8 +232,7 @@ static int perform_job( job_list_item_t * job, tgt_list_t targets,
 }
 
 /* perform the specified job */
-int job_list_perform( job_list_t jobs, unsigned int id, tgt_list_t targets,
-		      mem_map_t map, opdis_t o ) {
+int job_list_perform( job_list_t jobs, unsigned int id, job_opts_t opts ) {
 	job_list_item_t * item;
 	unsigned int curr_id = 1;
 
@@ -209,7 +242,7 @@ int job_list_perform( job_list_t jobs, unsigned int id, tgt_list_t targets,
 
 	for ( item = jobs->head; item; item = item->next, curr_id++ ) {
 		if ( curr_id == id ) {
-			return perform_job( item, targets, map, o );
+			return perform_job( item, opts );
 		}
 	}
 
@@ -217,8 +250,7 @@ int job_list_perform( job_list_t jobs, unsigned int id, tgt_list_t targets,
 }
 
 /* perform all jobs */
-int job_list_perform_all( job_list_t jobs , tgt_list_t targets, mem_map_t map, 
-			  opdis_t o, int quiet ) {
+int job_list_perform_all( job_list_t jobs , job_opts_t opts ) {
 	job_list_item_t * item;
 	int rv = 1;
 
@@ -227,7 +259,7 @@ int job_list_perform_all( job_list_t jobs , tgt_list_t targets, mem_map_t map,
 	}
 
 	for ( item = jobs->head; item; item = item->next ) {
-		int result = perform_job( item, targets, map, o );
+		int result = perform_job( item, opts );
 		if (! result ) {
 		}
 		rv &= result;
@@ -276,14 +308,20 @@ static void print_job( job_list_item_t * item, unsigned int id, void * arg ) {
 			fprintf( f, "\n" );
 			break;
 
-		case job_bfd_section:
-			fprintf( f, "Linear disassembly of BFD section '%s'\n", 
-				item->bfd_name );
+		case job_bfd_entry:
+			fprintf( f, 
+				"Control Flow disassembly of BFD entry point\n"
+				);
 			break;
 
 		case job_bfd_symbol:
 			fprintf( f, 
 				"Control Flow disassembly of BFD symbol '%s'\n",
+				item->bfd_name );
+			break;
+
+		case job_bfd_section:
+			fprintf( f, "Linear disassembly of BFD section '%s'\n", 
 				item->bfd_name );
 			break;
 		default:

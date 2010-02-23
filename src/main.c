@@ -65,6 +65,15 @@ static struct argp_option options[] = {
 	  "File to output to"},
 	{ "quiet", 'q', 0, 0, 
 	  "Suppress status messages"},
+	{ 0, 0, 0, OPTION_DOC, "BFD Options:" },
+	{ "bfd-entry", 'E', 0, 0,
+	  "Perform control flow disassembly on BFD entry point"},
+	{ "bfd-symbol", 'N', "bfdname", 0,
+	  "Perform control flow disassembly on symbol"},
+	{ "bfd-section", 'S', "bfdname", 0,
+	  "Perform linear disassembly on section"},
+	{ "bfd", 'B', "[target]", OPTION_ARG_OPTIONAL, 
+	  "Use BFD library to load and manage target"},
 	{ 0, 0, 0, OPTION_DOC, "Advanced Options:" },
 	{ "map", 'm', "mapspec", 0, 
 	  "Map offset to memory address." },
@@ -72,12 +81,6 @@ static struct argp_option options[] = {
 	  "List of input bytes in hex or octal" },
 	{ "disassembler-options", 'O', "string", 0,
 	  "Apply specific options to disassembler"},
-	{ "bfd", 'B', "[target]", OPTION_ARG_OPTIONAL, 
-	  "Use BFD library to load and manage target"},
-	{ "bfd-symbol", 'N', "bfdname", 0,
-	  "Perform control flow disassembly on symbol"},
-	{ "bfd-section", 'S', "bfdname", 0,
-	  "Perform linear disassembly on section"},
 	{ "list-architectures", 1, 0, 0, 
 	  "Print available machine architectures"},
 	{ "list-disassembler-options", 2, 0, 0, 
@@ -100,7 +103,7 @@ struct opdis_options {
 	job_list_t	jobs;
 	mem_map_t	map;
 	tgt_list_t	targets;
-	opdis_t		opdis;
+	opdis_t		opdis, bfd_opdis;
 
 	unsigned int		arch;
 	const char *		arch_str;
@@ -364,6 +367,9 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 				argp_error( state, "Invalid argument for -B" );
 			}
 			break;
+		case 'E':
+			add_bfd_job( opts, job_bfd_entry, NULL );
+			break;
 		case 'N':
 			if (! add_bfd_job( opts, job_bfd_symbol, arg ) ) {
 				argp_error( state, "Invalid argument for -N" );
@@ -413,7 +419,7 @@ static void bfd_load(  tgt_list_item_t * target, unsigned int id, void * arg ) {
 
 static void load_bfd_targets( struct opdis_options * opts ) {
 	int load_individually = 1;
-		struct BFD_TARGET * tgt;
+	struct BFD_TARGET * tgt;
 	if ( opts->bfd_all_targets ) {
 		tgt_list_foreach( opts->targets, bfd_load, opts );
 		load_individually = 0;
@@ -429,6 +435,8 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 		opts->bfd_targets = tgt->next;
 		free( tgt );
 	}
+
+	// TODO: init bfd_opdis 
 }
 
 static void configure_opdis( struct opdis_options * opts ) {
@@ -449,6 +457,14 @@ static void configure_opdis( struct opdis_options * opts ) {
 	// opdis_set_display( o )
 	// opdis_set_handler( o )
 	// opdis_set_resolver( o )
+}
+
+static void set_job_opts( struct opdis_options * o, job_opts_t j ) {
+	j->targets = o->targets;
+	j->map = o->map;
+	j->opdis = o->opdis;
+	j->bfd_opdis = o->bfd_opdis;
+	j->quiet = o->quiet;
 }
 
 static void print_target_syms (tgt_list_item_t * t, unsigned int id, void * a) {
@@ -525,6 +541,7 @@ static void list_format() {
 /* MAIN */
 int main( int argc, char ** argv ) {
 	struct opdis_options opts = {0}; // TODO: defaults
+	struct job_options_t job_opts;
 
 	set_defaults( &opts );
 
@@ -572,9 +589,8 @@ int main( int argc, char ** argv ) {
 	}
 
 	configure_opdis( & opts );
-
-	job_list_perform_all( opts.jobs, opts.targets, opts.map, opts.opdis,
-			      opts.quiet );
+	set_job_opts( &opts, &job_opts );
+	job_list_perform_all( opts.jobs, &job_opts );
 
 	return 0;
 }

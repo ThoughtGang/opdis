@@ -17,6 +17,7 @@
 enum job_type_t {
 	job_cflow,		/* Control Flow disasm on memspec */
 	job_linear,		/* Linear disasm on memspec */
+	job_bfd_entry,		/* Control Flow disasm of BFD entry point */
 	job_bfd_symbol,		/* Control Flow disasm of BFD symbol */
 	job_bfd_section		/* Linear disasm of BFD section */
 };
@@ -37,6 +38,13 @@ typedef struct JOB_LIST_HEAD {
 	unsigned int	num_items;
 	job_list_item_t * head;
 } * job_list_t;
+
+typedef struct job_options_t {
+	tgt_list_t targets;
+	mem_map_t map;
+	opdis_t opdis, bfd_opdis;
+	int quiet;
+} * job_opts_t;
 
 /* ---------------------------------------------------------------------- */
 
@@ -63,12 +71,10 @@ typedef void (*JOB_LIST_FOREACH_FN) ( job_list_item_t *, unsigned int id,
 void job_list_foreach( job_list_t, JOB_LIST_FOREACH_FN, void * arg );
 
 /* perform the specified job */
-int job_list_perform( job_list_t, unsigned int id, tgt_list_t,
-		      mem_map_t, opdis_t );
+int job_list_perform( job_list_t, unsigned int id, job_opts_t opts );
 
 /* perform all jobs */
-int job_list_perform_all( job_list_t, tgt_list_t, mem_map_t, opdis_t,
-			  int quiet );
+int job_list_perform_all( job_list_t, job_opts_t opts );
 
 void job_list_print( job_list_t, FILE * f );
 

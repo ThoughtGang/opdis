@@ -1,15 +1,49 @@
-libopcodes-based disassembler library
+                                  O P D I S
+                     libopcodes-based disassembler library
 
-libopdis : shared/static library for performing disassembly
+NOTES:
+	* The man page for opdis is out of date in respect to the src
+	* output options (file, format) are not implemented
+	* control flow will not work until a proper decoder is written
 
-opdis : command-line disassembler
+BUILD
+-----
 
-libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
+This repository contains source for the following binaries:
 
-./configure
-make
-make install
+	libopdis : shared/static library for performing disassembly
+	opdis : command-line disassembler
 
-libtool execute opdis
-libtool execute gdb/opdis
-libtool execute test/tree_test
+To build src distro from repo:
+
+   libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
+
+To build binaries from src distro:
+
+	./configure
+	make
+
+SPECIAL BUILD TARGETS
+---------------------
+
+	make install
+
+	make check
+
+	make dist
+
+	make doxygen
+
+MISC
+----
+
+To run from the local directory:
+
+	libtool execute opdis
+
+To debug from the local directory:
+
+	libtool execute gdb/opdis
+
+To run test utilities from the local directory:
+	libtool execute test/tree_test
