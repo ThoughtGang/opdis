@@ -16,6 +16,7 @@
 #include <opdis/types.h>
 #include <opdis/insn_buf.h>
 #include <opdis/model.h>
+#include <opdis/tree.h>
 
 #ifdef WIN32
         #define LIBCALL _stdcall
@@ -45,7 +46,12 @@ typedef int (*OPDIS_HANDLER) ( const opdis_insn_t * i, void * arg );
  * \fn int opdis_default_handler( const opdis_insn_t *, void * )
  * \ingroup configuration
  * \brief The built-in opdis handler callback.
- * The default handler returns true unless the instruction is invalid.
+ * The default handler returns true unless the instruction is invalid or
+ * if the address has already been visited.
+ * \note The default handler callback takes an opdis_vma_tree_t as the
+ *       \e arg parameter. If this parameter is NULL, the handler will
+ *       not check if an address has already been visited (which could
+ *       lead to cflow disassembler loops).
  */
 int opdis_default_handler( const opdis_insn_t * i, void * arg );
 
@@ -73,6 +79,7 @@ typedef void (*OPDIS_DISPLAY) ( const opdis_insn_t * i, void * arg );
  * \ingroup configuration
  * \brief  The built-in opdis display callback
  * This callback writes the instruction \e ascii field to STDOUT.
+ * \note The default display callback takes a NULL \e arg parameter.
  */
 void opdis_default_display ( const opdis_insn_t * i, void * arg );
 
@@ -149,6 +156,7 @@ typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
  * \ingroup configuration
  * \brief The built-in opdis resolver callback.
  * This callback returns OPDIS_INVALID_ADDR for all addresses.
+ * \note The default resolver callback takes a NULL \e arg parameter.
  */
 opdis_vma_t opdis_default_resolver( const opdis_insn_t * i, void * arg );
 
@@ -179,9 +187,11 @@ typedef void (*OPDIS_ERROR) ( enum opdis_error_t error, const char * msg,
 			      void * arg );
 
 /*!
- * \fn 
+ * \fn void opdis_default_error_reporter( enum opdis_error_t , const char *,
+			      		  void * )
  * \ingroup configuration
- * \brief 
+ * \brief The built-in error reporter.
+ * \note The default error reporter takes a NULL \e arg parameter.
  */
 void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 			      void * arg );
@@ -240,6 +250,12 @@ typedef struct {
 	 *  \brief buffer for storing libopcodes strings as they are emitted.
 	 */
 	opdis_insn_buf_t buf;
+
+
+	/*! \var visited_addr
+	 *  \brief Index of all VMAs that have been disassembled and displayed.
+	 */
+	opdis_vma_tree_t visited_addr;
 
 } opdis_info_t;
 

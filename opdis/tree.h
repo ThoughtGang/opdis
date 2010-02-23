@@ -171,12 +171,31 @@ int LIBCALL opdis_tree_update( opdis_tree_t tree, void * data );
 int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key );
 
 /*!
+ * \fn int opdis_tree_contains( opdis_tree_t, void * )
+ * \ingroup tree
+ * \brief Determine if tree contains data
+ * \param tree The AVL tree.
+ * \param key The key of the item to search for.
+ * \return 1 if the item is stored, 0 otherwise.
+ * \sa opdis_tree_find
+ * \details This function returns true (1) if \e tree contains a node with
+ *          the given \e key. This is used instead of opdis_tree_find
+ *          in trees where the node data (e.g. integers or pointers) could
+ *          be zero, as the opdis_tree_find return value of NULL for not
+ *          found will be zero regardless of whether the data is in the
+ *          tree.
+ */
+
+int LIBCALL opdis_tree_contains( opdis_tree_t tree, void * key );
+
+/*!
  * \fn void * opdis_tree_find( opdis_tree_t, void * )
  * \ingroup tree
  * \brief Find data in a tree.
  * \param tree The AVL tree.
  * \param key The key of the item to return.
  * \return The item stored in the tree or NULL.
+ * \sa opdis_tree_contains
  */
 
 void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key );
@@ -294,12 +313,25 @@ int LIBCALL opdis_vma_tree_add( opdis_vma_tree_t tree, opdis_vma_t addr );
 int LIBCALL opdis_vma_tree_delete( opdis_vma_tree_t tree, opdis_vma_t addr );
 
 /*!
+ * \fn int opdis_vma_tree_contains( opdis_vma_tree_t, opdis_vma_t )
+ * \ingroup tree
+ * \brief Determine if an address is in the tree.
+ * \param tree The Address Tree.
+ * \param addr The address to search for.
+ * \return 1 if the address is in the tree, 0 otherwise.
+ * \sa opdis_tree_contains
+ */
+
+int LIBCALL opdis_vma_tree_contains( opdis_vma_tree_t tree, opdis_vma_t addr );
+
+/*!
  * \fn opdis_vma_t opdis_vma_tree_find( opdis_vma_tree_t, opdis_vma_t )
  * \ingroup tree
  * \brief Find an address in the tree.
  * \param tree The Address Tree.
- * \param addr
+ * \param addr The address to search for.
  * \return The address or OPDIS_INVALID_ADDR.
+ * \sa opdis_tree_find
  */
 
 opdis_vma_t LIBCALL opdis_vma_tree_find( opdis_vma_tree_t tree, 
@@ -383,12 +415,25 @@ int LIBCALL opdis_insn_tree_add( opdis_insn_tree_t tree,
 int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr );
 
 /*!
+ * \fn int opdis_insn_tree_contains( opdis_insn_tree_t, opdis_vma_t );
+ * \ingroup tree
+ * \brief Determine if an instruction is in the tree.
+ * \param tree The Instruction Tree.
+ * \param addr The address to search for.
+ * \return 1 if the address is in the tree, 0 otherwise.
+ * \sa opdis_tree_contains
+ */
+
+int LIBCALL opdis_insn_tree_contains(opdis_insn_tree_t tree, opdis_vma_t addr);
+
+/*!
  * \fn opdis_insn_t * opdis_insn_tree_find( opdis_insn_tree_t, opdis_vma_t )
  * \ingroup tree
  * \brief Find an instruction in the tree.
  * \param tree The Instruction Tree.
  * \param addr The address of the instruction.
  * \return The instruction or NULL.
+ * \sa opdis_tree_find
  */
 
 opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 

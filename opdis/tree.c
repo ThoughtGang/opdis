@@ -464,6 +464,10 @@ int LIBCALL opdis_tree_delete( opdis_tree_t tree, void * key ) {
 	return 1;
 }
 
+int LIBCALL opdis_tree_contains( opdis_tree_t tree, void * key ) {
+	return (tree_node_find( tree, key ) == NULL) ? 0 : 1;
+}
+
 void * LIBCALL opdis_tree_find( opdis_tree_t tree, void * key ) {
 
 	opdis_tree_node_t * node = tree_node_find( tree, key );
@@ -572,10 +576,21 @@ int LIBCALL opdis_vma_tree_delete( opdis_vma_tree_t tree, opdis_vma_t addr ){
 	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
+int LIBCALL opdis_vma_tree_contains( opdis_vma_tree_t tree, 
+					   opdis_vma_t addr ) {
+	return (opdis_tree_contains((opdis_tree_t) tree, (void *) addr)) ? 
+						1 : 0;
+}
+
 opdis_vma_t LIBCALL opdis_vma_tree_find( opdis_vma_tree_t tree, 
 					   opdis_vma_t addr ) {
-	return (opdis_vma_t) opdis_tree_find( (opdis_tree_t) tree, 
-						(void *) addr );
+	opdis_tree_node_t * node = tree_node_find( (opdis_tree_t) tree, 
+						   (void *) addr );
+	if (! node ) {
+		return OPDIS_INVALID_ADDR;
+	}
+
+	return (opdis_vma_t) node->data;
 }
 
 void LIBCALL opdis_vma_tree_foreach( opdis_vma_tree_t tree,
@@ -634,7 +649,13 @@ int LIBCALL opdis_insn_tree_delete( opdis_insn_tree_t tree, opdis_vma_t addr ){
 	return opdis_tree_delete( (opdis_tree_t) tree, (void *) addr );
 }
 
-opdis_insn_t *  LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
+int LIBCALL opdis_insn_tree_contains( opdis_insn_tree_t tree, 
+				  	      opdis_vma_t addr ) {
+	return (opdis_tree_contains((opdis_tree_t) tree, (void *) addr)) ? 
+							1 : 0;
+}
+
+opdis_insn_t * LIBCALL opdis_insn_tree_find( opdis_insn_tree_t tree, 
 				  	      opdis_vma_t addr ) {
 	return (opdis_insn_t *) opdis_tree_find( (opdis_tree_t)tree, 
 						 (void *) addr );

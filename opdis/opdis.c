@@ -17,9 +17,24 @@
 /* Default callbacks */
 
 int opdis_default_handler( const opdis_insn_t * insn, void * arg ) {
-	// add to internal list
-	// if already present, return false
-	// return true unless invalid insn
+	opdis_vma_tree_t visited = (opdis_vma_tree_t) arg;
+
+	if ( insn->status == opdis_decode_invalid ) {
+		/* invalid instruction */
+		return 0;
+	}
+
+	if (! visited ) {
+		return 0;
+	}
+
+	if ( opdis_vma_tree_contains( visited, insn->vma ) ) {
+		/* address has already been visited */
+		return 0;
+	}
+
+	opdis_vma_tree_add( visited, insn->vma );
+
 	return 1;
 }
 
@@ -28,7 +43,7 @@ void opdis_default_display( const opdis_insn_t * i, void * arg ) {
 }
 
 opdis_vma_t opdis_default_resolver( const opdis_insn_t * insn, void * arg ) {
-	// resolve address if relative
+	// TODO: resolve address if relative
 	return OPDIS_INVALID_ADDR;
 }
 
@@ -102,6 +117,7 @@ opdis_t LIBCALL opdis_init( void ) {
 	
 	if ( o ) {
 		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
+		o->visited_addr = opdis_vma_tree_init();
 		init_disassemble_info ( &o->config, o, build_insn_fprintf );
 		o->config.application_data = (void *) o;
 		// TODO : read memory error fn
@@ -136,7 +152,7 @@ opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
 // NOTE: void disassembler_usage (FILE *);
 
 void LIBCALL opdis_set_defaults( opdis_t o ) {
-	opdis_set_handler( o, opdis_default_handler, NULL );
+	opdis_set_handler( o, opdis_default_handler, o->visited_addr );
 	opdis_set_display( o, opdis_default_display, NULL );
 	opdis_set_resolver( o, opdis_default_resolver, NULL );
 	opdis_set_error_reporter( o, opdis_default_error_reporter, NULL );
