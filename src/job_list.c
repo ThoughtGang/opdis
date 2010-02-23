@@ -107,16 +107,14 @@ void job_list_foreach( job_list_t jobs, JOB_LIST_FOREACH_FN fn, void * arg ) {
 	}
 }
 
-static void set_buffer_vma( unsigned int target, opdis_off_t offset, 
+static void set_buffer_vma( unsigned int target, opdis_buf_t buf, 
 			    mem_map_t map ) {
 	opdis_vma_t vma;
-	offset = (offset == OPDIS_INVALID_ADDR) ? 0 : offset;
-	vma = mem_map_vma_for_target( map, target, offset );
-	vma = (vma == OPDIS_INVALID_ADDR) ? 0 : vma;
+	vma = mem_map_vma_for_target( map, target, 0 );
+	buf->vma = (vma == OPDIS_INVALID_ADDR) ? 0 : vma;
 }
 
-static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf,
-				mem_map_t map ) {
+static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf ) {
 	opdis_vma_t vma;
 	if ( job->vma == OPDIS_INVALID_ADDR ) {
 		if ( job->offset >= buf->len ) {
@@ -181,18 +179,23 @@ static int bfd_section_job( job_list_item_t * job, tgt_list_item_t * tgt,
 
 static int linear_job( job_list_item_t * job, tgt_list_item_t * tgt, 
 		       job_opts_t o ) {
-	opdis_vma_t vma;
-	set_buffer_vma( job->target, job->offset, o->map );
-	vma = get_job_vma( job, tgt->data, o->map );
+	opdis_vma_t vma = get_job_vma( job, tgt->data );
+
+	if (! tgt->data->vma || tgt->data->vma == OPDIS_INVALID_ADDR ) {
+		set_buffer_vma( job->target, tgt->data, o->map );
+	}
+
 	return opdis_disasm_linear( o->opdis, tgt->data, vma, job->size );
 }
 
 static int cflow_job( job_list_item_t * job, tgt_list_item_t * tgt, 
 		      job_opts_t o ) {
-	opdis_vma_t vma;
+	opdis_vma_t vma = get_job_vma( job, tgt->data );
 
-	set_buffer_vma( job->target, job->offset, o->map );
-	vma = get_job_vma( job, tgt->data, o->map );
+	if (! tgt->data->vma || tgt->data->vma == OPDIS_INVALID_ADDR ) {
+		set_buffer_vma( job->target, tgt->data, o->map );
+	}
+
 	return opdis_disasm_cflow( o->opdis, tgt->data, vma );
 }
 
