@@ -122,6 +122,7 @@ struct opdis_options {
 	int		dry_run;
 	int		quiet;
 
+	FILE *			output_file;
 	opdis_insn_tree_t	insn_tree;
 };
 
@@ -131,6 +132,7 @@ static void set_defaults( struct opdis_options * opts ) {
 	opts->targets = tgt_list_alloc();
 	opts->opdis = opdis_init();
 	opts->insn_tree = opdis_insn_tree_init( 1 );
+	opts->output_file = stdout;
 
 	// TODO: use 64-bit detection?
 	opts->arch_str = "i386";
@@ -321,6 +323,27 @@ static int set_bfd_target( struct opdis_options * opts, const char * arg ) {
 	return add_bfd_target( opts, id );
 }
 
+static int set_output_file( struct opdis_options * opts, const char * arg ) {
+	FILE * f;
+	if (! strcmp( "-", arg ) ) {
+		opts->output = NULL;
+		opts->output_file = stdout;
+		return 1;
+	}
+
+	f = fopen( arg, "w" );
+	if (! f ) {
+		fprintf( stderr, "Unable to open '%s' for writing: %s\n", arg,
+			 strerror(errno) );
+		return 0;
+	}
+
+	opts->output = arg;
+	opts->output_file = f;
+
+	return 1;
+}
+
 static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 	struct opdis_options * opts = state->input;
 
@@ -352,7 +375,9 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			opts->asm_fmt = arg;
 			break;
 		case 'o':
-			opts->output = arg;
+			if (! set_output_file( opts, arg ) ) {
+				argp_error( state, "Invalid argument for -o" );
+			}
 			break;
 		case 'b':
 			if (! tgt_list_add( opts->targets, tgt_bytes, arg ) ) {
@@ -452,7 +477,7 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 
 	// TODO : asm format based on opts
 
-	printf( "%p\t%s\n", (void *) i->vma, i->ascii );
+	fprintf( opts->output_file, "%p\t%s\n", (void *) i->vma, i->ascii );
 
 	return 1;
 }
