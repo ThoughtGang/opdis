@@ -76,8 +76,10 @@ int LIBCALL opdis_insn_buf_append( opdis_insn_buf_t buf, const char * item ) {
 }
 
 void LIBCALL opdis_insn_buf_clear( opdis_insn_buf_t buf ) {
-	buf->item_count = 0;
-	buf->string[0] = '\0';
+	if ( buf ) {
+		buf->item_count = 0;
+		buf->string[0] = '\0';
+	}
 }
 
 void LIBCALL opdis_insn_buf_free( opdis_insn_buf_t buf ) {
