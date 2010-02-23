@@ -351,7 +351,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 /* Disassembler algorithms */
 
 static inline opdis_insn_t * alloc_fixed_insn() {
-	// TODO: verify these
+	// TODO: verify these values across architectures
 	return opdis_insn_alloc_fixed( 128, 32, 16, 32 );
 }
 
@@ -453,7 +453,9 @@ static int load_section( opdis_t o, asection * s ) {
 	size = bfd_section_size( s->owner, s );
 	buf = calloc( size, 1 );
 	if (! buf || ! bfd_get_section_contents( s->owner, s, buf, 0, size ) ) {
-		// TODO: error
+		char msg[32];
+		snprintf( msg, 31, "Unable to get section %s\n", s->name );
+		opdis_error( o, opdis_error_bfd, msg );
 		return 0;
 	}
 
@@ -480,12 +482,13 @@ static int load_section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
 
 	bfd_map_over_sections( abfd, vma_in_section, & req );
 	if (! req.sec ) {
-		// TODO : error
+		char msg[32];
+		snprintf( msg, 31, "No section for VMA %p\n", (void *) vma );
+		opdis_error( o, opdis_error_bfd, msg );
 		return 0;
 	}
 
 	if (! load_section( o, req.sec ) ) {
-		// TODO : error
 		return 0;
 	}
 
@@ -500,7 +503,6 @@ int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 	}
 
 	if (! load_section_for_vma(o, abfd, vma) ) {
-		// TODO: Error
 		return 0;
 	}
 
@@ -519,7 +521,6 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 	}
 
 	if (! load_section_for_vma(o, abfd, vma) ) {
-		// TODO: Error
 		return 0;
 	}
 

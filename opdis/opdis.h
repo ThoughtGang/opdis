@@ -169,6 +169,7 @@ enum opdis_error_t { opdis_error_unknown,
 		     opdis_error_bounds,	/*!< Buffer bounds exceeded */ 
 		     opdis_error_invalid_insn,	/*!< Invalid instruction */
 		     opdis_error_decode_insn,	/*!< Decoding error */
+		     opdis_error_bfd,		/*!< BFD error */
 		     opdis_error_max_items	/*!< Instruction > insn_buf */ 
 		   };
 
