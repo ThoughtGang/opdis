@@ -74,7 +74,7 @@ void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
 
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		           const opdis_byte_t * buf, opdis_off_t offset,
-			   opdis_vma_t vma, opdis_off_t length ) {
+			   opdis_vma_t vma, opdis_off_t length, void * arg ) {
 	opdis_insn_set_ascii( out, in->string );
 
 	out->bytes = &buf[offset ];
@@ -205,7 +205,7 @@ void LIBCALL opdis_set_x86_syntax( opdis_t o, enum opdis_x86_syntax_t syntax ) {
 
 	o->disassembler = fn;
 
-	opdis_set_decoder( o, d_fn, NULL );
+	opdis_set_decoder( o, d_fn, o );
 }
 
 void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch, 
@@ -225,12 +225,12 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 	// TODO : move this detection into its own file?
 	switch ( arch ) {
 		case bfd_arch_i386:
-			opdis_x86_intel_decoder; break;
+			d_fn = opdis_x86_intel_decoder; break;
 		default:
 			break;
 	}
 
-	opdis_set_decoder( o, d_fn, NULL );
+	opdis_set_decoder( o, d_fn, o );
 }
 
 void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg ) {
@@ -301,7 +301,8 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 	o->buf->target2 = o->config.target2;
 
 	if (! o->decoder( o->buf, insn, o->config.buffer, 
-			  o->config.buffer_vma - vma, vma, size ) ) {
+			  o->config.buffer_vma - vma, vma, size,
+			  o->decoder_arg ) ) {
 		char msg[64];
 		snprintf( msg, 63, "VMA %p: '%s'\n", (void *) vma,
 			  o->buf->string );

@@ -185,6 +185,14 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic ){
 	i->mnemonic = strdup(mnemonic);
 }
 
+void LIBCALL opdis_insn_add_prefix( opdis_insn_t * i, const char * prefix ){
+	// TODO
+}
+
+void LIBCALL opdis_insn_add_comment( opdis_insn_t * i, const char * cmt ){
+	// TODO
+}
+
 int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
 	void * p;
 

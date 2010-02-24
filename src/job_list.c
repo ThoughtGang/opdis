@@ -155,10 +155,14 @@ static opdis_t opdis_for_bfd( bfd * abfd, opdis_t orig ) {
 	o->resolver = orig->resolver;
 	o->resolver_arg = orig->resolver_arg;
 
-	/* if user has overridden syntax, defer to it */
-	if ( orig->config.arch == o->config.arch &&
-	     orig->disassembler != o->disassembler ) {
-		o->disassembler = orig->disassembler;
+	/* if user has overridden syntax or decoder, defer to it */
+	if ( orig->config.arch == o->config.arch ) {
+		if ( orig->disassembler != o->disassembler ) {
+			o->disassembler = orig->disassembler;
+		}
+		if ( orig->decoder != o->decoder ) {
+			opdis_set_decoder(o, orig->decoder, orig->decoder_arg);
+		}
 	}
 
 	return o;

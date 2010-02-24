@@ -58,6 +58,10 @@ typedef struct {
 		char reg[OPDIS_REG_NAME_SZ];
 		// TODO
 	} value;
+
+	/* fixed-size operand fields */
+	int fixed_size;			/*!< Is op of a fixed size? 0 or 1 */
+	unsigned int ascii_sz;		/*!< Size of fixed ascii field */
 } opdis_op_t;
 
 /* ---------------------------------------------------------------------- */
@@ -102,6 +106,7 @@ typedef struct {
 		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
 		// TODO
 	} flags;			/*!< Instruction-specific flags */
+	char * comment;			/*!< Comment or hint from libopcodes */
 
 	
 	/* operands */
@@ -113,6 +118,12 @@ typedef struct {
 	opdis_op_t * target;		/*!< Branch target */
 	opdis_op_t * dest;		/*!< Destination operand */
 	opdis_op_t * src;		/*!< Source operand */
+
+	/* fixed-size instruction fields */
+	int fixed_size;			/*!< Is insn of a fixed size? 0 or 1 */
+	unsigned int ascii_sz;		/*!< Size of fixed ascii field */
+	unsigned int mnemonic_sz;	/*!< Size of fixed mnemonic field */
+
 } opdis_insn_t;
 
 /* ---------------------------------------------------------------------- */
@@ -219,6 +230,24 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
  * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
  */
 void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
+
+/*!
+ * \fn void opdis_insn_add_prefix( opdis_insn_t *, const char * )
+ * \ingroup model
+ * \brief Append a string to the \e prefix field
+ * \param i The instruction to modify.
+ * \param prefix The value to append to the \e prefix field.
+ */
+void LIBCALL opdis_insn_add_prefix( opdis_insn_t * i, const char * prefix );
+
+/*!
+ * \fn void opdis_insn_add_comment( opdis_insn_t *, const char * )
+ * \ingroup model
+ * \brief Append a string to the \e comment field
+ * \param i The instruction to modify.
+ * \param cmt The value to append to the \e comment field.
+ */
+void LIBCALL opdis_insn_add_comment( opdis_insn_t * i, const char * cmt );
 
 /*!
  * \fn int opdis_insn_add_operand( opdis_insn_t *, opdis_op_t * )

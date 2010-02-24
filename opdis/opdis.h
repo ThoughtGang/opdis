@@ -100,6 +100,7 @@ void opdis_default_display ( const opdis_insn_t * i, void * arg );
  * \param offset Offset of start of instruction in \e buf.
  * \param vma Address (vma) of start of instruction.
  * \param length Size of instruction in bytes.
+ * \param arg Optional argument to pass to callback
  * \return 0 on failure, nonzero on success. 
  * \details This function is invoked after libopcodes has finished 
  *          disassembling the instruction. The strings emitted from libopcodes
@@ -120,21 +121,24 @@ typedef int (*OPDIS_DECODER) ( const opdis_insn_buf_t in,
 			       const opdis_byte_t * buf, 
 			       opdis_off_t offset,
 			       opdis_vma_t vma,
-			       opdis_off_t length );
+			       opdis_off_t length,
+			       void * arg );
 
 /*!
  * \fn int opdis_default_decoder( const opdis_insn_buf_t, opdis_insn_t *,
 			          const opdis_byte_t *, opdis_off_t, 
-				  opdis_vma_t, opdis_off_t )
+				  opdis_vma_t, opdis_off_t, void * )
  * \ingroup configuration
  * \brief The built-in opdis instruction decoder
  * This callback fills the \e ascii, \e offset, \e vma, \e bytes,
  * and \e size fields of the output instruction object. It is recommended 
  * that all other decoders invoke this callback directly to fill these fields.
+ * \note The default decoder callback takes a NULL \e arg parameter.
  */
 int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			   const opdis_byte_t * buf, opdis_off_t,
-			   opdis_vma_t vma, opdis_off_t length );
+			   opdis_vma_t vma, opdis_off_t length,
+			   void * arg );
 
 /*!
  * \typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, 
