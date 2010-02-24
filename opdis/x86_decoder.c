@@ -49,18 +49,21 @@ static int intel_register_lookup( const char * item ) {
 	return -1;
 }
 
-/* ---------------------------------------------------------------------- */
-/* AT&T DECODING */
+static const char * intel_prefixes[] = {
+	"lock", "addr16", "addr32", "rep", "repe", "repz", "repne", "repnz",
+	"cs", "ss", "ds", "es", "fs", "gs", "pt", "pn"
+};
 
-static int is_att_operand( const char * item ) {
-	int rv = 0;
-	switch ( item[0] ) {
-		case '0': case '%': case '$': case '*': case '-': case '(':
-			rv = 1; break;
-		default:
-			break;
+static int intel_prefix_lookup( const char * item ) {
+	int i;
+	int num = (int) sizeof(intel_prefixes) / sizeof(char *);
+	for ( i = 0; i < num; i++ ) {
+		if (! strcmp(intel_prefixes[i], item) ) {
+			return i;
+		}
 	}
-	return rv;
+
+	return -1;
 }
 
 typedef int (*IS_OPERAND_FN) ( const char * );
@@ -132,28 +135,104 @@ static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
 
 	if ( parse->mnem > 0 ) {
 		parse->pfx = 0;
+	} else if ( intel_prefix_lookup(in->items[parse->mnem]) > -1 ) {
+		/* verify that this is not a prefix */
+		parse->pfx = parse->mnem;
+		parse->mnem = 0;
 	}
 
 	//print_parsed_insn( in, parse );
+}
+
+static void add_prefixes( const opdis_insn_buf_t in, opdis_insn_t * out,
+			  struct INSN_BUF_PARSE * parse ) {
+	int i, max_i, rv;
+
+	/* fill prefixes */
+	max_i = (parse->mnem > -1) ? parse->mnem : in->item_count;
+	for ( i = parse->pfx; i < max_i; i++ ) {
+		opdis_insn_add_prefix( out, in->items[i] );
+	}
+}
+
+static void add_comments( const opdis_insn_buf_t in, opdis_insn_t * out,
+			  struct INSN_BUF_PARSE * parse ) {
+	int i;
+
+	for ( i = parse->cmt; i > -1 && i < in->item_count; i++ ) {
+		opdis_insn_add_comment( out, in->items[i] );
+	}
+
+	if ( parse->pfx > -1 && parse->mnem == -1 ) {
+		// TODO: set flags
+		opdis_insn_add_comment( out, "Warning: prefix w/o insn" );
+	} else if ( parse->mnem > -1 && in->items[parse->mnem][0] == '.' ) {
+		// TODO: set flags
+		opdis_insn_add_comment( out, "Warning: directive (data)" );
+	}
+}
+
+/* ---------------------------------------------------------------------- */
+/* AT&T DECODING */
+
+static int is_att_operand( const char * item ) {
+	int rv = 0;
+	switch ( item[0] ) {
+		case '0': case '%': case '$': case '*': case '-': case '(':
+			rv = 1; break;
+		default:
+			break;
+	}
+	return rv;
+}
+
+static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
+}
+
+static void decode_att_operand( opdis_insn_t * out, const char * item ) {
 }
 
 int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		           const opdis_byte_t * buf, opdis_off_t offset,
 			   opdis_vma_t vma, opdis_off_t length ) {
 
-	int i;
-	int rv;
+	int i, max_i, rv;
 	struct INSN_BUF_PARSE parse;
 
-
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
-	printf( "INSN %s (ATT)\n", in->string );
+	//printf( "INSN %s (ATT)\n", in->string );
 
 	parse_insn_buf( in, is_att_operand, & parse );
 
-	printf("\n");
+	add_prefixes( in, out, & parse );
 
-	// NOTE: prefix w/ no mnemonic is probably invalid!
+	/* fill instruction info */
+	if ( parse.mnem > -1 ) {
+		const char * mnem = in->items[parse.mnem];
+		/* check for branch hint */
+		const char * comma = strchr(mnem, ',');
+		if ( comma ) {
+			char buf[16] = {0};
+			strncpy( buf, mnem, 
+				 (comma - mnem > 15) ? 15 : comma - mnem );
+			opdis_insn_add_prefix( out, buf );
+			mnem = comma + 1;
+		}
+
+		decode_att_mnemonic( out, mnem );
+	}
+
+	/* fill operands */
+	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
+		if ( in->items[i][0] != ',' ) {
+			decode_att_operand( out, in->items[i] );
+		}
+	}
+
+	add_comments( in, out, & parse );
+
+	/* set operand pointers */
+
 	// out->status |= opdis_decode_basic;
 
 	return rv;
@@ -184,21 +263,51 @@ static int is_intel_operand( const char * item ) {
 	return 0;
 }
 
+static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
+}
+
+static void decode_intel_operand( opdis_insn_t * out, const char * item ) {
+}
+
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		             const opdis_byte_t * buf, opdis_off_t offset,
 			     opdis_vma_t vma, opdis_off_t length ) {
 
 	struct INSN_BUF_PARSE parse;
-	int rv;
+	int i, max_i, rv;
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
-	printf( "INSN %s (INTEL)\n", in->string );
-	printf( "insn_info_valid? %d\n", in->insn_info_valid );
+
 	parse_insn_buf( in, is_intel_operand, & parse );
-	printf("\n");
+
+	add_prefixes( in, out, & parse );
+
+	/* fill instruction info */
+	if ( parse.mnem > -1 ) {
+		const char * mnem = in->items[parse.mnem];
+		/* check for branch hint */
+		const char * comma = strchr(mnem, ',');
+		if ( comma ) {
+			char buf[16] = {0};
+			strncpy( buf, mnem, 
+				 (comma - mnem > 15) ? 15 : comma - mnem );
+			opdis_insn_add_prefix( out, buf );
+			mnem = comma + 1;
+		}
+
+		decode_intel_mnemonic( out, mnem );
+	}
+
+	/* fill operands */
+	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
+		if ( in->items[i][0] != ',' ) {
+			decode_intel_operand( out, in->items[i] );
+		}
+	}
+
+	add_comments( in, out, & parse );
+
+	/* set operand pointers */
 	
-	// must do strcmp
-	// lock repne repnx rep repe repz cs ss ds es fs gs 
-	// addr32 addr16
 	// out->status |= opdis_decode_basic;
 
 	return rv;
