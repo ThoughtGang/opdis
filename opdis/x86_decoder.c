@@ -37,15 +37,20 @@ static const char * intel_registers[] = {
 	"gdtr", "ldtr", "idtr"
 };
 
-static int is_intel_register( const char * item ) {
+static int intel_register_lookup( const char * item ) {
+	int i;
+	int num_regs = (int) sizeof(intel_registers) / sizeof(char *);
+	for ( i = 0; i < num_regs; i++ ) {
+		if (! strcmp(intel_registers[i], item) ) {
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 /* ---------------------------------------------------------------------- */
 /* AT&T DECODING */
-
-static int is_att_cmt( const char * item ) {
-	return (strchr(item, '#') == NULL) ? 0 : 1;
-}
 
 static int is_att_operand( const char * item ) {
 	int rv = 0;
@@ -58,73 +63,94 @@ static int is_att_operand( const char * item ) {
 	return rv;
 }
 
+typedef int (*IS_OPERAND_FN) ( const char * );
+struct INSN_BUF_PARSE {
+	int pfx, mnem, first_op, last_op, cmt, cmt_char;
+};
+
+static void print_parsed_insn_buf( const opdis_insn_buf_t in,
+			    struct INSN_BUF_PARSE * parse ) {
+	int i;
+
+	if ( parse->pfx > -1 ) {
+		printf("Prefix:" );
+		for ( i = 0; i <= parse->pfx; i++ ) {
+			printf(" '%s'", in->items[i]);
+		}
+		printf("'|" );
+	}
+	printf("Mnemonic: '%s'", in->items[parse->mnem] );
+	for ( i = parse->first_op; i > -1 && i <= parse->last_op; i++ ) {
+		if ( in->items[i][0] != ',' ) {
+			printf("|Operand: '%s'", in->items[i]);
+		}
+	}
+	if ( parse->cmt > -1 ) {
+		printf("|Comment:" );
+		for ( i = parse->cmt; i <= in->item_count; i++ ) {
+			printf(" '%s'", in->items[i]);
+		}
+	}
+	printf("\n");
+}
+
+static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
+			    struct INSN_BUF_PARSE * parse ) {
+
+	int i;
+	parse->pfx = parse->mnem = parse->first_op = parse->last_op = 
+		     parse->cmt = parse->cmt_char = -1;
+
+	for ( i=0; i < in->item_count; i++ ) {
+		if ( is_operand(in->items[i]) && parse->cmt_char == -1 ) {
+			/* all operands-looking tokesn before # are operands */
+			if ( parse->first_op == -1 ) {
+				parse->first_op = i;
+				parse->mnem = i - 1;
+			}
+			parse->last_op = i;
+		}
+
+		if ( strchr(in->items[i], '#') != NULL ) {
+			parse->cmt_char = i;
+			if ( i + 1 < in->item_count ) {
+				parse->cmt = i + 1;
+			}
+		}
+
+	}
+
+	if ( parse->mnem == -1 ) {
+		if ( parse->first_op != -1 ) {
+			parse->mnem = parse->first_op - 1;
+		} else if ( parse->cmt_char != -1 ) {
+			parse->mnem = parse->cmt_char - 1;
+		} else {
+			parse->mnem = in->item_count - 1;
+		}
+	}
+
+	if ( parse->mnem > 0 ) {
+		parse->pfx = 0;
+	}
+
+	//print_parsed_insn( in, parse );
+}
+
 int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		           const opdis_byte_t * buf, opdis_off_t offset,
 			   opdis_vma_t vma, opdis_off_t length ) {
 
 	int i;
 	int rv;
-	int pfx = -1, mnem = -1, first_op = -1, last_op = -1, cmt = -1,
-	    cmt_char = -1;
+	struct INSN_BUF_PARSE parse;
+
 
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
 	printf( "INSN %s (ATT)\n", in->string );
 
-	for ( i=0; i < in->item_count; i++ ) {
-		if ( is_att_operand(in->items[i]) && cmt_char == -1 ) {
-			/* all operands-looking tokesn before # are operands */
-			if ( first_op == -1 ) {
-				first_op = i;
-				mnem = i - 1;
-			}
-			last_op = i;
-		}
+	parse_insn_buf( in, is_att_operand, & parse );
 
-		if ( is_att_cmt(in->items[i]) ) {
-			cmt_char = i;
-			if ( i + 1 < in->item_count ) {
-				cmt = i + 1;
-			}
-		}
-
-	//	printf("ITEM %d: %s (%d)\n", i, in->items[i],
-	//		is_att_operand(in->items[i]) );
-	}
-
-	if ( mnem == -1 ) {
-		if ( first_op != -1 ) {
-			mnem = first_op - 1;
-		} else if ( cmt_char != -1 ) {
-			mnem = cmt_char - 1;
-		} else {
-			mnem = in->item_count - 1;
-		}
-	}
-
-	if ( mnem > 0 ) {
-		pfx = 0;
-	}
-
-	if ( pfx > -1 ) {
-		printf("Prefix:" );
-		for ( i = 0; i <= pfx; i++ ) {
-			printf(" '%s'", in->items[i]);
-		}
-		printf("'|" );
-	}
-	printf("Mnemonic: '%s'", in->items[mnem] );
-	for ( i = first_op; i > -1 && i <= last_op; i++ ) {
-		if ( in->items[i][0] != ',' ) {
-			printf("|Operand: '%s'", in->items[i]);
-		}
-	}
-	if ( cmt > -1 ) {
-		printf("|Comment:" );
-		for ( i = cmt; i <= in->item_count; i++ ) {
-			printf(" '%s'", in->items[i]);
-		}
-	}
-	printf("\n");
 	printf("\n");
 
 	// NOTE: prefix w/ no mnemonic is probably invalid!
@@ -137,23 +163,37 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 /* INTEL DECODING */
 
 static int is_intel_operand( const char * item ) {
-	if ( is_intel_register(item) ) {
+	if ( intel_register_lookup(item) > -1 ) {
 		return 1;
 	}
+
+	switch ( item[0] ) {
+		case '[': case '+': case '-':
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			return 1;
+	}
+
+	if (! strncmp( "BYTE PTR", item, 8 ) ||
+	    ! strncmp( "WORD PTR", item, 8 ) ||
+	    ! strncmp( "DWORD PTR", item, 9 ) ||
+	    ! strncmp( "QWORD PTR", item, 9 ) ) {
+		return 1;
+	}
+
+	return 0;
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		             const opdis_byte_t * buf, opdis_off_t offset,
 			     opdis_vma_t vma, opdis_off_t length ) {
 
-	int i;
+	struct INSN_BUF_PARSE parse;
 	int rv;
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
 	printf( "INSN %s (INTEL)\n", in->string );
 	printf( "insn_info_valid? %d\n", in->insn_info_valid );
-	for ( i=0; i < in->item_count; i++ ) {
-		printf("ITEM %d: %s\n", i, in->items[i]);
-	}
+	parse_insn_buf( in, is_intel_operand, & parse );
 	printf("\n");
 	
 	// must do strcmp
