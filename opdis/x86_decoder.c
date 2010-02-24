@@ -17,6 +17,65 @@
 /* ---------------------------------------------------------------------- */
 /* SHARED DECODING */
 
+
+static const char * jcc_insns[] = {
+	"ja", "jae", "jb", "jbe", "jc", "jcxz", "jecxz", 
+	"jrcxz", "je", "jg", "jge", "jl", "jle", "jna", "jnae", "jnb", "jnbe", 
+	"jnc", "jne", "jng", "jnge", "jnl", "jnle", "jno", "jnp", "jns", "jnz",
+	"jo", "jp", "jpe", "js", "jz"
+};
+
+static const char * call_insns[] = { "lcall", "call" };
+
+static const char * jmp_insns[] = { "jmp", "ljmp" };
+
+static const char * ret_insns[] = {
+	"ret", "lret", "retf", "iret", "iretd", "iretq"
+};
+
+static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
+	int i, num;
+
+	if ( item[0] == 'f' ) {
+		// fpu insn
+		return;
+	}
+
+	/* detect JMP */
+	num = (int) sizeof(jmp_insns) / sizeof(char *);
+	for ( i = 0; i < num; i++ ) {
+		if (! strcmp(jmp_insns[i], item) ) {
+			// set jmp insn info
+			return;
+		}
+	}
+
+	/* detect RET */
+	num = (int) sizeof(ret_insns) / sizeof(char *);
+	for ( i = 0; i < num; i++ ) {
+		if (! strcmp(ret_insns[i], item) ) {
+			// set ret insn info
+			return;
+		}
+	}
+
+	/* detect branch (call/jcc) */
+	num = (int) sizeof(call_insns) / sizeof(char *);
+	for ( i = 0; i < num; i++ ) {
+		if (! strcmp(call_insns[i], item) ) {
+			// set branch insn info
+			return;
+		}
+	}
+	num = (int) sizeof(jcc_insns) / sizeof(char *);
+	for ( i = 0; i < num; i++ ) {
+		if (! strcmp(jcc_insns[i], item) ) {
+			// set branch insn info
+			return;
+		}
+	}
+
+}
 static const char * intel_registers[] = {
 	"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
 	"ax", "cx", "dx", "bx", "sp", "bp", "si", "di",
@@ -187,9 +246,21 @@ static int is_att_operand( const char * item ) {
 }
 
 static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
+	// TODO: handle mem operand size: b w l q
+	return decode_intel_mnemonic( out, item );
 }
 
 static void decode_att_operand( opdis_insn_t * out, const char * item ) {
+	switch ( item[0] ) {
+		case '$':	// immediate
+			break;
+		case '%':	// register
+			break;
+		case '*':	// absolute jump/call operand
+			break;
+	}
+
+	// handle memory addr
 }
 
 int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -232,6 +303,7 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	add_comments( in, out, & parse );
 
 	/* set operand pointers */
+	// source, dest unless bounf invlpga and 2-imm
 
 	// out->status |= opdis_decode_basic;
 
@@ -263,10 +335,11 @@ static int is_intel_operand( const char * item ) {
 	return 0;
 }
 
-static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
-}
-
 static void decode_intel_operand( opdis_insn_t * out, const char * item ) {
+	int reg = intel_register_lookup( item );
+	if ( reg != -1 ) {
+		// decode_intel_register();
+	}
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -307,6 +380,7 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	add_comments( in, out, & parse );
 
 	/* set operand pointers */
+	// dest, source
 	
 	// out->status |= opdis_decode_basic;
 
