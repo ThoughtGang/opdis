@@ -35,6 +35,8 @@ opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands ) {
 	return i;
 }
 
+#define PREFIX_SIZE(mnem_size) (4 * mnem_size)
+
 opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz, 
 				size_t mnemonic_sz, size_t num_operands,
 				size_t op_ascii_sz ) {
@@ -46,8 +48,9 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 	}
 
 	insn->ascii = calloc( 1, ascii_sz );
-	insn->prefixes = calloc( 4, mnemonic_sz );
+	insn->prefixes = calloc( 1, PREFIX_SIZE(mnemonic_sz) );
 	insn->mnemonic = calloc( 1, mnemonic_sz );
+	insn->comment = calloc( 1, ascii_sz );
 
 	if (! insn->ascii || !insn->prefixes || ! insn->mnemonic ) {
 		opdis_insn_free( insn );
@@ -64,6 +67,10 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 			return NULL;
 		}
 	}
+
+	insn->fixed_size = 1;
+	insn->ascii_sz = ascii_sz;
+	insn->mnemonic_sz = mnemonic_sz;
 
 	return insn;
 }
@@ -166,6 +173,11 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii ) {
 		return;
 	}
 
+	if ( i->fixed_size ) {
+		strncpy( i->ascii, ascii, i->ascii_sz - 1 );
+		return;
+	}
+
 	if ( i->ascii ) {
 		free((void *) i->ascii);
 	}
@@ -178,6 +190,11 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic ){
 		return;
 	}
 
+	if ( i->fixed_size ) {
+		strncpy( i->mnemonic, mnemonic, i->mnemonic_sz - 1 );
+		return;
+	}
+
 	if ( i->mnemonic ) {
 		free((void *) i->mnemonic);
 	}
@@ -186,11 +203,66 @@ void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic ){
 }
 
 void LIBCALL opdis_insn_add_prefix( opdis_insn_t * i, const char * prefix ){
-	// TODO
+	if (! i || ! prefix ) {
+		return;
+	}
+
+	if ( i->fixed_size ) {
+		unsigned int size = PREFIX_SIZE(i->mnemonic_sz) - 
+				    strlen(i->prefixes);
+		strncat( i->prefixes, " ", size - 1 );
+		strncat( i->prefixes, prefix, size - 2 );
+		return;
+	}
+
+	if ( i->prefixes ) {
+		void * ptr = realloc( i->prefixes, strlen(i->prefixes) + 
+			       strlen(prefix) + 2 );
+		if (! ptr ) {
+			return;
+		}
+
+		i->prefixes = ptr;
+		strcat( i->prefixes, " " );
+	} else {
+		i->prefixes = calloc( 1, strlen(prefix) + 1 );
+		if (! i->prefixes ) {
+			return;
+		}
+	}
+
+	strcat( i->prefixes, prefix );
 }
 
 void LIBCALL opdis_insn_add_comment( opdis_insn_t * i, const char * cmt ){
-	// TODO
+	if (! i || ! cmt ) {
+		return;
+	}
+
+	if ( i->fixed_size ) {
+		unsigned int size = i->ascii_sz - strlen(i->comment);
+		strncat( i->comment, " ", size - 1 );
+		strncat( i->comment, cmt, size - 2 );
+		return;
+	}
+
+	if ( i->comment ) {
+		void * ptr = realloc( i->comment, 
+				      strlen(i->comment) + strlen(cmt) + 2 );
+		if (! ptr ) {
+			return;
+		}
+
+		i->comment = ptr;
+		strcat( i->comment, ";" );
+	} else {
+		i->comment = calloc( 1, strlen(cmt) + 1 );
+		if (! i->comment ) {
+			return;
+		}
+	}
+
+	strcat( i->comment, cmt );
 }
 
 int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
@@ -252,6 +324,8 @@ opdis_op_t * LIBCALL opdis_op_alloc( void ) {
 opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz ) {
 	opdis_op_t * op = opdis_op_alloc();
 	if ( op ) {
+		op->fixed_size = 1;
+		op->ascii_sz = ascii_sz;
 		op->ascii = (char *) calloc( 1, ascii_sz );
 		if (! op->ascii ) {
 			free(op);
@@ -294,6 +368,11 @@ void LIBCALL opdis_op_free( opdis_op_t * op ) {
 
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
 	if (! op || ! ascii ) {
+		return;
+	}
+
+	if ( op->fixed_size ) {
+		strncpy( op->ascii, ascii, op->ascii_sz - 1 );
 		return;
 	}
 

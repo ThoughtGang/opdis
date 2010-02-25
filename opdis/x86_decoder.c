@@ -396,7 +396,7 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 				fill_expression(&out->value.expr, item, start);
 			} else {
 				out->flags |= opdis_op_cat_addr;
-				fill_immediate( &out->value.addr, item );
+				fill_immediate( &out->value.immediate.u, item );
 			}
 	}
 }

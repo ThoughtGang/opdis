@@ -234,8 +234,7 @@ opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands );
  * \sa opdis_insn_alloc
  * \sa opdis_insn_free
  * \note The instruction object returned by this function is intended for use
- *       as a buffer. All fields (including operands) should be accessed
- *       directly instead of using opdis_insn functions.
+ *       as a buffer. 
  */
 opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz, 
 				size_t mnemonic_sz, size_t num_operands,
@@ -284,7 +283,6 @@ void LIBCALL opdis_insn_free( opdis_insn_t * i );
  * \param i The instruction to modify.
  * \param ascii The new value for the \e ascii field.
  * \sa opdis_insn_set_mnemonic
- * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
  */
 void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
 
@@ -298,7 +296,6 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
  * \param i The instruction to modify.
  * \param mnemonic The new value for the \e mnemonic field.
  * \sa opdis_insn_set_ascii
- * \note Not for use with instructions allocated by opdis_insn_alloc_fixed.
  */
 void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
 
@@ -398,7 +395,6 @@ void LIBCALL opdis_op_free( opdis_op_t * op );
  *          is freed before the assignment.
  * \param op The operand to modify
  * \param ascii The new value for the \e ascii field.
- * \note Not for use with operand allocated by opdis_op_alloc_fixed.
  */
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
 
