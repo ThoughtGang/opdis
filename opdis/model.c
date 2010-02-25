@@ -220,13 +220,28 @@ int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op ) {
 	return 1;
 }
 
-int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn ) {
-	// TODO : check flags for jcc, call
+int LIBCALL opdis_insn_is_branch( opdis_insn_t * i ) {
+	/* All CALL and JMP instructions have a branch target */
+	if ( i && i->category == opdis_insn_cat_cflow ) {
+		if ( i->flags.cflow == opdis_cflow_flag_call ||
+		     i->flags.cflow == opdis_cflow_flag_callcc ||
+		     i->flags.cflow == opdis_cflow_flag_jmp ||
+		     i->flags.cflow == opdis_cflow_flag_jmpcc ) {
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
-int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn ) {
-	// TODO : check flags for ret. jmp
+int LIBCALL opdis_insn_fallthrough( opdis_insn_t * i ) {
+	/* No fall-through for RET and JMP instructions */
+	if ( i && i->category == opdis_insn_cat_cflow ) {
+		if ( i->flags.cflow == opdis_cflow_flag_ret ||
+		     i->flags.cflow == opdis_cflow_flag_jmp ) {
+			return 0;
+		}
+	}
 	return 1;
 }
 

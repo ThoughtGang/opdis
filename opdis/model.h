@@ -172,6 +172,7 @@ typedef struct {
 
 	char * mnemonic;		/*!< ASCII mnemonic for insn */
 	enum opdis_insn_cat_t category;	/*!< Type of insn */
+	enum opdis_insn_subset_t isa;	/*!< Subset of ISA for insn */
 	union {
 		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
 		// TODO
