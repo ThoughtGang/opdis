@@ -240,6 +240,11 @@ static void fill_expression( opdis_addr_expr_t *expr, const char * item,
 typedef void (*OPERAND_DECODE_FN) ( opdis_op_t *, const char * );
 static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn, 
 			   const char * item ) {
+	if (! op ) {
+		// TODO : log
+		return 0;
+	}
+
 	op->category = opdis_op_cat_unknown;
 	op->flags = opdis_op_flag_none;
 	opdis_op_set_ascii( op, item );
@@ -333,7 +338,7 @@ static void add_prefixes( const opdis_insn_buf_t in, opdis_insn_t * out,
 
 	/* fill prefixes */
 	max_i = (parse->mnem > -1) ? parse->mnem : in->item_count;
-	for ( i = parse->pfx; i < max_i; i++ ) {
+	for ( i = parse->pfx; i > -1 && i < max_i; i++ ) {
 		opdis_insn_add_prefix( out, in->items[i] );
 	}
 }
@@ -434,7 +439,7 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	/* fill operands */
 	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
 		if ( in->items[i][0] != ',' ) {
-			decode_operand( out->operands[out->num_operands], 
+			decode_operand( opdis_insn_next_avail_op(out),
 					decode_att_operand, in->items[i] );
 		}
 	}
@@ -502,7 +507,7 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	/* fill operands */
 	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
 		if ( in->items[i][0] != ',' ) {
-			decode_operand( out->operands[out->num_operands], 
+			decode_operand( opdis_insn_next_avail_op(out),
 					decode_intel_operand, in->items[i] );
 		}
 	}

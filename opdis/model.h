@@ -333,12 +333,43 @@ void LIBCALL opdis_insn_add_comment( opdis_insn_t * i, const char * cmt );
  */
 int LIBCALL opdis_insn_add_operand( opdis_insn_t * i, opdis_op_t * op );
 
-// does insn have a branch target?
-// only valid if insn flags have been decoded
-// if so, check insn->target for what to resolve
+/*!
+ * \fn opdis_op_t * opdis_insn_next_avail_op( opdis_insn_t * )
+ * \ingroup model
+ * \brief Return next available allocated operand.
+ * \param i The instruction to containing the operand.
+ * \return The next unused operand, or NULL if all allocated operands are used.
+ */
+opdis_op_t * LIBCALL opdis_insn_next_avail_op( opdis_insn_t * i );
+
+/*!
+ * \fn int opdis_insn_is_branch( opdis_insn_t * )
+ * \ingroup model
+ * \brief Determine if the instruction has a branch target operand
+ * \details Returns true (1) if the instruction has a branch target
+ *          operand. The branch target operand is accessible via
+ *          \e i->target.
+ * \param i The instruction to examine.
+ * \return 1 if the instruction has a branch target, 0 otherwise.
+ * \note This will only work if of the decoder supports it. Check
+ *       that status contains both \e opdis_decode_mnem_flags and
+ *       opdis_decode_ops before relying on the return value.
+ */
 int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn );
-// does insn fallthrough?
-// only valid if insn flags have been decoded
+
+/*!
+ * \fn int opdis_insn_fallthrough( opdis_insn_t * )
+ * \ingroup model
+ * \brief Determine if the execution falls through to the next instruction.
+ * \details Returns true (1) if execution falls through to the subsequent
+ *          instruction in memory. This is true for all instructions except
+ *          unconditional jumps (JMP) and procedure returns (RET).
+ * \param i The instruction to examine.
+ * \return 1 if execution continues, 0 otherwise.
+ * \note This will only work if of the decoder supports it. Check
+ *       that status contains \e opdis_decode_mnem_flags 
+ *       before relying on the return value.
+ */
 int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
 
 /*!
