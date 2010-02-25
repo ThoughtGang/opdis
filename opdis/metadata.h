@@ -26,11 +26,11 @@
 enum opdis_op_cat_t {
 	opdis_op_cat_unknown,	/*!< Unknown operand type */
 	opdis_op_cat_register,	/*!< CPU register */
-	opdis_op_cat_immr,	/*!< Immediate value */
+	opdis_op_cat_immediate,	/*!< Immediate value */
 	opdis_op_cat_addr,	/*!< Address */
 	opdis_op_cat_faraddr,	/*!< Far address (seg:offset) */
 	opdis_op_cat_rel,	/*!< Relative (to PC) offset */
-	opdis_op_cat_exp	/*!< Address expression */
+	opdis_op_cat_expr	/*!< Address expression */
 };
 
 /*!
@@ -41,6 +41,7 @@ enum opdis_op_cat_t {
  *          operand.
  */
 enum opdis_op_flag_t {
+	opdis_op_flag_none = 0,		/*!< No flags */
 	opdis_op_flag_r = 1,		/*!< Operand is read by insn */
 	opdis_op_flag_w = 2,		/*!< Operand is written by insn */
 	opdis_op_flag_x = 4,		/*!< Operand is executed by insn */

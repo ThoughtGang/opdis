@@ -15,8 +15,15 @@
 
 
 /* ---------------------------------------------------------------------- */
-/* SHARED DECODING */
+/* UTILITY ROUTINES */
 
+static inline void rtrim( char * str ) {
+	int i;
+	for ( i = strlen(str) - 1; i >= 0 && isspace(str[i]); i++ )
+		str[i] = '\0';
+}
+/* ---------------------------------------------------------------------- */
+/* MNEMONICS */
 
 static const char * jcc_insns[] = {
 	"ja", "jae", "jb", "jbe", "jc", "jcxz", "jecxz", 
@@ -25,12 +32,12 @@ static const char * jcc_insns[] = {
 	"jo", "jp", "jpe", "js", "jz"
 };
 
-static const char * call_insns[] = { "lcall", "call" };
+static const char * call_insns[] = { "lcall", "call", "callq" };
 
-static const char * jmp_insns[] = { "jmp", "ljmp" };
+static const char * jmp_insns[] = { "jmp", "ljmp", "jmpq" };
 
 static const char * ret_insns[] = {
-	"ret", "lret", "retf", "iret", "iretd", "iretq"
+	"ret", "lret", "retq", "retf", "iret", "iretd", "iretq"
 };
 
 static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
@@ -74,38 +81,15 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 			return;
 		}
 	}
-
 }
-static const char * intel_registers[] = {
-	"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
-	"ax", "cx", "dx", "bx", "sp", "bp", "si", "di",
-	"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi",
-	"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
-	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-	"r8l", "r9l", "r10l", "r11l", "r12l", "r13l", "r14l", "r15l",
-	"r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w",
-	"r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d",
-	"mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
-	"xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
-	"st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7",
-	"cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
-	"dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7",
-	"cs", "ds", "ss", "es", "fs", "gs", 
-	"eip", "rip", "eflags", "rflags",
-	"spl", "bpl", "sil", "dil", 
-	"gdtr", "ldtr", "idtr"
-};
 
-static int intel_register_lookup( const char * item ) {
-	int i;
-	int num_regs = (int) sizeof(intel_registers) / sizeof(char *);
-	for ( i = 0; i < num_regs; i++ ) {
-		if (! strcmp(intel_registers[i], item) ) {
-			return i;
-		}
-	}
+typedef void (*MNEMONIC_DECODE_FN) ( opdis_insn_t *, const char * );
+static int decode_mnemonic( opdis_insn_t * insn, MNEMONIC_DECODE_FN decode_fn, 
+			    const char * item ) {
+	opdis_insn_set_mnemonic( insn, item );
 
-	return -1;
+	rtrim( insn->mnemonic );
+	decode_fn( insn, item );
 }
 
 static const char * intel_prefixes[] = {
@@ -125,7 +109,146 @@ static int intel_prefix_lookup( const char * item ) {
 	return -1;
 }
 
-typedef int (*IS_OPERAND_FN) ( const char * );
+/* ---------------------------------------------------------------------- */
+/* CPU REGISTERS */
+
+static char intel_reg_id[] = {
+	1, 2, 3, 4, 1, 2, 3, 4, 	// al, cl, dl, bl, ah, ch, dh, bh
+	1, 2, 3, 4, 5, 6, 7, 8, 	// ax, cx, dx, bx, sp, bp, si, di
+	1, 2, 3, 4, 5, 6, 7, 8, 	// eax,ecx,edx,ebx,esp,ebp,esi,edi
+	1, 2, 3, 4, 5, 6, 7, 8, 	// rax,rcx,rdx,rbx,rsp,rbp,rsi,rdi
+	9, 10, 11, 12, 13, 14, 15, 16, 	// r8 - r15
+	9, 10, 11, 12, 13, 14, 15, 16, 	// r8l - r15l
+	9, 10, 11, 12, 13, 14, 15, 16, 	// r8w - r15w
+	9, 10, 11, 12, 13, 14, 15, 16, 	// r8d - r15d
+	17, 18, 19, 20, 21, 22, 23, 24, // mm0 - mm7
+	25, 26, 27, 28, 29, 30, 31, 32,	// xmm0 - xmm7
+	17, 18, 19, 20, 21, 22, 23, 24, // st(0) - st(7)
+	33, 34, 35, 36, 37, 38, 39, 40, // cr0 - cr7
+	41, 42, 43, 44, 45, 46, 47, 48, // dr0 - dr7
+	49, 50, 51, 52, 53, 54, 	// cs, ds, ss, es, fs, gs 
+	55, 55, 56, 56, 		// eip, rip, eflags, rflags
+	5, 6, 7, 8, 			// spl, bpl, sil, dil
+	57, 58, 59, 60, 61 		// gdtr, ldtr, idtr, tr, mxcsr
+};
+
+static enum opdis_reg_cat_t lookup_register_type( unsigned int id ) {
+	enum opdis_reg_cat_t type = opdis_reg_cat_unknown;
+
+	if ( id == 5 ) {
+		type = opdis_reg_cat_gen | opdis_reg_cat_stack;
+	} else if ( id == 6 ) {
+		type = opdis_reg_cat_gen | opdis_reg_cat_frame;
+	} else if ( id <= 16 ) {
+		type = opdis_reg_cat_gen;
+	} else if ( id >= 17 && id <= 24 ) {
+		type = opdis_reg_cat_fpu | opdis_reg_cat_sse;
+	} else if ( id >= 25 && id <= 32 || id == 61 ) {
+		type = opdis_reg_cat_sse;
+	} else if ( id >= 33 && id <= 40 ) {
+		type = opdis_reg_cat_task;
+	} else if ( id >= 41 && id <= 48 ) {
+		type = opdis_reg_cat_debug;
+	} else if ( id >= 49 && id <= 54 ) {
+		type = opdis_reg_cat_gen | opdis_reg_cat_seg;
+	} else if ( id == 55 ) {
+		type = opdis_reg_cat_pc;
+	} else if ( id == 56 ) {
+		type = opdis_reg_cat_flags;
+	} else if ( id >= 57 && id <= 60 ) {
+		type = opdis_reg_cat_mem;
+	}
+
+	return type;
+}
+
+static char intel_reg_size[] = {
+	1, 1, 1, 1, 1, 1, 1, 1, 	// al, cl, dl, bl, ah, ch, dh, bh
+	2, 2, 2, 2, 2, 2, 2, 2, 	// ax, cx, dx, bx, sp, bp, si, di
+	4, 4, 4, 4, 4, 4, 4, 4, 	// eax,ecx,edx,ebx,esp,ebp,esi,edi
+	8, 8, 8, 8, 8, 8, 8, 8, 	// rax,rcx,rdx,rbx,rsp,rbp,rsi,rdi
+	8, 8, 8, 8, 8, 8, 8, 8, 	// r8 - r15
+	1, 1, 1, 1, 1, 1, 1, 1, 	// r8l - r15l
+	2, 2, 2, 2, 2, 2, 2, 2, 	// r8w - r15w
+	4, 4, 4, 4, 4, 4, 4, 4, 	// r8d - r15d
+	8, 8, 8, 8, 8, 8, 8, 8, 	// mm0 - mm7
+	16, 16, 16, 16, 16, 16, 16, 16,	// xmm0 - xmm7
+	10, 10, 10, 10, 10, 10, 10, 10,	// st(0) - st(7)
+	4, 4, 4, 4, 4, 4, 4, 4, 	// cr0 - cr7
+	4, 4, 4, 4, 4, 4, 4, 4, 	// dr0 - dr7
+	2, 2, 2, 2, 2, 2, 		// cs, ds, ss, es, fs, gs 
+	4, 8, 4, 8, 			// eip, rip, eflags, rflags
+	1, 1, 1, 1, 			// spl, bpl, sil, dil
+	6, 6, 6, 6, 4 			// gdtr, ldtr, idtr, tr, mxcsr
+};
+
+static const char * intel_registers[] = {
+	"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
+	"ax", "cx", "dx", "bx", "sp", "bp", "si", "di",
+	"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi",
+	"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
+	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+	"r8l", "r9l", "r10l", "r11l", "r12l", "r13l", "r14l", "r15l",
+	"r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w",
+	"r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d",
+	"mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+	"xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
+	"st(0)", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
+	"cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
+	"dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7",
+	"cs", "ds", "ss", "es", "fs", "gs", 
+	"eip", "rip", "eflags", "rflags",
+	"spl", "bpl", "sil", "dil", 
+	"gdtr", "ldtr", "idtr", "tr", "mxcsr"
+};
+
+static int intel_register_lookup( const char * item ) {
+	int i;
+	int num_regs = (int) sizeof(intel_registers) / sizeof(char *);
+	for ( i = 0; i < num_regs; i++ ) {
+		if (! strcmp(intel_registers[i], item) ) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+static void fill_register( opdis_reg_t * reg, const char * name ) {
+	int id = intel_register_lookup(name);
+	if ( id > -1 ) {
+		reg->category = lookup_register_type(id);
+		reg->id = intel_reg_id[id];
+		reg->size = intel_reg_size[id];
+	} else {
+		reg->category = opdis_reg_cat_unknown;
+		reg->id = reg->size = 0;
+	}
+	strncpy( reg->ascii, name, OPDIS_REG_NAME_SZ - 1 );
+}
+
+/* ---------------------------------------------------------------------- */
+/* OPERANDS */
+
+static void fill_immediate( unsigned int * imm, const char * item ) {
+}
+
+static void fill_expression( opdis_addr_expr_t *expr, const char * item,
+			     const char * first_paren ) {
+}
+
+typedef void (*OPERAND_DECODE_FN) ( opdis_op_t *, const char * );
+static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn, 
+			   const char * item ) {
+	op->category = opdis_op_cat_unknown;
+	op->flags = opdis_op_flag_none;
+	opdis_op_set_ascii( op, item );
+	decode_fn( op, item );
+}
+
+/* ---------------------------------------------------------------------- */
+/* SHARED DECODING */
+
 struct INSN_BUF_PARSE {
 	int pfx, mnem, first_op, last_op, cmt, cmt_char;
 };
@@ -156,6 +279,7 @@ static void print_parsed_insn_buf( const opdis_insn_buf_t in,
 	printf("\n");
 }
 
+typedef int (*IS_OPERAND_FN) ( const char * );
 static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
 			    struct INSN_BUF_PARSE * parse ) {
 
@@ -246,21 +370,35 @@ static int is_att_operand( const char * item ) {
 }
 
 static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
-	// TODO: handle mem operand size: b w l q
+	// TODO: handle mem operand size: b w l q ?
 	return decode_intel_mnemonic( out, item );
 }
 
-static void decode_att_operand( opdis_insn_t * out, const char * item ) {
+static void decode_att_operand( opdis_op_t * out, const char * item ) {
+	const char * start;
 	switch ( item[0] ) {
-		case '$':	// immediate
-			break;
-		case '%':	// register
-			break;
-		case '*':	// absolute jump/call operand
-			break;
+		case '$':			/* immediate value */
+			out->category = opdis_op_cat_immediate;
+			fill_immediate( &out->value.immediate.u, &item[1] );
+			return;
+		case '%':			/* CPU register */
+			out->category = opdis_op_cat_register;
+			fill_register( &out->value.reg, &item[1] );
+			return;
+		case '*':			/* absolute jump/call addr */
+			out->flags |= opdis_op_cat_register;
+			decode_att_operand( out, &item[1] );
+			return;
+		default:
+			start = strchr( item, '(' );
+			if ( start ) {
+				out->flags |= opdis_op_cat_expr;
+				fill_expression(&out->value.expr, item, start);
+			} else {
+				out->flags |= opdis_op_cat_addr;
+				fill_immediate( &out->value.addr, item );
+			}
 	}
-
-	// handle memory addr
 }
 
 int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -290,13 +428,14 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			mnem = comma + 1;
 		}
 
-		decode_att_mnemonic( out, mnem );
+		decode_mnemonic( out, decode_att_mnemonic, mnem );
 	}
 
 	/* fill operands */
 	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
 		if ( in->items[i][0] != ',' ) {
-			decode_att_operand( out, in->items[i] );
+			decode_operand( out->operands[out->num_operands], 
+					decode_att_operand, in->items[i] );
 		}
 	}
 
@@ -335,7 +474,7 @@ static int is_intel_operand( const char * item ) {
 	return 0;
 }
 
-static void decode_intel_operand( opdis_insn_t * out, const char * item ) {
+static void decode_intel_operand( opdis_op_t * out, const char * item ) {
 	int reg = intel_register_lookup( item );
 	if ( reg != -1 ) {
 		// decode_intel_register();
@@ -356,24 +495,15 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 
 	/* fill instruction info */
 	if ( parse.mnem > -1 ) {
-		const char * mnem = in->items[parse.mnem];
-		/* check for branch hint */
-		const char * comma = strchr(mnem, ',');
-		if ( comma ) {
-			char buf[16] = {0};
-			strncpy( buf, mnem, 
-				 (comma - mnem > 15) ? 15 : comma - mnem );
-			opdis_insn_add_prefix( out, buf );
-			mnem = comma + 1;
-		}
-
-		decode_intel_mnemonic( out, mnem );
+		decode_mnemonic( out, decode_intel_mnemonic, 
+				 in->items[parse.mnem] );
 	}
 
 	/* fill operands */
 	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
 		if ( in->items[i][0] != ',' ) {
-			decode_intel_operand( out, in->items[i] );
+			decode_operand( out->operands[out->num_operands], 
+					decode_intel_operand, in->items[i] );
 		}
 	}
 
