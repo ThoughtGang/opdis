@@ -44,6 +44,68 @@ enum opdis_insn_decode_t {
 #define OPDIS_REG_NAME_SZ 16
 
 /*!
+ * \struct opdis_reg_t 
+ * \ingroup model
+ * \brief CPU Register operand
+ * \details A register operand.
+ * \sa opdis_op_t
+ */
+typedef struct {
+	char ascii[OPDIS_REG_NAME_SZ];	/*!< Name of register */
+	enum opdis_reg_cat_t category;	/*!< Type of register */
+	unsigned char id;		/*!< Register id # */
+	unsigned char size;		/*!< Size of register in bytes */
+} opdis_reg_t;
+
+/*!
+ * \enum opdis_addr_expr_elem_t 
+ * \ingroup model
+ * \brief Elements present in an address expression.
+ * \sa opdis_addr_expr_t
+ * \note Scale factor is always present; it defaults to 1.
+ */
+enum opdis_addr_expr_elem_t {
+	opdis_addr_expr_base = 1,	/*!< Base register */
+	opdis_addr_expr_index = 2,	/*!< Index register */
+	opdis_addr_expr_disp = 4	/*!< Displacement */
+};
+
+/*!
+ * \enum opdis_addr_expr_shift_t 
+ * \ingroup model
+ * \brief Type of shift operation used in address expression.
+ * \sa opdis_addr_expr_t
+ * \note These only apply to ARM; x86 is always ASL.
+ */
+enum opdis_addr_expr_shift_t {
+	opdis_addr_expr_lsl,		/*!< Logical shift left */
+	opdis_addr_expr_lsr,		/*!< Logical shift right */
+	opdis_addr_expr_asl,		/*!< Arithmetic shift left */
+	opdis_addr_expr_ror,		/*!< Rotate right */
+	opdis_addr_expr_rrx		/*!< Rotate right with carry */
+};
+
+/*!
+ * \struct opdis_addr_expr_t 
+ * \ingroup model
+ * \brief An address expression operand
+ * \details An address expression or "effective address" operand.
+ *          scale, index, base.
+ * \sa opdis_op_t
+ */
+typedef struct {
+	enum opdis_addr_expr_elem_t elements;
+	enum opdis_addr_expr_shift_t shift;
+	char scale; 
+	opdis_reg_t index;
+	opdis_reg_t base;
+	union {
+		unsigned int u;
+		int s;
+	} displacement;
+} opdis_addr_expr_t;
+
+/*!
  * \struct opdis_op_t 
  * \ingroup model
  * \brief Operand object
@@ -53,15 +115,23 @@ enum opdis_insn_decode_t {
 
 typedef struct {
 	char * ascii;			/*!< String representation of operand */
-	enum opdis_op_cat_t category;	/*!< Type of operand */
+	enum opdis_op_cat_t category;	/*!< Type of operand, e.g. register */
+	enum opdis_op_flag_t flags;	/*!< Flags for operand, e.g. signed */
 	union {
-		char reg[OPDIS_REG_NAME_SZ];
-		// TODO
-	} value;
+		opdis_reg_t reg;	/*!< Register value */
+		opdis_addr_expr_t expr;	/*!< Address expression value */
+		opdis_vma_t addr;	/*!< Address value */
+		int rel_offset;		/*!< Relative offset value */
+		union {
+			unsigned int u;	/*!< Unsigned immediate value */
+			int s;		/*!< Signed immediate value */
+		} immediate;		/*!< Immediate value */
+	} value;			/*!< Value of operand */
+	unsigned char data_size;	/*!< Size of operand datatype */
 
 	/* fixed-size operand fields */
-	int fixed_size;			/*!< Is op of a fixed size? 0 or 1 */
-	unsigned int ascii_sz;		/*!< Size of fixed ascii field */
+	unsigned char fixed_size;	/*!< Is op of a fixed size? 0 or 1 */
+	unsigned char ascii_sz;		/*!< Size of fixed ascii field */
 } opdis_op_t;
 
 /* ---------------------------------------------------------------------- */
@@ -120,9 +190,9 @@ typedef struct {
 	opdis_op_t * src;		/*!< Source operand */
 
 	/* fixed-size instruction fields */
-	int fixed_size;			/*!< Is insn of a fixed size? 0 or 1 */
-	unsigned int ascii_sz;		/*!< Size of fixed ascii field */
-	unsigned int mnemonic_sz;	/*!< Size of fixed mnemonic field */
+	unsigned char fixed_size;	/*!< Is insn of a fixed size? 0 or 1 */
+	unsigned char ascii_sz;		/*!< Size of fixed ascii field */
+	unsigned char mnemonic_sz;	/*!< Size of fixed mnemonic field */
 
 } opdis_insn_t;
 
