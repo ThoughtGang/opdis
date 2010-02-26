@@ -109,6 +109,51 @@ static int intel_prefix_lookup( const char * item ) {
 	return -1;
 }
 
+static int is_prefix_byte( opdis_byte_t b ) {
+	switch (b) {
+		case 0xF0: case 0xF2: case 0xF3:
+		case 0x26: case 0x2E: case 0x36: case 0x3E:
+		case 0x64: case 0x65: case 0x66: case 0x67:
+			return 1; break;
+		default:
+			return 0;
+	}
+}
+
+static void make_relative_operand( opdis_op_t * op ) {
+	// TODO
+}
+
+static void fix_rel_operands( opdis_insn_t * insn ) {
+	const opdis_byte_t * start, * max;
+
+	if ( insn->category != opdis_insn_cat_cflow ) {
+		return ;
+	}
+
+	for ( start = insn->bytes, max = insn->bytes + insn->size; 
+	      start < max && is_prefix_byte(*start); start++ ) 
+		;
+
+	if ( start >= max ) {
+		return;
+	}
+
+	if ( insn->flags.cflow == opdis_cflow_flag_jmpcc ) {
+		/* All JCC instructions are relative. The bytes are
+		 * 0xE3, 0x70-7F, and 0x0F 0x80-8F. */
+		make_relative_operand( insn->operands[0] );
+	} else if ( insn->flags.cflow == opdis_cflow_flag_call ) {
+		if ( *start == 0xE8 ) {
+			make_relative_operand( insn->operands[0] );
+		}
+	} else if ( insn->flags.cflow == opdis_cflow_flag_jmp ) {
+		if ( *start == 0xE9 || * start == 0xEB ) {
+			make_relative_operand( insn->operands[0] );
+		}
+	}
+}
+
 /* ---------------------------------------------------------------------- */
 /* CPU REGISTERS */
 
@@ -231,10 +276,7 @@ static void fill_register( opdis_reg_t * reg, const char * name ) {
 /* OPERANDS */
 
 static void fill_immediate( unsigned int * imm, const char * item ) {
-}
-
-static void fill_expression( opdis_addr_expr_t *expr, const char * item,
-			     const char * first_paren ) {
+	// strtoul
 }
 
 typedef void (*OPERAND_DECODE_FN) ( opdis_op_t *, const char * );
@@ -379,6 +421,15 @@ static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
 	return decode_intel_mnemonic( out, item );
 }
 
+static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
+			     const char * first_paren ) {
+	// if first != item
+	// 	fill_immediate( item )
+	// find ). sib is between first and )
+	// from start of sib, find , or )
+	// first is scale, next index reg, next base reg?
+}
+
 static void decode_att_operand( opdis_op_t * out, const char * item ) {
 	const char * start;
 	switch ( item[0] ) {
@@ -398,7 +449,8 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 			start = strchr( item, '(' );
 			if ( start ) {
 				out->flags |= opdis_op_cat_expr;
-				fill_expression(&out->value.expr, item, start);
+				fill_att_expression(&out->value.expr, item, 
+						    start);
 			} else {
 				out->flags |= opdis_op_cat_addr;
 				fill_immediate( &out->value.immediate.u, item );
@@ -414,7 +466,6 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	struct INSN_BUF_PARSE parse;
 
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
-	//printf( "INSN %s (ATT)\n", in->string );
 
 	parse_insn_buf( in, is_att_operand, & parse );
 
@@ -444,10 +495,12 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		}
 	}
 
+	fix_rel_operands( out );
+
 	add_comments( in, out, & parse );
 
 	/* set operand pointers */
-	// source, dest unless bounf invlpga and 2-imm
+	// source, dest unless bound invlpga and 2-imm
 
 	// out->status |= opdis_decode_basic;
 
@@ -469,6 +522,7 @@ static int is_intel_operand( const char * item ) {
 			return 1;
 	}
 
+	// replace with substr PTR
 	if (! strncmp( "BYTE PTR", item, 8 ) ||
 	    ! strncmp( "WORD PTR", item, 8 ) ||
 	    ! strncmp( "DWORD PTR", item, 9 ) ||
@@ -483,7 +537,16 @@ static void decode_intel_operand( opdis_op_t * out, const char * item ) {
 	int reg = intel_register_lookup( item );
 	if ( reg != -1 ) {
 		// decode_intel_register();
+		// return 1;
 	}
+
+	// search for ' ptr'
+	// search for '['
+	// 	find ]
+	// 	tokenize by +-*
+	// 	scale = int, base is first, index is * scale
+	// search for :
+	// treat as int
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -511,6 +574,8 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 					decode_intel_operand, in->items[i] );
 		}
 	}
+
+	fix_rel_operands( out );
 
 	add_comments( in, out, & parse );
 
