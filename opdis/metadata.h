@@ -27,9 +27,9 @@ enum opdis_op_cat_t {
 	opdis_op_cat_unknown,	/*!< Unknown operand type */
 	opdis_op_cat_register,	/*!< CPU register */
 	opdis_op_cat_immediate,	/*!< Immediate value */
-	opdis_op_cat_addr,	/*!< Address */
-	opdis_op_cat_faraddr,	/*!< Far address (seg:offset) */
-	opdis_op_cat_rel,	/*!< Relative (to PC) offset */
+	opdis_op_cat_address,	/*!< Address (VMA) */
+	opdis_op_cat_absolute,	/*!< Absolute address (seg:offset) */
+	opdis_op_cat_relative,	/*!< Relative (to PC) offset */
 	opdis_op_cat_expr	/*!< Address expression */
 };
 

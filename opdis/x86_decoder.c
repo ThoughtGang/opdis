@@ -359,7 +359,7 @@ static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
 
 	for ( i=0; i < in->item_count; i++ ) {
 		if ( is_operand(in->items[i]) && parse->cmt_char == -1 ) {
-			/* all operands-looking tokesn before # are operands */
+			/* all operands-looking tokens before # are operands */
 			if ( parse->first_op == -1 ) {
 				parse->first_op = i;
 				parse->mnem = i - 1;
@@ -417,10 +417,10 @@ static void add_comments( const opdis_insn_buf_t in, opdis_insn_t * out,
 	}
 
 	if ( parse->pfx > -1 && parse->mnem == -1 ) {
-		// TODO: set flags
+		// TODO: set flags ?
 		opdis_insn_add_comment( out, "Warning: prefix w/o insn" );
 	} else if ( parse->mnem > -1 && in->items[parse->mnem][0] == '.' ) {
-		// TODO: set flags
+		// TODO: set flags ?
 		opdis_insn_add_comment( out, "Warning: directive (data)" );
 	}
 }
@@ -451,8 +451,7 @@ static int att_register_for_token( const char * tok ) {
 		return -1;
 	}
 
-	/* move past '%' */
-	tok++;
+	tok++; 		/* move past '%' */
 
 	for ( i=0; tok[i] && tok[i] != ',' && tok[i] != ')' && tok[i] != ':'; 
 	      i++ ) {
@@ -473,9 +472,7 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 	end_paren = (end_paren == NULL) ? item + strlen(item) -1 : end_paren;
 
 	if ( first_paren != item ) {
-		// fill_absolute
 		const char * col = strchr( item, ':' );
-		const char * start = item;
 		if ( col != NULL ) {
 			fill_absolute( &expr->displacement.a, &item[1], col );
 		} else {
@@ -509,7 +506,8 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 		scale = strtol( scale_tok, NULL, 0 );
 	}
 
-	// fill addr expr
+	// TODO
+	// fill addr expr scale-index-base
 }
 
 static void decode_att_operand( opdis_op_t * out, const char * item ) {
@@ -534,8 +532,18 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 				fill_att_expression(&out->value.expr, item, 
 						    start);
 			} else {
-				out->flags |= opdis_op_cat_addr;
-				fill_immediate( &out->value.immediate.u, item );
+				start = strchr( item, ',' );
+				if ( start ) {
+					out->flags |= opdis_op_cat_absolute;
+					fill_absolute( &out->value.abs,
+						       item, start );
+				} else {
+					/* assume all other values are
+					 * addresses, not immediates */
+					out->flags |= opdis_op_cat_address;
+					fill_immediate( &out->value.immediate.u,
+							item );
+				}
 			}
 	}
 }
@@ -582,9 +590,26 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	add_comments( in, out, & parse );
 
 	/* set operand pointers */
-	// source, dest unless bound invlpga and 2-imm
+	if ( out->category == opdis_insn_cat_cflow ) {
+		if ( out->num_operands > 0 &&
+		     (out->flags.cflow >= opdis_cflow_flag_call &&
+		      out->flags.cflow <= opdis_cflow_flag_jmpcc ) ) {
+			out->target = out->operands[0];
+		}
+	} else if ( out->num_operands > 0 ) {
+		// TODO : exceptions such as bound, invlpga, 2-imm-insn,
+		//        and non-commutative FPU insns
+		out->src = out->operands[0];
+		if ( out->num_operands > 1 ) {
+			out->dest = out->operands[1];
+		}
+	}
 
-	// out->status |= opdis_decode_basic;
+	// NOTE: it might be better to set the *_flags status(es) only
+	//       when insn and operands have been successfully parsed
+	out->status |= (opdis_decode_basic | opdis_decode_mnem | 
+			opdis_decode_ops | opdis_decode_mnem_flags |
+			opdis_decode_op_flags);
 
 	return rv;
 }
@@ -682,9 +707,22 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	add_comments( in, out, & parse );
 
 	/* set operand pointers */
-	// dest, source
+	if ( out->category == opdis_insn_cat_cflow ) {
+		if ( out->num_operands > 0 &&
+		     (out->flags.cflow >= opdis_cflow_flag_call &&
+		      out->flags.cflow <= opdis_cflow_flag_jmpcc ) ) {
+			out->target = out->operands[0];
+		}
+	} else if ( out->num_operands > 0 ) {
+		out->dest = out->operands[0];
+		if ( out->num_operands > 1 ) {
+			out->src = out->operands[1];
+		}
+	}
 	
-	// out->status |= opdis_decode_basic;
+	out->status |= (opdis_decode_basic | opdis_decode_mnem | 
+			opdis_decode_ops | opdis_decode_mnem_flags |
+			opdis_decode_op_flags);
 
 	return rv;
 }
