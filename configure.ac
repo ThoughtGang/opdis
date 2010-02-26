@@ -20,6 +20,7 @@ AC_CHECK_LIB([libopcodes.so], [init_disassemble_info])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sys/types.h])
+AC_CHECK_HEADERS([stdint.h])
 AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([string.h])
 AC_CHECK_HEADERS([argp.h])
@@ -34,5 +35,17 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([strdup])
+
+# Enable debug
+AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug],
+        		               [build debug symbols (def=no)])],
+    	      [debug_syms="$enableval"], [debug_syms=no])
+
+if test x"$debug_syms" = x"yes"; then
+    AM_CXXFLAGS="$AM_CXXFLAGS -ggdb -Wall -Werror -O0"
+else
+    AM_CXXFLAGS="$AM_CXXFLAGS -O2"
+fi
+
 
 AC_OUTPUT
