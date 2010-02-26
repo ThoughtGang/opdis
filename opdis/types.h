@@ -13,6 +13,7 @@
 
 #include <bfd.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef WIN32

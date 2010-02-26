@@ -259,8 +259,7 @@ static int intel_register_lookup( const char * item ) {
 	return -1;
 }
 
-static void fill_register( opdis_reg_t * reg, const char * name ) {
-	int id = intel_register_lookup(name);
+static void fill_register_by_id(opdis_reg_t * reg, int id, const char *name) {
 	if ( id > -1 ) {
 		reg->category = lookup_register_type(id);
 		reg->id = intel_reg_id[id];
@@ -272,18 +271,42 @@ static void fill_register( opdis_reg_t * reg, const char * name ) {
 	strncpy( reg->ascii, name, OPDIS_REG_NAME_SZ - 1 );
 }
 
+static void fill_register( opdis_reg_t * reg, const char * name ) {
+	int id = intel_register_lookup(name);
+	return fill_register_by_id(reg, id, name);
+}
+
 /* ---------------------------------------------------------------------- */
 /* OPERANDS */
 
-static void fill_immediate( unsigned int * imm, const char * item ) {
-	// strtoul
+static void fill_immediate( uint64_t * imm, const char * item ) {
+	if ( *item == '-' ) {
+		/* sign extend result */
+		*imm = (uint64_t) strtoll( item, NULL, 0 );
+	} else {
+		*imm = strtoull( item, NULL, 0 );
+	}
+}
+
+static void fill_absolute( opdis_abs_addr_t * abs, const char * item,
+			   const char * colon ) {
+	int i;
+	char buf[OPDIS_REG_NAME_SZ];
+	int seg = intel_register_lookup( item );
+
+	for ( i = 0; item + i < colon && item[i] != ':' ; i++ ) {
+		buf[i] = item[i];
+	}
+	buf[i] = '\0';
+
+	fill_register( &abs->segment, buf );
+	fill_immediate( &abs->offset, colon + 1 );
 }
 
 typedef void (*OPERAND_DECODE_FN) ( opdis_op_t *, const char * );
 static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn, 
 			   const char * item ) {
 	if (! op ) {
-		// TODO : log
 		return 0;
 	}
 
@@ -421,13 +444,72 @@ static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
 	return decode_intel_mnemonic( out, item );
 }
 
+static int att_register_for_token( const char * tok ) {
+	char buf[OPDIS_REG_NAME_SZ];
+	int i;
+	if (! tok ) {
+		return -1;
+	}
+
+	/* move past '%' */
+	tok++;
+
+	for ( i=0; tok[i] && tok[i] != ',' && tok[i] != ')' && tok[i] != ':'; 
+	      i++ ) {
+		buf[i] = tok[i];
+	}
+	buf[i] = '\0';
+
+	return intel_register_lookup( buf );
+}
+
+
 static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 			     const char * first_paren ) {
-	// if first != item
-	// 	fill_immediate( item )
-	// find ). sib is between first and )
-	// from start of sib, find , or )
-	// first is scale, next index reg, next base reg?
+	int seg = -1, base = -1, index = -1, scale = 1, tok_count = 0;
+	long long int displacement;
+	const char * ptr, * tok, * end_paren = strchr( item, ')' );
+	const char * base_tok = NULL, * index_tok = NULL, * scale_tok = NULL;
+	end_paren = (end_paren == NULL) ? item + strlen(item) -1 : end_paren;
+
+	if ( first_paren != item ) {
+		// fill_absolute
+		const char * col = strchr( item, ':' );
+		const char * start = item;
+		if ( col != NULL ) {
+			fill_absolute( &expr->displacement.a, &item[1], col );
+		} else {
+			fill_immediate( &expr->displacement.u, item );
+		}
+	}
+
+	for ( ptr = tok = first_paren + 1; ptr < end_paren; ptr++ ) {
+		if ( *ptr == ',' ) {
+			if (! tok_count ) {
+				base_tok = tok;
+			} else {
+				index_tok = tok;
+			}
+			tok_count++;
+			tok = ptr + 1;
+		}
+	}
+
+	if (! base_tok ) {
+		base_tok = tok;
+	} else if (! index_tok && *tok != '1' ) {	/* handle disp(,1) */
+		index_tok = tok;
+	} else {
+		scale_tok = tok;
+	}
+
+	base = att_register_for_token( base_tok );
+	index = att_register_for_token( index_tok );
+	if ( scale_tok ) {
+		scale = strtol( scale_tok, NULL, 0 );
+	}
+
+	// fill addr expr
 }
 
 static void decode_att_operand( opdis_op_t * out, const char * item ) {
@@ -533,20 +615,40 @@ static int is_intel_operand( const char * item ) {
 	return 0;
 }
 
-static void decode_intel_operand( opdis_op_t * out, const char * item ) {
-	int reg = intel_register_lookup( item );
-	if ( reg != -1 ) {
-		// decode_intel_register();
-		// return 1;
-	}
-
-	// search for ' ptr'
-	// search for '['
+static void fill_intel_expression( opdis_addr_expr_t *expr, const char * item,
+				   const char * first_paren ) {
 	// 	find ]
 	// 	tokenize by +-*
 	// 	scale = int, base is first, index is * scale
-	// search for :
-	// treat as int
+}
+
+static void decode_intel_operand( opdis_op_t * out, const char * item ) {
+	const char * start;
+	int reg = intel_register_lookup( item );
+	if ( reg != -1 ) {
+		fill_register_by_id( &out->value.reg, reg, item );
+		return;
+	}
+
+	start = strchr( item, '[' );
+	if ( start != NULL ) {
+		fill_intel_expression( &out->value.expr, item, start);
+		return;
+	}
+
+	start = strstr( item, "PTR" );
+	if ( start != NULL ) {
+		// do something;
+		return;
+	}
+
+	start = strchr( item, ':' );
+	if ( start != NULL ) {
+		// do seg:offset
+		return;
+	}
+
+	out->value.immediate.s = strtoll( item, NULL, 0 );
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,

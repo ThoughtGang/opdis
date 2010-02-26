@@ -58,6 +58,18 @@ typedef struct {
 } opdis_reg_t;
 
 /*!
+ * \struct opdis_abs_addr_t 
+ * \ingroup model
+ * \brief An absolute address operand
+ * \details A segment:offset address.
+ * \sa opdis_op_t
+ */
+typedef struct {
+	opdis_reg_t segment;
+	uint64_t offset;
+} opdis_abs_addr_t;
+
+/*!
  * \enum opdis_addr_expr_elem_t 
  * \ingroup model
  * \brief Elements present in an address expression.
@@ -67,7 +79,10 @@ typedef struct {
 enum opdis_addr_expr_elem_t {
 	opdis_addr_expr_base = 1,	/*!< Base register */
 	opdis_addr_expr_index = 2,	/*!< Index register */
-	opdis_addr_expr_disp = 4	/*!< Displacement */
+	opdis_addr_expr_disp = 4,	/*!< Displacement */
+	opdis_addr_expr_disp_u = 8,	/*!< Unsigned disp */
+	opdis_addr_expr_disp_s = 16,	/*!< Signed disp */
+	opdis_addr_expr_disp_abs = 32	/*!< Absolute addr disp */
 };
 
 /*!
@@ -100,8 +115,9 @@ typedef struct {
 	opdis_reg_t index;
 	opdis_reg_t base;
 	union {
-		unsigned int u;
-		int s;
+		uint64_t u;
+		int32_t s;
+		opdis_abs_addr_t a;
 	} displacement;
 } opdis_addr_expr_t;
 
@@ -120,11 +136,12 @@ typedef struct {
 	union {
 		opdis_reg_t reg;	/*!< Register value */
 		opdis_addr_expr_t expr;	/*!< Address expression value */
-		opdis_vma_t addr;	/*!< Address value */
+		opdis_abs_addr_t abs;	/*!< Absolute address value */
+		opdis_vma_t addr;	/*!< Virtual Memory Address value */
 		int rel_offset;		/*!< Relative offset value */
 		union {
-			unsigned int u;	/*!< Unsigned immediate value */
-			int s;		/*!< Signed immediate value */
+			uint64_t u;	/*!< Unsigned immediate value */
+			int64_t s;	/*!< Signed immediate value */
 		} immediate;		/*!< Immediate value */
 	} value;			/*!< Value of operand */
 	unsigned char data_size;	/*!< Size of operand datatype */
@@ -302,6 +319,8 @@ void LIBCALL opdis_insn_set_ascii( opdis_insn_t * i, const char * ascii );
 void LIBCALL opdis_insn_set_mnemonic( opdis_insn_t * i, const char * mnemonic );
 
 /*!
+ * a
+ * a
  * \fn void opdis_insn_add_prefix( opdis_insn_t *, const char * )
  * \ingroup model
  * \brief Append a string to the \e prefix field
@@ -374,6 +393,10 @@ int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn );
  */
 int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
 
+int LIBCALL opdis_insn_isa_str( opdis_insn_t *, char * buf, int buf_len );
+int LIBCALL opdis_insn_cat_str( opdis_insn_t *, char * buf, int buf_len );
+int LIBCALL opdis_insn_flags_str( opdis_insn_t *, char * buf, int buf_len );
+
 /*!
  * \fn opdis_op_t * opdis_op_alloc()
  * \ingroup model
@@ -430,6 +453,10 @@ void LIBCALL opdis_op_free( opdis_op_t * op );
  * \param ascii The new value for the \e ascii field.
  */
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
+
+int LIBCALL opdis_op_cat_str( opdis_op_t *, char * buf, int buf_len );
+int LIBCALL opdis_op_flags_str( opdis_op_t *, char * buf, int buf_len );
+int LIBCALL opdis_reg_cat_str( opdis_reg_t *, char * buf, int buf_len );
 
 #ifdef __cplusplus
 }

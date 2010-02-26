@@ -440,3 +440,27 @@ void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
 
 	op->ascii = strdup(ascii);
 }
+
+int LIBCALL opdis_insn_isa_str( opdis_insn_t * insn, char * buf, int buf_len ) {
+	return 0;
+}
+
+int LIBCALL opdis_insn_cat_str( opdis_insn_t * insn, char * buf, int buf_len ) {
+	return 0;
+}
+
+int LIBCALL opdis_insn_flags_str(opdis_insn_t * insn, char * buf, int buf_len) {
+	return 0;
+}
+
+int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len ) {
+	return 0;
+}
+
+int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len ) {
+	return 0;
+}
+
+int LIBCALL opdis_reg_cat_str( opdis_reg_t * reg, char * buf, int buf_len ) {
+	return 0;
+}
