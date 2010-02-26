@@ -175,7 +175,9 @@ typedef struct {
 	enum opdis_insn_subset_t isa;	/*!< Subset of ISA for insn */
 	union {
 		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
-		// TODO
+		enum opdis_stack_flag_t stack;	/*!< Stack insn flags */
+		enum opdis_io_flag_t io;	/*!< IO Port insn flags */
+		enum opdis_bit_flag_t bit;	/*!< Bitwise insn flags */
 	} flags;			/*!< Instruction-specific flags */
 	char * comment;			/*!< Comment or hint from libopcodes */
 
