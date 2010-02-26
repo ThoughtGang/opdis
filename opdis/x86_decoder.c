@@ -121,7 +121,10 @@ static int is_prefix_byte( opdis_byte_t b ) {
 }
 
 static void make_relative_operand( opdis_op_t * op ) {
-	// TODO
+	int rel = (int) op->value.immediate.s;
+	op->value.rel_offset = rel;
+	op->category = opdis_op_cat_relative;
+	op->flags |= opdis_op_flag_signed;
 }
 
 static void fix_rel_operands( opdis_insn_t * insn ) {
@@ -259,21 +262,37 @@ static int intel_register_lookup( const char * item ) {
 	return -1;
 }
 
-static void fill_register_by_id(opdis_reg_t * reg, int id, const char *name) {
+static void fill_register_by_id(opdis_reg_t * reg, int id) {
 	if ( id > -1 ) {
 		reg->category = lookup_register_type(id);
 		reg->id = intel_reg_id[id];
 		reg->size = intel_reg_size[id];
+		strncpy( reg->ascii, intel_registers[id], 
+			 OPDIS_REG_NAME_SZ - 1 );
 	} else {
 		reg->category = opdis_reg_cat_unknown;
 		reg->id = reg->size = 0;
 	}
-	strncpy( reg->ascii, name, OPDIS_REG_NAME_SZ - 1 );
 }
 
 static void fill_register( opdis_reg_t * reg, const char * name ) {
 	int id = intel_register_lookup(name);
-	return fill_register_by_id(reg, id, name);
+	return fill_register_by_id(reg, id);
+}
+
+static int register_for_token( const char * tok ) {
+	char buf[OPDIS_REG_NAME_SZ];
+	int i;
+	if (! tok ) {
+		return -1;
+	}
+
+	for ( i=0; tok[i] && isalnum(tok[i]); i++ ) {
+		buf[i] = tok[i];
+	}
+	buf[i] = '\0';
+
+	return intel_register_lookup( buf );
 }
 
 /* ---------------------------------------------------------------------- */
@@ -290,16 +309,7 @@ static void fill_immediate( uint64_t * imm, const char * item ) {
 
 static void fill_absolute( opdis_abs_addr_t * abs, const char * item,
 			   const char * colon ) {
-	int i;
-	char buf[OPDIS_REG_NAME_SZ];
-	int seg = intel_register_lookup( item );
-
-	for ( i = 0; item + i < colon && item[i] != ':' ; i++ ) {
-		buf[i] = item[i];
-	}
-	buf[i] = '\0';
-
-	fill_register( &abs->segment, buf );
+	fill_register_by_id( &abs->segment, register_for_token(item) );
 	fill_immediate( &abs->offset, colon + 1 );
 }
 
@@ -322,32 +332,6 @@ static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn,
 struct INSN_BUF_PARSE {
 	int pfx, mnem, first_op, last_op, cmt, cmt_char;
 };
-
-static void print_parsed_insn_buf( const opdis_insn_buf_t in,
-			    struct INSN_BUF_PARSE * parse ) {
-	int i;
-
-	if ( parse->pfx > -1 ) {
-		printf("Prefix:" );
-		for ( i = 0; i <= parse->pfx; i++ ) {
-			printf(" '%s'", in->items[i]);
-		}
-		printf("'|" );
-	}
-	printf("Mnemonic: '%s'", in->items[parse->mnem] );
-	for ( i = parse->first_op; i > -1 && i <= parse->last_op; i++ ) {
-		if ( in->items[i][0] != ',' ) {
-			printf("|Operand: '%s'", in->items[i]);
-		}
-	}
-	if ( parse->cmt > -1 ) {
-		printf("|Comment:" );
-		for ( i = parse->cmt; i <= in->item_count; i++ ) {
-			printf(" '%s'", in->items[i]);
-		}
-	}
-	printf("\n");
-}
 
 typedef int (*IS_OPERAND_FN) ( const char * );
 static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
@@ -393,8 +377,6 @@ static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
 		parse->pfx = parse->mnem;
 		parse->mnem = 0;
 	}
-
-	//print_parsed_insn( in, parse );
 }
 
 static void add_prefixes( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -444,39 +426,30 @@ static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
 	return decode_intel_mnemonic( out, item );
 }
 
-static int att_register_for_token( const char * tok ) {
-	char buf[OPDIS_REG_NAME_SZ];
-	int i;
-	if (! tok ) {
-		return -1;
-	}
-
-	tok++; 		/* move past '%' */
-
-	for ( i=0; tok[i] && tok[i] != ',' && tok[i] != ')' && tok[i] != ':'; 
-	      i++ ) {
-		buf[i] = tok[i];
-	}
-	buf[i] = '\0';
-
-	return intel_register_lookup( buf );
-}
 
 
 static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 			     const char * first_paren ) {
 	int seg = -1, base = -1, index = -1, scale = 1, tok_count = 0;
-	long long int displacement;
-	const char * ptr, * tok, * end_paren = strchr( item, ')' );
+	enum opdis_addr_expr_elem_t flags = 0;
 	const char * base_tok = NULL, * index_tok = NULL, * scale_tok = NULL;
+	const char * ptr, * tok, * end_paren = strchr( item, ')' );
 	end_paren = (end_paren == NULL) ? item + strlen(item) -1 : end_paren;
 
 	if ( first_paren != item ) {
+		/* displacement always precedes SIB */
 		const char * col = strchr( item, ':' );
+		flags |= opdis_addr_expr_disp;
 		if ( col != NULL ) {
 			fill_absolute( &expr->displacement.a, &item[1], col );
+			flags |= opdis_addr_expr_disp_abs;
 		} else {
 			fill_immediate( &expr->displacement.u, item );
+			if ( item[0] == '-' ) {
+				flags |= opdis_addr_expr_disp_s;
+			} else {
+				flags |= opdis_addr_expr_disp_u;
+			}
 		}
 	}
 
@@ -500,14 +473,23 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 		scale_tok = tok;
 	}
 
-	base = att_register_for_token( base_tok );
-	index = att_register_for_token( index_tok );
+	base = register_for_token( &base_tok[1] );
+	index = register_for_token( &index_tok[1] );
 	if ( scale_tok ) {
 		scale = strtol( scale_tok, NULL, 0 );
 	}
 
-	// TODO
-	// fill addr expr scale-index-base
+	if ( base != -1 ) {
+		fill_register_by_id( &expr->base, base );
+		flags |= opdis_addr_expr_base;
+	}
+	if ( index != -1 ) {
+		fill_register_by_id( &expr->index, index );
+		flags |= opdis_addr_expr_index;
+	}
+	expr->scale = scale;
+	expr->shift = opdis_addr_expr_asl;
+	expr->elements = flags;
 }
 
 static void decode_att_operand( opdis_op_t * out, const char * item ) {
@@ -516,31 +498,38 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 		case '$':			/* immediate value */
 			out->category = opdis_op_cat_immediate;
 			fill_immediate( &out->value.immediate.u, &item[1] );
+			out->flags |= opdis_op_flag_r;
+			if ( item[1] == '-' ) {
+				out->flags |= opdis_op_flag_signed;
+			}
 			return;
 		case '%':			/* CPU register */
 			out->category = opdis_op_cat_register;
 			fill_register( &out->value.reg, &item[1] );
 			return;
-		case '*':			/* absolute jump/call addr */
-			out->flags |= opdis_op_cat_register;
+		case '*':			/* indirect jump/call addr */
+			out->flags |= opdis_op_flag_indirect;
+			/* * is followed by either a reg or expr; recurse */
 			decode_att_operand( out, &item[1] );
 			return;
 		default:
+			/* All other values are assumed to be addresses */
+			out->flags |= opdis_op_flag_address;
 			start = strchr( item, '(' );
 			if ( start ) {
-				out->flags |= opdis_op_cat_expr;
+				out->category = opdis_op_cat_expr;
 				fill_att_expression(&out->value.expr, item, 
 						    start);
 			} else {
 				start = strchr( item, ',' );
 				if ( start ) {
-					out->flags |= opdis_op_cat_absolute;
+					out->category = opdis_op_cat_absolute;
 					fill_absolute( &out->value.abs,
 						       item, start );
 				} else {
 					/* assume all other values are
 					 * addresses, not immediates */
-					out->flags |= opdis_op_cat_address;
+					out->category = opdis_op_cat_address;
 					fill_immediate( &out->value.immediate.u,
 							item );
 				}
@@ -595,13 +584,17 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		     (out->flags.cflow >= opdis_cflow_flag_call &&
 		      out->flags.cflow <= opdis_cflow_flag_jmpcc ) ) {
 			out->target = out->operands[0];
+			out->target->flags |= opdis_op_flag_r | opdis_op_flag_x;
 		}
 	} else if ( out->num_operands > 0 ) {
-		// TODO : exceptions such as bound, invlpga, 2-imm-insn,
-		//        and non-commutative FPU insns
+		// TODO : insns such as bound, invlpga, 2-imm-insn,
+		//        and non-commutative FPU insns are dest,src
 		out->src = out->operands[0];
+		out->src->flags |= opdis_op_flag_r;
 		if ( out->num_operands > 1 ) {
 			out->dest = out->operands[1];
+			/* TODO: find exceptions to this rule and apply them */
+			out->dest->flags |= opdis_op_flag_w;
 		}
 	}
 
@@ -629,11 +622,7 @@ static int is_intel_operand( const char * item ) {
 			return 1;
 	}
 
-	// replace with substr PTR
-	if (! strncmp( "BYTE PTR", item, 8 ) ||
-	    ! strncmp( "WORD PTR", item, 8 ) ||
-	    ! strncmp( "DWORD PTR", item, 9 ) ||
-	    ! strncmp( "QWORD PTR", item, 9 ) ) {
+	if ( strstr( "PTR", item ) != NULL ) {
 		return 1;
 	}
 
@@ -642,38 +631,119 @@ static int is_intel_operand( const char * item ) {
 
 static void fill_intel_expression( opdis_addr_expr_t *expr, const char * item,
 				   const char * first_paren ) {
-	// 	find ]
-	// 	tokenize by +-*
-	// 	scale = int, base is first, index is * scale
+	// segment:[base + index * scale + disp]
+	int seg = -1, base = -1, index = -1, scale = 1, tok_count = 0;
+	enum opdis_addr_expr_elem_t flags = 0;
+	const char * base_tok = NULL, * index_tok = NULL, * scale_tok = NULL,
+	      	   * disp_tok = NULL;
+	const char * ptr, * tok, * end_paren = strchr( item, ']' );
+	end_paren = (end_paren == NULL) ? item + strlen(item) -1 : end_paren;
+
+	if ( first_paren != item ) {
+		/* segment always precedes SIP */
+		const char * col = strchr( item, ':' );
+		if ( col != NULL ) {
+			fill_register_by_id( &expr->displacement.a.segment,
+					register_for_token( base_tok ) );
+			flags |= opdis_addr_expr_disp_abs;
+		}
+	}
+
+	for ( ptr = tok = first_paren + 1; ptr < end_paren; ptr++ ) {
+		if ( *ptr == '+' ) {
+			if (! tok_count ) {
+				base_tok = tok;
+			} else {
+				scale_tok = tok;
+			}
+			tok_count++;
+			tok = ptr + 1;
+		} else if ( *ptr == '*' ) {
+			index_tok = tok;
+			tok_count++;
+			tok = ptr + 1;
+		}
+	}
+
+	/* only a single token means either base register or disp */
+	if (! base_tok ) {
+		if ( isalpha(tok[0]) ) {
+			base_tok = tok;
+		} else {
+			disp_tok = tok;
+		}
+	} else if ( *(tok-1) == '*' ) {
+		/* remaining token is scale if previous byte was '*' */
+		scale_tok = tok;
+	} else {
+		/* remaining token is displacement */
+		disp_tok = tok;
+	}
+
+	base = register_for_token( base_tok );
+	index = register_for_token( index_tok );
+	if ( scale_tok ) {
+		scale = strtol( scale_tok, NULL, 0 );
+	}
+
+	if ( disp_tok ) {
+		flags |= opdis_addr_expr_disp_abs;
+		fill_immediate( &expr->displacement.u, item );
+		if ( item[0] == '-' ) {
+			flags |= opdis_addr_expr_disp_s;
+		} else {
+			flags |= opdis_addr_expr_disp_u;
+		}
+	}
+
+	if ( base != -1 ) {
+		fill_register_by_id( &expr->base, base );
+		flags |= opdis_addr_expr_base;
+	}
+	if ( index != -1 ) {
+		fill_register_by_id( &expr->index, index );
+		flags |= opdis_addr_expr_index;
+	}
+
+	expr->scale = scale;
+	expr->shift = opdis_addr_expr_asl;
+	expr->elements = flags;
 }
 
-static void decode_intel_operand( opdis_op_t * out, const char * item ) {
+static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 	const char * start;
 	int reg = intel_register_lookup( item );
 	if ( reg != -1 ) {
-		fill_register_by_id( &out->value.reg, reg, item );
+		op->category = opdis_op_cat_register;
+		fill_register_by_id( &op->value.reg, reg );
 		return;
+	}
+
+	/* default category will be immediate */
+	op->category = opdis_op_cat_immediate;
+
+	start = strstr( item, "PTR" );
+	if ( start != NULL ) {
+		op->category = opdis_op_cat_address;
+		op->flags |= opdis_op_flag_indirect;
 	}
 
 	start = strchr( item, '[' );
 	if ( start != NULL ) {
-		fill_intel_expression( &out->value.expr, item, start);
-		return;
-	}
-
-	start = strstr( item, "PTR" );
-	if ( start != NULL ) {
-		// do something;
+		op->category = opdis_op_cat_expr;
+		fill_intel_expression( &op->value.expr, item, start);
 		return;
 	}
 
 	start = strchr( item, ':' );
 	if ( start != NULL ) {
+		op->category = opdis_op_cat_absolute;
 		// do seg:offset
 		return;
 	}
 
-	out->value.immediate.s = strtoll( item, NULL, 0 );
+	// TODO : signed
+	fill_immediate( &op->value.immediate.u, item );
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -712,11 +782,15 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		     (out->flags.cflow >= opdis_cflow_flag_call &&
 		      out->flags.cflow <= opdis_cflow_flag_jmpcc ) ) {
 			out->target = out->operands[0];
+			out->target->flags |= opdis_op_flag_r | opdis_op_flag_x;
 		}
 	} else if ( out->num_operands > 0 ) {
 		out->dest = out->operands[0];
+		/* TODO: find exceptions to this rule and apply them */
+		out->dest->flags |= opdis_op_flag_w;
 		if ( out->num_operands > 1 ) {
 			out->src = out->operands[1];
+			out->src->flags |= opdis_op_flag_r;
 		}
 	}
 	
