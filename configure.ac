@@ -38,7 +38,7 @@ AC_CHECK_FUNCS([strdup])
 
 # Enable debug
 AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug],
-        		               [build debug symbols (def=no)])],
+        		               [build debug symbols [default=no]])],
     	      [debug_syms="$enableval"], [debug_syms=no])
 
 if test x"$debug_syms" = x"yes"; then
