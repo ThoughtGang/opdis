@@ -120,43 +120,6 @@ static int is_prefix_byte( opdis_byte_t b ) {
 	}
 }
 
-static void make_relative_operand( opdis_op_t * op ) {
-	int rel = (int) op->value.immediate.s;
-	op->value.rel_offset = rel;
-	op->category = opdis_op_cat_relative;
-	op->flags |= opdis_op_flag_signed;
-}
-
-static void fix_rel_operands( opdis_insn_t * insn ) {
-	const opdis_byte_t * start, * max;
-
-	if ( insn->category != opdis_insn_cat_cflow ) {
-		return ;
-	}
-
-	for ( start = insn->bytes, max = insn->bytes + insn->size; 
-	      start < max && is_prefix_byte(*start); start++ ) 
-		;
-
-	if ( start >= max ) {
-		return;
-	}
-
-	if ( insn->flags.cflow == opdis_cflow_flag_jmpcc ) {
-		/* All JCC instructions are relative. The bytes are
-		 * 0xE3, 0x70-7F, and 0x0F 0x80-8F. */
-		make_relative_operand( insn->operands[0] );
-	} else if ( insn->flags.cflow == opdis_cflow_flag_call ) {
-		if ( *start == 0xE8 ) {
-			make_relative_operand( insn->operands[0] );
-		}
-	} else if ( insn->flags.cflow == opdis_cflow_flag_jmp ) {
-		if ( *start == 0xE9 || * start == 0xEB ) {
-			make_relative_operand( insn->operands[0] );
-		}
-	}
-}
-
 /* ---------------------------------------------------------------------- */
 /* CPU REGISTERS */
 
@@ -430,6 +393,7 @@ static void decode_att_mnemonic( opdis_insn_t * out, const char * item ) {
 
 static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 			     const char * first_paren ) {
+	/* format : section:disp(base,index.scale) */
 	int seg = -1, base = -1, index = -1, scale = 1, tok_count = 0;
 	enum opdis_addr_expr_elem_t flags = 0;
 	const char * base_tok = NULL, * index_tok = NULL, * scale_tok = NULL;
@@ -527,9 +491,7 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 					fill_absolute( &out->value.abs,
 						       item, start );
 				} else {
-					/* assume all other values are
-					 * addresses, not immediates */
-					out->category = opdis_op_cat_address;
+					out->category = opdis_op_cat_immediate;
 					fill_immediate( &out->value.immediate.u,
 							item );
 				}
@@ -573,8 +535,6 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 					decode_att_operand, in->items[i] );
 		}
 	}
-
-	fix_rel_operands( out );
 
 	add_comments( in, out, & parse );
 
@@ -631,7 +591,7 @@ static int is_intel_operand( const char * item ) {
 
 static void fill_intel_expression( opdis_addr_expr_t *expr, const char * item,
 				   const char * first_paren ) {
-	// segment:[base + index * scale + disp]
+	/* format: segment:[base + index * scale + disp] */
 	int seg = -1, base = -1, index = -1, scale = 1, tok_count = 0;
 	enum opdis_addr_expr_elem_t flags = 0;
 	const char * base_tok = NULL, * index_tok = NULL, * scale_tok = NULL,
@@ -724,8 +684,7 @@ static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 
 	start = strstr( item, "PTR" );
 	if ( start != NULL ) {
-		op->category = opdis_op_cat_address;
-		op->flags |= opdis_op_flag_indirect;
+		op->flags |= opdis_op_flag_indirect | opdis_op_flag_address;
 	}
 
 	start = strchr( item, '[' );
@@ -738,12 +697,16 @@ static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 	start = strchr( item, ':' );
 	if ( start != NULL ) {
 		op->category = opdis_op_cat_absolute;
-		// do seg:offset
+		fill_register_by_id( &op->value.abs.segment, 
+				     register_for_token(item) );
+		fill_immediate( &op->value.immediate.u, start + 1 );
 		return;
 	}
 
-	// TODO : signed
 	fill_immediate( &op->value.immediate.u, item );
+	if ( item[0] == '-' ) {
+		op->flags |= opdis_op_flag_signed;
+	}
 }
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
@@ -771,8 +734,6 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 					decode_intel_operand, in->items[i] );
 		}
 	}
-
-	fix_rel_operands( out );
 
 	add_comments( in, out, & parse );
 

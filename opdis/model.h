@@ -137,9 +137,8 @@ typedef struct {
 		opdis_reg_t reg;	/*!< Register value */
 		opdis_addr_expr_t expr;	/*!< Address expression value */
 		opdis_abs_addr_t abs;	/*!< Absolute address value */
-		opdis_vma_t addr;	/*!< Virtual Memory Address value */
-		int rel_offset;		/*!< Relative offset value */
 		union {
+			opdis_vma_t vma;/*!< Virtual memory address */
 			uint64_t u;	/*!< Unsigned immediate value */
 			int64_t s;	/*!< Signed immediate value */
 		} immediate;		/*!< Immediate value */
