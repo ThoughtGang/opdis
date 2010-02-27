@@ -140,7 +140,6 @@ opdis_t LIBCALL opdis_init( void ) {
 	
 	if ( o ) {
 		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
-		o->visited_addr = opdis_vma_tree_init();
 		init_disassemble_info ( &o->config, o, build_insn_fprintf );
 		o->config.application_data = (void *) o;
 		o->config.memory_error_func = report_memory_error;
@@ -452,6 +451,11 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
 
+	if (! o->visited_addr ) {
+		/* ensure visited address tree is initialized */
+		o->visited_addr = opdis_vma_tree_init();
+	}
+
 	set_opdis_buffer( o, buf );
 
 	return disasm_cflow( o, vma );
@@ -541,6 +545,11 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 
 	if (! load_section_for_vma(o, abfd, vma) ) {
 		return 0;
+	}
+
+	if (! o->visited_addr ) {
+		/* ensure visited address tree is initialized */
+		o->visited_addr = opdis_vma_tree_init();
 	}
 
 	count = disasm_cflow( o, vma );
