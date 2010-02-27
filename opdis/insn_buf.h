@@ -84,7 +84,8 @@ extern "C"
 #endif
 
 /*!
- * \fn opdis_insn_buf_t opdis_insn_buf_alloc( size_t, size_t, size_t  )
+ * \fn opdis_insn_buf_t opdis_insn_buf_alloc( unsigned int, unsigned int, 
+ * 					      unsigned int  )
  * \ingroup internal
  * \brief Allocate an instruction buffer
  * \details Allocates an opdis_insn_buffer_t based on the specified parameters.

@@ -157,9 +157,9 @@ static enum opdis_reg_flag_t lookup_register_type( unsigned int id ) {
 	} else if ( id <= 16 ) {
 		type = opdis_reg_flag_gen;
 	} else if ( id >= 17 && id <= 24 ) {
-		type = opdis_reg_flag_fpu | opdis_reg_flag_sse;
+		type = opdis_reg_flag_fpu | opdis_reg_flag_simd;
 	} else if ( id >= 25 && id <= 32 || id == 61 ) {
-		type = opdis_reg_flag_sse;
+		type = opdis_reg_flag_simd;
 	} else if ( id >= 33 && id <= 40 ) {
 		type = opdis_reg_flag_task;
 	} else if ( id >= 41 && id <= 48 ) {

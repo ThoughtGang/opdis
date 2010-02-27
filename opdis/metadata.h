@@ -60,7 +60,7 @@ enum opdis_reg_flag_t {
 	opdis_reg_flag_gen=1,	      /*!< General-purpose register, e.g. EAX */
 	opdis_reg_flag_fpu=2,	      /*!< FPU register, e.g. ST(0) */
 	opdis_reg_flag_gpu=4,	      /*!< GPU register */
-	opdis_reg_flag_sse=8,	      /*!< SSE register, e.g. XMM0 */
+	opdis_reg_flag_simd=8,	      /*!< SIMD register, e.g. XMM0 */
 	opdis_reg_flag_task=16,	      /*!< Task management register, e.g. CR0 */
 	opdis_reg_flag_mem=32,	      /*!< Memory mgt register, e.g. LDTR */
 	opdis_reg_flag_debug=64,      /*!< Debug register, e.g. DR0 */

@@ -375,7 +375,7 @@ void LIBCALL opdis_vma_tree_free( opdis_vma_tree_t tree );
 /* Instruction tree */
 
 /*!
- * \fn opdis_tree_t opdis_insn_tree_init()
+ * \fn opdis_tree_t opdis_insn_tree_init( int )
  * \ingroup tree
  * \brief Allocate an Instruction Tree.
  * \param manage 1 if tree should free items on deletion; 0 otherwise.

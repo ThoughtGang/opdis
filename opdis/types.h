@@ -102,7 +102,7 @@ void LIBCALL opdis_buf_set_vma( opdis_buf_t buf, opdis_vma_t addr );
 
 
 /*!
- * \fn opdis_buf_t opdis_buf_read( FILE *, opdis_off_t )
+ * \fn opdis_buf_t opdis_buf_read( FILE *, opdis_off_t, opdis_vma_t )
  * \ingroup types
  * \brief Allocate an opdis buffer containing contents of file
  * \details Allocates an opdis buffer and fills it with the contents of

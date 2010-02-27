@@ -223,7 +223,7 @@ extern "C"
 
 
 /*!
- * \fn opdis_insn_t * opdis_insn_alloc()
+ * \fn opdis_insn_t * opdis_insn_alloc( opdis_off_t )
  * \ingroup model
  * \brief Allocate an instruction object and initialize its contents to zero.
  * \param num_operands The number of operands to allocate, or 0.
@@ -234,7 +234,7 @@ extern "C"
  *       operands themselves are not allocated.
  */
 
-opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands );
+opdis_insn_t * LIBCALL opdis_insn_alloc(  opdis_off_t num_operands );
 
 /*!
  * \fn opdis_insn_t * opdis_insn_alloc_fixed( size_t, size_t, size_t, size_t )
@@ -392,9 +392,48 @@ int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn );
  */
 int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
 
-int LIBCALL opdis_insn_isa_str( opdis_insn_t *, char * buf, int buf_len );
-int LIBCALL opdis_insn_cat_str( opdis_insn_t *, char * buf, int buf_len );
-int LIBCALL opdis_insn_flags_str( opdis_insn_t *, char * buf, int buf_len );
+/*!
+ * \fn int opdis_insn_isa_str( opdis_insn_t *, char *, int )
+ * \ingroup model
+ * \brief Generate a string representation of instruction isa field.
+ * \param i The instruction.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \sa opdis_insn_cat_str
+ * \sa opdis_insn_flags_str
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ */
+int LIBCALL opdis_insn_isa_str( opdis_insn_t * i, char * buf, int buf_len );
+
+/*!
+ * \fn int opdis_insn_cat_str( opdis_insn_t *, char *, int )
+ * \ingroup model
+ * \brief Generate a string representation of instruction category field.
+ * \param i The instruction.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \note '/' should not be used as a delimiter, as some flags (e.g. load/store,
+ *       i/o) use it in their string representation.
+ * \sa opdis_insn_isa_str
+ * \sa opdis_insn_flags_str
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ */
+int LIBCALL opdis_insn_cat_str( opdis_insn_t * i, char * buf, int buf_len );
+
+/*!
+ * \fn int opdis_insn_flags_str( opdis_insn_t *, char *, int, const char * )
+ * \ingroup model
+ * \brief Generate a string representation of instruction flags field.
+ * \param i The instruction.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \param delim The delimiter to use between flags.
+ * \sa opdis_insn_cat_str
+ * \sa opdis_insn_isa_str
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ */
+int LIBCALL opdis_insn_flags_str( opdis_insn_t * i, char * buf, int buf_len,
+				  const char * delim );
 
 /*!
  * \fn opdis_op_t * opdis_op_alloc()
@@ -453,9 +492,48 @@ void LIBCALL opdis_op_free( opdis_op_t * op );
  */
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
 
-int LIBCALL opdis_op_cat_str( opdis_op_t *, char * buf, int buf_len );
-int LIBCALL opdis_op_flags_str( opdis_op_t *, char * buf, int buf_len );
-int LIBCALL opdis_reg_cat_str( opdis_reg_t *, char * buf, int buf_len );
+/*!
+ * \fn int opdis_op_cat_str( opdis_op_t *, char *, int )
+ * \ingroup model
+ * \brief Generate a string representation of operand category field.
+ * \param op The operand.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ * \sa opdis_op_flags_str
+ * \sa opdis_reg_flags_str
+ */
+int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len );
+
+/*!
+ * \fn int opdis_op_flags_str( opdis_op_t *, char *, int, const char * )
+ * \ingroup model
+ * \brief Generate a string representation of operand flags field.
+ * \param op The operand.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \param delim The delimiter to use between flags.
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ * \sa opdis_op_cat_str
+ * \sa opdis_reg_flags_str
+ */
+int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
+				const char * delim );
+
+/*!
+ * \fn int opdis_reg_flags_str( opdis_reg_t *, char *, int, const char * )
+ * \ingroup model
+ * \brief Generate a string representation of register flags field.
+ * \param reg The register.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \param delim The delimiter to use between flags.
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ * \sa opdis_op_cat_str
+ * \sa opdis_op_flags_str
+ */
+int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
+				 const char * delim );
 
 #ifdef __cplusplus
 }

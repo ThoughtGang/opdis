@@ -12,7 +12,7 @@
 
 #include <opdis/model.h>
 
-opdis_insn_t * LIBCALL opdis_insn_alloc( size_t num_operands ) {
+opdis_insn_t * LIBCALL opdis_insn_alloc( opdis_off_t num_operands ) {
 	opdis_insn_t * i = (opdis_insn_t *) calloc( 1, sizeof(opdis_insn_t) );
 	if (! i ) {
 		return NULL;
@@ -442,25 +442,271 @@ void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
 }
 
 int LIBCALL opdis_insn_isa_str( opdis_insn_t * insn, char * buf, int buf_len ) {
-	return 0;
+	int max_size;
+	if (! insn || ! buf || ! buf_len ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+
+	switch ( insn->isa ) {
+		case opdis_insn_subset_gen:
+			strncat( buf, "general purpose", max_size ); break;
+		case opdis_insn_subset_fpu:
+			strncat( buf, "fpu", max_size ); break;
+		case opdis_insn_subset_gpu:
+			strncat( buf, "gpu", max_size ); break;
+		case opdis_insn_subset_simd:
+			strncat( buf, "simd", max_size ); break;
+		case opdis_insn_subset_vm:
+			strncat( buf, "virtualization", max_size ); break;
+	}
+
+	return strlen(buf);
 }
 
 int LIBCALL opdis_insn_cat_str( opdis_insn_t * insn, char * buf, int buf_len ) {
-	return 0;
+	int max_size;
+	if (! insn || ! buf || ! buf_len ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+
+	switch ( insn->category ) {
+		case opdis_insn_cat_unknown:
+			strncat( buf, "unknown", max_size ); break;
+		case opdis_insn_cat_cflow:
+			strncat( buf, "control flow", max_size ); break;
+		case opdis_insn_cat_stack:
+			strncat( buf, "stack", max_size ); break;
+		case opdis_insn_cat_lost:
+			strncat( buf, "load/store", max_size ); break;
+		case opdis_insn_cat_test:
+			strncat( buf, "compare", max_size ); break;
+		case opdis_insn_cat_math:
+			strncat( buf, "arithmetic", max_size ); break;
+		case opdis_insn_cat_bit:
+			strncat( buf, "bitwise", max_size ); break;
+		case opdis_insn_cat_flag:
+			strncat( buf, "flag", max_size ); break;
+		case opdis_insn_cat_io:
+			strncat( buf, "i/o", max_size ); break;
+		case opdis_insn_cat_trap:
+			strncat( buf, "trap", max_size ); break;
+		case opdis_insn_cat_priv:
+			strncat( buf, "privileged", max_size ); break;
+		case opdis_insn_cat_nop:
+			strncat( buf, "nop", max_size ); break;
+	}
+
+	return strlen(buf);
 }
 
-int LIBCALL opdis_insn_flags_str(opdis_insn_t * insn, char * buf, int buf_len) {
-	return 0;
+#define delim_strcat( buf, max_size, str, delim, use_delim ) 	\
+	if ( use_delim ) {					\
+		strncat( buf, delim, max_size );		\
+		max_size -= strlen(delim);			\
+	}							\
+	strncat( buf, str, max_size );				\
+	max_size -= strlen(str);				\
+	use_delim = 1;
+
+int LIBCALL opdis_insn_flags_str( opdis_insn_t * insn, char * buf, int buf_len,
+				  const char * delim ) {
+	int max_size, use_delim = 0;
+	if (! insn || ! buf || ! buf_len ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+
+	switch ( insn->category ) {
+		case opdis_insn_cat_cflow:
+			if ( insn->flags.cflow & opdis_cflow_flag_call )
+				delim_strcat( buf, max_size, "call", 
+					      delim, use_delim );
+			if ( insn->flags.cflow & opdis_cflow_flag_callcc )
+				delim_strcat( buf, max_size, "conditional call",
+					      delim, use_delim );
+			if ( insn->flags.cflow & opdis_cflow_flag_jmp )
+				delim_strcat( buf, max_size, "jump", 
+					      delim, use_delim );
+			if ( insn->flags.cflow & opdis_cflow_flag_jmpcc )
+				delim_strcat( buf, max_size, "conditional jump",
+					      delim, use_delim );
+			if ( insn->flags.cflow & opdis_cflow_flag_ret )
+				delim_strcat( buf, max_size, "return", 
+					      delim, use_delim );
+			break;
+
+		case opdis_insn_cat_stack:
+			if ( insn->flags.stack & opdis_stack_flag_push )
+				delim_strcat( buf, max_size, "push", 
+					      delim, use_delim );
+			if ( insn->flags.stack & opdis_stack_flag_pop )
+				delim_strcat( buf, max_size, "pop", 
+					      delim, use_delim );
+			if ( insn->flags.stack & opdis_stack_flag_frame )
+				delim_strcat( buf, max_size, "enter frame", 
+					      delim, use_delim );
+			if ( insn->flags.stack & opdis_stack_flag_unframe )
+				delim_strcat( buf, max_size, "exit frame", 
+					      delim, use_delim );
+			break;
+
+		case opdis_insn_cat_bit:
+			if ( insn->flags.bit & opdis_bit_flag_and )
+				delim_strcat( buf, max_size, "bitwise and", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_or )
+				delim_strcat( buf, max_size, "bitwise or", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_xor )
+				delim_strcat( buf, max_size, "bitwise xor", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_not )
+				delim_strcat( buf, max_size, "bitwise not", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_lsl )
+				delim_strcat( buf, max_size, 
+					      "logical shift left", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_lsr )
+				delim_strcat( buf, max_size, 
+					      "logical shift right", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_asl )
+				delim_strcat( buf, max_size, 
+					      "arithmetic shift left", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_asr )
+				delim_strcat( buf, max_size, 
+					      "arithmetic shift right", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_rol )
+				delim_strcat( buf, max_size, "rotate left", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_ror )
+				delim_strcat( buf, max_size, "rotate right", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_rcl )
+				delim_strcat( buf, max_size, 
+					      "rotate carry left", 
+					      delim, use_delim );
+			if ( insn->flags.bit & opdis_bit_flag_rcr )
+				delim_strcat( buf, max_size, 
+					      "rotate carry right", 
+					      delim, use_delim );
+			break;
+
+		case opdis_insn_cat_io:
+			if ( insn->flags.io & opdis_io_flag_in )
+				delim_strcat( buf, max_size, "input from port", 
+					      delim, use_delim );
+			if ( insn->flags.io & opdis_io_flag_out )
+				delim_strcat( buf, max_size, "output to port", 
+					      delim, use_delim );
+			break;
+
+		default:
+			break;
+	}
+
+	return strlen(buf);
 }
 
 int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len ) {
-	return 0;
+	int max_size;
+	if (! op || ! buf || ! buf_len ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+
+	switch ( op->category ) {
+		case opdis_op_cat_unknown:
+			strncat( buf, "unknown", max_size ); break;
+		case opdis_op_cat_register:
+			strncat( buf, "register", max_size ); break;
+		case opdis_op_cat_immediate:
+			strncat( buf, "immediate", max_size ); break;
+		case opdis_op_cat_absolute:
+			strncat( buf, "absolute address", max_size ); break;
+		case opdis_op_cat_expr:
+			strncat( buf, "address expression", max_size ); break;
+	}
+
+	return strlen(buf);
 }
 
-int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len ) {
-	return 0;
+int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
+				const char * delim ) {
+	int max_size, use_delim = 0;
+	if (! op || ! buf || ! buf_len || ! delim ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+
+	if ( op->flags & opdis_op_flag_r )
+		delim_strcat( buf, max_size, "read", delim, use_delim );
+	if ( op->flags & opdis_op_flag_w )
+		delim_strcat( buf, max_size, "write", delim, use_delim );
+	if ( op->flags & opdis_op_flag_x )
+		delim_strcat( buf, max_size, "exec", delim, use_delim );
+	if ( op->flags & opdis_op_flag_signed )
+		delim_strcat( buf, max_size, "signed", delim, use_delim );
+	if ( op->flags & opdis_op_flag_address )
+		delim_strcat( buf, max_size, "address", delim, use_delim );
+	if ( op->flags & opdis_op_flag_indirect )
+		delim_strcat( buf, max_size, "indirect", delim, use_delim );
+
+	return strlen(buf);
 }
 
-int LIBCALL opdis_reg_cat_str( opdis_reg_t * reg, char * buf, int buf_len ) {
-	return 0;
+int LIBCALL opdis_reg_cat_str( opdis_reg_t * reg, char * buf, int buf_len,
+				const char * delim ) {
+	int max_size, use_delim = 0;
+	if (! reg || ! buf || ! buf_len || ! delim ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+	if ( reg->flags & opdis_reg_flag_gen )
+		delim_strcat( buf, max_size, "general", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_fpu )
+		delim_strcat( buf, max_size, "fpu", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_gpu )
+		delim_strcat( buf, max_size, "gpu", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_simd )
+		delim_strcat( buf, max_size, "simd", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_task )
+		delim_strcat( buf, max_size, "task mgt", delim, 
+			      use_delim );
+	if ( reg->flags & opdis_reg_flag_mem )
+		delim_strcat( buf, max_size, "memory mgt", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_debug )
+		delim_strcat( buf, max_size, "debug", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_pc )
+		delim_strcat( buf, max_size, "pc", delim, use_delim );
+		delim_strcat( buf, max_size, "flags", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_stack )
+		delim_strcat( buf, max_size, "stack ptr", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_frame )
+		delim_strcat( buf, max_size, "frame ptr", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_seg )
+		delim_strcat( buf, max_size, "segment", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_zero )
+		delim_strcat( buf, max_size, "zero", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_argsin )
+		delim_strcat( buf, max_size, "in args", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_argsout )
+		delim_strcat( buf, max_size, "out args", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_locals )
+		delim_strcat( buf, max_size, "locals", delim, use_delim );
+	if ( reg->flags & opdis_reg_flag_return )
+		delim_strcat( buf, max_size, "return addr", delim, use_delim );
+
+	return strlen(buf);
 }

@@ -487,7 +487,7 @@ void LIBCALL opdis_set_resolver( opdis_t o, OPDIS_RESOLVER fn, void * arg );
 void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg );
 
 /*!
- * \fn opdis_disasm_insn_size( opdis_t, opdis_buf_t, opdis_off_t )
+ * \fn opdis_disasm_insn_size( opdis_t, opdis_buf_t, opdis_vma_t )
  * \ingroup disassembly
  * \brief Return the size of the instruction at an offset in the buffer.
  * \param o opdis disassembler
@@ -503,7 +503,7 @@ unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
 //       * after decode, find addr arguments in insns bytes (search backwards
 //         from end) and wildcard them out of bytes to create signature
 /*!
- * \fn opdis_disasm_insn(opdis_t, opdis_buf_t, opdis_off_t, opdis_insn_t * )
+ * \fn opdis_disasm_insn( opdis_t, opdis_buf_t, opdis_vma_t, opdis_insn_t * )
  * \ingroup disassembly
  * \brief Disassemble a single instruction in the buffer
  * \param o opdis disassembler
@@ -531,7 +531,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 				 opdis_off_t length );
 /*!
- * \fn opdis_disasm_cflow( opdis_t, opdis_buf_t, opdis_off_t )
+ * \fn opdis_disasm_cflow( opdis_t, opdis_buf_t, opdis_vma_t )
  * \ingroup disassembly
  * \brief Disassemble a buffer following flow of control.
  * \param o opdis disassembler
@@ -555,7 +555,7 @@ int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf,
 int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 				     opdis_off_t length );
 /*!
- * \fn opdis_disasm_bfd_cflow( opdis_t, bfd *, opdis_off_t )
+ * \fn opdis_disasm_bfd_cflow( opdis_t, bfd *, opdis_vma_t )
  * \ingroup bfd
  * \brief Disassemble a contents of a BFD following flow of control.
  * \param o opdis disassembler
