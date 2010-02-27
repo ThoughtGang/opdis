@@ -213,6 +213,11 @@ void opdis_default_error_reporter( enum opdis_error_t error, const char * msg,
  * \struct opdis_info_t
  * \ingroup configuration
  * \brief An opdis disassembler
+ * \note The \e visited_addr tree is NULL by default. Both 
+ *       opdis_disasm_cflow and opdis_disasm_bfd_cflow create this tree
+ *       if \e visited_addr is NULL. This means that linear disassembly
+ *       will not check if an address exists before invoking the display
+ *       callback.
  */
 typedef struct {
 	/*! \var config
