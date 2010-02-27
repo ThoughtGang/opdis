@@ -164,7 +164,8 @@ typedef opdis_vma_t (*OPDIS_RESOLVER) ( const opdis_insn_t * i, void * arg );
  * \fn opdis_vma_t opdis_default_resolver( const opdis_insn_t *, void * )
  * \ingroup configuration
  * \brief The built-in opdis resolver callback.
- * This callback returns OPDIS_INVALID_ADDR for all addresses.
+ * This callback returns the immediate value of the taregt operand for the
+ * instruction (if set) or OPDIS_INVALID_ADDR.
  * \note The default resolver callback takes a NULL \e arg parameter.
  */
 opdis_vma_t opdis_default_resolver( const opdis_insn_t * i, void * arg );

@@ -44,7 +44,16 @@ void opdis_default_display( const opdis_insn_t * i, void * arg ) {
 }
 
 opdis_vma_t opdis_default_resolver( const opdis_insn_t * insn, void * arg ) {
-	// TODO: resolve address if relative
+	/* NOTE : More sophisticated resolvers can handle register contents
+	 *        and address expressions, or can validate that the target
+	 *        is a valid VMA. */
+	if ( insn->status & opdis_decode_ops && insn->target ) {
+		opdis_op_t * dest = insn->target;
+		if ( dest->category == opdis_op_cat_immediate ) {
+			return dest->value.immediate.vma;
+		}
+	}
+
 	return OPDIS_INVALID_ADDR;
 }
 
@@ -414,11 +423,11 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 		pos += size;
 		count++;
 
-		// NOTE : handler determines if an address has already been
-		//        visited, and if not it adds the insn to the addr
-		//        list. this means that the first insn of a branch could
-		//        be disassembled, but will not be added. a bit
-		//        inefficient, but not too troubling.
+		/* NOTE : handler determines if an address has already been
+		 *        visited, and if not it adds the insn to the addr
+		 *        list. this means that the first insn of a branch could
+		 *        be disassembled, but will not be added. a bit
+		 *        inefficient, but not too troubling. */
 		cont = o->handler( insn, o->handler_arg );
 
 		if ( cont ) {

@@ -442,8 +442,12 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 		scale_tok = tok;
 	}
 
-	base = register_for_token( &base_tok[1] );
-	index = register_for_token( &index_tok[1] );
+	if ( base_tok ) {
+		base = register_for_token( &base_tok[1] );
+	}
+	if ( index_tok ) {
+		index = register_for_token( &index_tok[1] );
+	}
 	if ( scale_tok ) {
 		scale = strtol( scale_tok, NULL, 0 );
 	}
@@ -561,7 +565,7 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		out->src->flags |= opdis_op_flag_r;
 		if ( out->num_operands > 1 ) {
 			out->dest = out->operands[1];
-			/* TODO: find exceptions to this rule and apply them */
+			// TODO: find exceptions to this rule and apply them
 			out->dest->flags |= opdis_op_flag_w;
 		}
 	}
@@ -756,7 +760,7 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		}
 	} else if ( out->num_operands > 0 ) {
 		out->dest = out->operands[0];
-		/* TODO: find exceptions to this rule and apply them */
+		// TODO: find exceptions to this rule and apply them 
 		out->dest->flags |= opdis_op_flag_w;
 		if ( out->num_operands > 1 ) {
 			out->src = out->operands[1];
