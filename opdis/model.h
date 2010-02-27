@@ -52,7 +52,7 @@ enum opdis_insn_decode_t {
  */
 typedef struct {
 	char ascii[OPDIS_REG_NAME_SZ];	/*!< Name of register */
-	enum opdis_reg_cat_t category;	/*!< Type of register */
+	enum opdis_reg_flag_t flags;	/*!< Type of register */
 	unsigned char id;		/*!< Register id # */
 	unsigned char size;		/*!< Size of register in bytes */
 } opdis_reg_t;

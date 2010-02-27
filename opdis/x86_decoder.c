@@ -147,31 +147,31 @@ static char intel_reg_id[] = {
 	57, 58, 59, 60, 61 		// gdtr, ldtr, idtr, tr, mxcsr
 };
 
-static enum opdis_reg_cat_t lookup_register_type( unsigned int id ) {
-	enum opdis_reg_cat_t type = opdis_reg_cat_unknown;
+static enum opdis_reg_flag_t lookup_register_type( unsigned int id ) {
+	enum opdis_reg_flag_t type = opdis_reg_flag_unknown;
 
 	if ( id == 5 ) {
-		type = opdis_reg_cat_gen | opdis_reg_cat_stack;
+		type = opdis_reg_flag_gen | opdis_reg_flag_stack;
 	} else if ( id == 6 ) {
-		type = opdis_reg_cat_gen | opdis_reg_cat_frame;
+		type = opdis_reg_flag_gen | opdis_reg_flag_frame;
 	} else if ( id <= 16 ) {
-		type = opdis_reg_cat_gen;
+		type = opdis_reg_flag_gen;
 	} else if ( id >= 17 && id <= 24 ) {
-		type = opdis_reg_cat_fpu | opdis_reg_cat_sse;
+		type = opdis_reg_flag_fpu | opdis_reg_flag_sse;
 	} else if ( id >= 25 && id <= 32 || id == 61 ) {
-		type = opdis_reg_cat_sse;
+		type = opdis_reg_flag_sse;
 	} else if ( id >= 33 && id <= 40 ) {
-		type = opdis_reg_cat_task;
+		type = opdis_reg_flag_task;
 	} else if ( id >= 41 && id <= 48 ) {
-		type = opdis_reg_cat_debug;
+		type = opdis_reg_flag_debug;
 	} else if ( id >= 49 && id <= 54 ) {
-		type = opdis_reg_cat_gen | opdis_reg_cat_seg;
+		type = opdis_reg_flag_gen | opdis_reg_flag_seg;
 	} else if ( id == 55 ) {
-		type = opdis_reg_cat_pc;
+		type = opdis_reg_flag_pc;
 	} else if ( id == 56 ) {
-		type = opdis_reg_cat_flags;
+		type = opdis_reg_flag_flags;
 	} else if ( id >= 57 && id <= 60 ) {
-		type = opdis_reg_cat_mem;
+		type = opdis_reg_flag_mem;
 	}
 
 	return type;
@@ -231,13 +231,13 @@ static int intel_register_lookup( const char * item ) {
 
 static void fill_register_by_id(opdis_reg_t * reg, int id) {
 	if ( id > -1 ) {
-		reg->category = lookup_register_type(id);
+		reg->flags = lookup_register_type(id);
 		reg->id = intel_reg_id[id];
 		reg->size = intel_reg_size[id];
 		strncpy( reg->ascii, intel_registers[id], 
 			 OPDIS_REG_NAME_SZ - 1 );
 	} else {
-		reg->category = opdis_reg_cat_unknown;
+		reg->flags = opdis_reg_flag_unknown;
 		reg->id = reg->size = 0;
 	}
 }

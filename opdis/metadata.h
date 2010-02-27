@@ -49,31 +49,31 @@ enum opdis_op_flag_t {
 };
 
 /*!
- * \enum opdis_reg_cat_t
+ * \enum opdis_reg_flags_t
  * \ingroup model
- * \brief The category of a CPU register.
- * \details The type or \e category of a CPU register.
+ * \brief The flags for a CPU register.
+ * \details The type or \e flags of a CPU register.
  * \note A CPU register may have multiple purposes, so these can be ORed.
  */
-enum opdis_reg_cat_t {
-	opdis_reg_cat_unknown=0,     /*!< Unknown register type */
-	opdis_reg_cat_gen=1,	     /*!< General-purpose register, e.g. EAX */
-	opdis_reg_cat_fpu=2,	     /*!< FPU register, e.g. ST(0) */
-	opdis_reg_cat_gpu=4,	     /*!< GPU register */
-	opdis_reg_cat_sse=8,	     /*!< SSE register, e.g. XMM0 */
-	opdis_reg_cat_task=16,	     /*!< Task management register, e.g. CR0 */
-	opdis_reg_cat_mem=32,	     /*!< Memory mgt register, e.g. LDTR */
-	opdis_reg_cat_debug=64,	     /*!< Debug register, e.g. DR0 */
-	opdis_reg_cat_pc=128,	     /*!< Program Counter register, e.g. EIP */
-	opdis_reg_cat_flags=256,     /*!< Flags register, e.g. EFLAGS */
-	opdis_reg_cat_stack=512,     /*!< Stack pointer register, e.g. ESP */
-	opdis_reg_cat_frame=1024,    /*!< Frame pointer register, e.g. EBP */
-	opdis_reg_cat_seg=2048,      /*!< Segment register, e.g. CS */
-	opdis_reg_cat_zero=4096,     /*!< Zero register (RISC) */
-	opdis_reg_cat_argsin=8192,   /*!< Incoming arguments (RISC) */
-	opdis_reg_cat_argsout=16384, /*!< Outgoing arguments (RISC) */
-	opdis_reg_cat_locals=32768,  /*!< Local variables (RISC) */
-	opdis_reg_cat_return=65536   /*!< Return address */
+enum opdis_reg_flag_t {
+	opdis_reg_flag_unknown=0,     /*!< Unknown register type */
+	opdis_reg_flag_gen=1,	      /*!< General-purpose register, e.g. EAX */
+	opdis_reg_flag_fpu=2,	      /*!< FPU register, e.g. ST(0) */
+	opdis_reg_flag_gpu=4,	      /*!< GPU register */
+	opdis_reg_flag_sse=8,	      /*!< SSE register, e.g. XMM0 */
+	opdis_reg_flag_task=16,	      /*!< Task management register, e.g. CR0 */
+	opdis_reg_flag_mem=32,	      /*!< Memory mgt register, e.g. LDTR */
+	opdis_reg_flag_debug=64,      /*!< Debug register, e.g. DR0 */
+	opdis_reg_flag_pc=128,	      /*!< Program Counter register, e.g. EIP */
+	opdis_reg_flag_flags=256,     /*!< Flags register, e.g. EFLAGS */
+	opdis_reg_flag_stack=512,     /*!< Stack pointer register, e.g. ESP */
+	opdis_reg_flag_frame=1024,    /*!< Frame pointer register, e.g. EBP */
+	opdis_reg_flag_seg=2048,      /*!< Segment register, e.g. CS */
+	opdis_reg_flag_zero=4096,     /*!< Zero register (RISC) */
+	opdis_reg_flag_argsin=8192,   /*!< Incoming arguments (RISC) */
+	opdis_reg_flag_argsout=16384, /*!< Outgoing arguments (RISC) */
+	opdis_reg_flag_locals=32768,  /*!< Local variables (RISC) */
+	opdis_reg_flag_return=65536   /*!< Return address */
 };
 
 /* ---------------------------------------------------------------------- */
