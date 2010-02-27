@@ -22,6 +22,10 @@
  * \details The type or \e category of an instruction operand. This is used
  *          to distinguish between operands that are registers, memory
  *          locations, immediate values, or relative offsets.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct category is set. A value of 'unknown' does
+ *       not ensure that one of the other values is not suitable, but may
+ *       indicate that the decoder does not fully support the operand.
  */
 enum opdis_op_cat_t {
 	opdis_op_cat_unknown,	/*!< Unknown operand type */
@@ -37,6 +41,10 @@ enum opdis_op_cat_t {
  * \brief Flags applied to an operand.
  * \details Operand flags are used to encode additional information about the
  *          operand.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the operand.
  */
 enum opdis_op_flag_t {
 	opdis_op_flag_none = 0,		/*!< No flags */
@@ -54,6 +62,10 @@ enum opdis_op_flag_t {
  * \brief The flags for a CPU register.
  * \details The type or \e flags of a CPU register.
  * \note A CPU register may have multiple purposes, so these can be ORed.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the register.
  */
 enum opdis_reg_flag_t {
 	opdis_reg_flag_unknown=0,     /*!< Unknown register type */
@@ -83,6 +95,10 @@ enum opdis_reg_flag_t {
  * \enum opdis_insn_subset_t
  * \ingroup model
  * \brief The \e subset of an ISA that the instruction belongs to.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct ISA is set. A value of 'general' does
+ *       not ensure that one of the other values is not suitable, but may
+ *       indicate that the decoder does not fully support the ISA.
  */
 enum opdis_insn_subset_t {
 	opdis_insn_subset_gen,	/*!< General-purpose instruction */
@@ -100,6 +116,10 @@ enum opdis_insn_subset_t {
  *          distinguish between instructions at a high level : control
  *          flow instructions (jmp, call, ret), stack instructions (push,
  *          pop), floating point instructions, etc.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct category is set. A value of 'unknown' does
+ *       not ensure that one of the other values is not suitable, but may
+ *       indicate that the decoder does not fully support the instruction.
  */
 enum opdis_insn_cat_t {
 	opdis_insn_cat_unknown,	/*!< Unknown instruction type */
@@ -124,6 +144,10 @@ enum opdis_insn_cat_t {
  * \details These flags encode specific information about the control flow
  *          instructions: is it a call, does it branch, is it a return,
  *          etc.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the instruction.
  */
 enum opdis_cflow_flag_t {
 	opdis_cflow_flag_none=0,	/*!< No flags */
@@ -139,7 +163,12 @@ enum opdis_cflow_flag_t {
  * \ingroup model
  * \brief Details of the instruction.
  * \details These flags encode specific information about the 
- *          instructions: 
+ *          instructions: is it a push or a pop, does it enter or
+ *          leave a stack frame, etc.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the instruction.
  */
 enum opdis_stack_flag_t {
 	opdis_stack_flag_none=0,	/*!< No flags */
@@ -154,7 +183,12 @@ enum opdis_stack_flag_t {
  * \ingroup model
  * \brief Details of the instruction.
  * \details These flags encode specific information about the 
- *          instructions: 
+ *          instructions: is it a shift or rotate (and is the carry flag
+ *          significant), is it an AND/OR/XOR/NOT operation, etc.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the instruction.
  */
 enum opdis_bit_flag_t {
 	opdis_bit_flag_none=0,	/*!< No flags */
@@ -177,7 +211,12 @@ enum opdis_bit_flag_t {
  * \ingroup model
  * \brief Details of the instruction.
  * \details These flags encode specific information about the 
- *          instructions: 
+ *          instructions: does it read input from a port, does it write
+ *          output to a port, etc.
+ * \note It is the responsibility of the architecture-specific decoder to
+ *       enure that the correct flags set. A missing flag does not 
+ *       necessarily mean that the flag does not apply, but may indicate
+ *       that the decoder does not fully support the instruction.
  */
 enum opdis_io_flag_t {
 	opdis_io_flag_none=0,	/*!< No flags */
