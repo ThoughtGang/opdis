@@ -584,6 +584,11 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 		return 0;
 	}
 
+	if (! o->visited_addr ) {
+		/* ensure visited address tree is initialized */
+		o->visited_addr = opdis_vma_tree_init();
+	}
+
 	if ( load_section( o, sec ) ) {
 		count = disasm_cflow( o, sym->value );
 		free( o->config.buffer );
