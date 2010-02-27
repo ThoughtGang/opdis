@@ -26,7 +26,8 @@ int opdis_default_handler( const opdis_insn_t * insn, void * arg ) {
 	}
 
 	if (! visited ) {
-		return 0;
+		/* visited addresses not being tracked */
+		return 1;
 	}
 
 	if ( opdis_vma_tree_contains( visited, insn->vma ) ) {
