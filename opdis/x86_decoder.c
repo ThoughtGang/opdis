@@ -44,7 +44,7 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	int i, num;
 
 	if ( item[0] == 'f' ) {
-		// fpu insn
+		out->isa = opdis_insn_subset_fpu;
 		return;
 	}
 
@@ -52,7 +52,8 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	num = (int) sizeof(jmp_insns) / sizeof(char *);
 	for ( i = 0; i < num; i++ ) {
 		if (! strcmp(jmp_insns[i], item) ) {
-			// set jmp insn info
+			out->category = opdis_insn_cat_cflow;
+			out->flags.cflow = opdis_cflow_flag_jmp;
 			return;
 		}
 	}
@@ -61,7 +62,8 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	num = (int) sizeof(ret_insns) / sizeof(char *);
 	for ( i = 0; i < num; i++ ) {
 		if (! strcmp(ret_insns[i], item) ) {
-			// set ret insn info
+			out->category = opdis_insn_cat_cflow;
+			out->flags.cflow = opdis_cflow_flag_ret;
 			return;
 		}
 	}
@@ -70,14 +72,16 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	num = (int) sizeof(call_insns) / sizeof(char *);
 	for ( i = 0; i < num; i++ ) {
 		if (! strcmp(call_insns[i], item) ) {
-			// set branch insn info
+			out->category = opdis_insn_cat_cflow;
+			out->flags.cflow = opdis_cflow_flag_call;
 			return;
 		}
 	}
 	num = (int) sizeof(jcc_insns) / sizeof(char *);
 	for ( i = 0; i < num; i++ ) {
 		if (! strcmp(jcc_insns[i], item) ) {
-			// set branch insn info
+			out->category = opdis_insn_cat_cflow;
+			out->flags.cflow = opdis_cflow_flag_jmpcc;
 			return;
 		}
 	}
@@ -270,12 +274,6 @@ static void fill_immediate( uint64_t * imm, const char * item ) {
 	}
 }
 
-static void fill_absolute( opdis_abs_addr_t * abs, const char * item,
-			   const char * colon ) {
-	fill_register_by_id( &abs->segment, register_for_token(item) );
-	fill_immediate( &abs->offset, colon + 1 );
-}
-
 typedef void (*OPERAND_DECODE_FN) ( opdis_op_t *, const char * );
 static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn, 
 			   const char * item ) {
@@ -362,10 +360,10 @@ static void add_comments( const opdis_insn_buf_t in, opdis_insn_t * out,
 	}
 
 	if ( parse->pfx > -1 && parse->mnem == -1 ) {
-		// TODO: set flags ?
+		// TODO: set insn status to invalid?
 		opdis_insn_add_comment( out, "Warning: prefix w/o insn" );
 	} else if ( parse->mnem > -1 && in->items[parse->mnem][0] == '.' ) {
-		// TODO: set flags ?
+		// TODO: set insn status to invalid?
 		opdis_insn_add_comment( out, "Warning: directive (data)" );
 	}
 }
@@ -405,9 +403,16 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 		const char * col = strchr( item, ':' );
 		flags |= opdis_addr_expr_disp;
 		if ( col != NULL ) {
-			fill_absolute( &expr->displacement.a, &item[1], col );
+			/* segment register followed by optional displacement */
+			fill_register_by_id( &expr->displacement.a.segment, 
+					     register_for_token(&item[1]) );
+			if ( col + 1 < first_paren ) {
+				fill_immediate( &expr->displacement.a.offset, 
+						col + 1 );
+			}
 			flags |= opdis_addr_expr_disp_abs;
 		} else {
+			/* displacement */
 			fill_immediate( &expr->displacement.u, item );
 			if ( item[0] == '-' ) {
 				flags |= opdis_addr_expr_disp_s;
@@ -488,8 +493,11 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 				start = strchr( item, ',' );
 				if ( start ) {
 					out->category = opdis_op_cat_absolute;
-					fill_absolute( &out->value.abs,
-						       item, start );
+					fill_register_by_id( 
+						&out->value.abs.segment, 
+						register_for_token(item) );
+					fill_immediate( &out->value.abs.offset, 
+							start );
 				} else {
 					out->category = opdis_op_cat_immediate;
 					fill_immediate( &out->value.immediate.u,
@@ -682,6 +690,7 @@ static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 	/* default category will be immediate */
 	op->category = opdis_op_cat_immediate;
 
+	// NOTE: the byte/word/dword before 'ptr' should be used for op size */
 	start = strstr( item, "PTR" );
 	if ( start != NULL ) {
 		op->flags |= opdis_op_flag_indirect | opdis_op_flag_address;
