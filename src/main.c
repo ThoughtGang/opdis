@@ -19,8 +19,6 @@
 #include "map.h"
 #include "target_list.h"
 
-// TODO: fix resolver callback
-//       fix display callback
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
@@ -108,7 +106,8 @@ struct opdis_options {
 	const char *		arch_str;
 	enum opdis_x86_syntax_t syntax;
 	const char *		syntax_str;
-	const char * 		asm_fmt;
+	enum asm_format_t	fmt;
+	const char * 		fmt_str;
 	const char *		output;
 
 	int			bfd_all_targets;
@@ -141,7 +140,9 @@ static void set_defaults( struct opdis_options * opts ) {
 	opts->syntax_str = "att";
 	opts->syntax = opdis_x86_syntax_att;
 
-	opts->asm_fmt = "dump";
+	opts->fmt_str = "dump";
+	opts->fmt = asmfmt_dump;
+
 
 	opts->disasm_opts = "";
 }
@@ -173,6 +174,26 @@ static int set_syntax( struct opdis_options * opts, const char * arg ) {
 	}
 
 	opts->syntax_str = arg;
+	return 1;
+}
+
+static int set_format( struct opdis_options * opts, const char * arg ) {
+	if (! strcmp( "asm", arg) ) {
+		opts->fmt = asmfmt_asm;
+	} else if ( ! strcmp( "dump", arg ) ) {
+		opts->fmt = asmfmt_dump;
+	} else if ( ! strcmp( "delim", arg ) ) {
+		opts->fmt = asmfmt_delim;
+	} else if ( ! strcmp( "xml", arg ) ) {
+		opts->fmt = asmfmt_xml;
+	} else if ( strchr( arg, '%' ) ) {
+		opts->fmt = asmfmt_custom;
+	} else {
+		fprintf( stderr, "Unreognized format : '%s'\n", arg );
+		return 0;
+	}
+
+	opts->fmt_str = arg;
 	return 1;
 }
 
@@ -266,6 +287,7 @@ static int add_bfd_target( struct opdis_options * opts, unsigned int id ) {
 
 	return 1;
 }
+
 static int add_bfd_job( struct opdis_options * opts, enum job_type_t type, 
 			const char * arg ) {
 	unsigned int target;
@@ -369,10 +391,9 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			}
 			break;
 		case 'f':
-			if (! is_supported_format(arg) ) {
+			if (! set_format( opts, arg ) ) {
 				argp_error( state, "Invalid argument for -f" );
 			}
-			opts->asm_fmt = arg;
 			break;
 		case 'o':
 			if (! set_output_file( opts, arg ) ) {
@@ -464,7 +485,7 @@ opdis_vma_t opdis_resolver_cb( const opdis_insn_t * i, void * arg ) {
 		return OPDIS_INVALID_ADDR;
 	}
 
-	// TODO : check map for target operand
+	// TODO : check map for target operand if absolute or indirect
 	return OPDIS_INVALID_ADDR;
 }
 
@@ -475,9 +496,7 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 		return;
 	}
 
-	// TODO : asm format based on opts
-
-	fprintf( opts->output_file, "%p\t%s\n", (void *) i->vma, i->ascii );
+	asm_fprintf( opts->output_file, opts->fmt, opts->fmt_str, i );
 
 	return 1;
 }
@@ -542,7 +561,7 @@ static void dry_run( struct opdis_options * opts ) {
 	printf( "Architecture: %s\n", opts->arch_str );
 	printf( "Disassembler options: %s\n", opts->disasm_opts );
 	printf( "Syntax: %s\n", opts->syntax_str );
-	printf( "Format: %s\n", opts->asm_fmt );
+	printf( "Format: %s\n", opts->fmt_str );
 	printf( "Output: %s\n\n", opts->output ? opts->output : "STDOUT" );
 
 	if ( opts->targets->num_items ) {

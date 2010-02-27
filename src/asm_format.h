@@ -8,6 +8,10 @@
 #ifndef ASM_FORMAT_H
 #define ASM_FORMAT_H
 
+#include <stdio.h>
+
+#include <opdis/model.h>
+
 enum asm_format_t {
 	asmfmt_custom,
 	asmfmt_asm,
@@ -16,7 +20,6 @@ enum asm_format_t {
 	asmfmt_xml
 };
 
-/* returns true if fmt is asm, dump, delim, or xml, or if fmt contains a % */ 
-int is_supported_format( const char * fmt );
-
+int asm_fprintf( FILE * f, enum asm_format_t fmt, const char * fmt_str, 
+		 opdis_insn_t * insn );
 #endif

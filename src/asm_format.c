@@ -9,10 +9,23 @@
 
 #include "asm_format.h"
 
-int is_supported_format( const char * fmt ) {
-	return (! strcmp( "asm", fmt) ||
-		! strcmp( "dump", fmt ) ||
-		! strcmp( "delim", fmt ) ||
-		! strcmp( "xml", fmt ) ||
-		strchr( fmt, '%' ) );
+int asm_fprintf( FILE * f, enum asm_format_t fmt, const char * fmt_str,
+		 opdis_insn_t * insn ) {
+	int rv = 0;
+	switch (fmt) {
+		case asmfmt_dump:
+		case asmfmt_delim:
+		case asmfmt_xml:
+		case asmfmt_asm:
+			rv = fprintf( f, "%s", insn->ascii );
+			if (! strchr( insn->ascii, '#' ) ) {
+				fprintf( f, "\t#" );
+			}
+			fprintf( f, " [%p]\n", (void *) insn->vma );
+			break;
+		case asmfmt_custom:
+			break;
+
+	}
+	return rv;
 }
