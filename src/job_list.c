@@ -233,7 +233,12 @@ static int linear_job( job_list_item_t * job, tgt_list_item_t * tgt,
 	}
 
 	if (! o->quiet ) {
-		printf( "Linear disassembly of %p\n", (void *) vma );
+		printf( "Linear disassembly of " );
+		if ( vma ) {
+			printf( "%p\n", (void *) vma );
+		} else {
+			printf( "0x0\n" );
+		}
 	}
 	return opdis_disasm_linear( o->opdis, tgt->data, vma, job->size );
 }
@@ -247,7 +252,12 @@ static int cflow_job( job_list_item_t * job, tgt_list_item_t * tgt,
 	}
 
 	if (! o->quiet ) {
-		printf( "Control Flow disassembly of %p\n", (void *) vma );
+		printf( "Control Flow disassembly of " );
+		if ( vma ) {
+			printf( "%p\n", (void *) vma );
+		} else {
+			printf( "0x0\n" );
+		}
 	}
 	return opdis_disasm_cflow( o->opdis, tgt->data, vma );
 }

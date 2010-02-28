@@ -504,6 +504,12 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 	return 1;
 }
 
+static void output_disassembly( struct opdis_options * opts ) {
+	// todo xml header, pipe header, asm comment
+	opdis_insn_tree_foreach( opts->insn_tree, print_insn, opts );
+	// todo xml footer
+}
+
 /* ---------------------------------------------------------------------- */
 
 static void bfd_load(  tgt_list_item_t * target, unsigned int id, void * arg ) {
@@ -677,7 +683,7 @@ int main( int argc, char ** argv ) {
 	set_job_opts( &opts, &job_opts );
 	job_list_perform_all( opts.jobs, &job_opts );
 
-	opdis_insn_tree_foreach( opts.insn_tree, print_insn, &opts );
+	output_disassembly( & opts );
 
 	return 0;
 }
