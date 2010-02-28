@@ -247,7 +247,9 @@ void LIBCALL opdis_insn_add_prefix( opdis_insn_t * i, const char * prefix ){
 	if ( i->fixed_size ) {
 		unsigned int size = PREFIX_SIZE(i->mnemonic_sz) - 
 				    strlen(i->prefixes);
-		strncat( i->prefixes, " ", size - 1 );
+		if ( i->prefixes[0] ) {
+			strncat( i->prefixes, " ", size - 1 );
+		}
 		strncat( i->prefixes, prefix, size - 2 );
 		i->num_prefixes++;
 		return;

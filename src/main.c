@@ -496,6 +496,9 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 		return;
 	}
 
+	// TODO : have display track jump/call targets in a tree,
+	//        then emit a comment label line before the tree if
+	//        the format is .asm
 	asm_fprintf( opts->output_file, opts->fmt, opts->fmt_str, i );
 
 	return 1;
