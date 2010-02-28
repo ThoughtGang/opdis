@@ -333,7 +333,7 @@ static void parse_insn_buf( const opdis_insn_buf_t in, IS_OPERAND_FN is_operand,
 
 	if ( parse->mnem > 0 ) {
 		parse->pfx = 0;
-	} else if ( intel_prefix_lookup(in->items[parse->mnem]) > -1 ) {
+	} else if (parse->mnem == 0 && intel_prefix_lookup(in->items[0]) > -1) {
 		/* verify that this is not a prefix */
 		parse->pfx = parse->mnem;
 		parse->mnem = 0;
