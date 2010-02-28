@@ -12,7 +12,11 @@
 static int dump_insn( FILE * f, opdis_insn_t * insn ) {
 	int i, prev_op = 0, rv = 0;
 
-	rv += fprintf( f, "%p:", (void *) insn->vma );
+	if ( insn->vma == 0 ) {
+		rv += fprintf( f, "0x0:" );
+	} else {
+		rv += fprintf( f, "%p:", (void *) insn->vma );
+	}
 
 	for ( i = 0; i < insn->size && i < 8; i++ ) {
 		rv += fprintf( f, " %02X", insn->bytes[i] );
@@ -66,7 +70,12 @@ static int dump_insn( FILE * f, opdis_insn_t * insn ) {
 static int delim_insn( FILE * f, opdis_insn_t * insn ) {
 }
 
+static int xml_operand( FILE * f, opdis_op_t * op ) {
+	return 0;
+}
+
 static int xml_insn( FILE * f, opdis_insn_t * insn ) {
+	// TODO
 	return 0;
 }
 
