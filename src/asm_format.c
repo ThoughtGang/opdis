@@ -9,6 +9,34 @@
 
 #include "asm_format.h"
 
+int asm_fprintf_header( FILE * f, enum asm_format_t fmt ) {
+	int rv = 0;
+	switch (fmt) {
+		case asmfmt_asm:
+		case asmfmt_dump:
+		case asmfmt_delim:
+		case asmfmt_xml:
+		case asmfmt_custom:
+			break;
+
+	}
+	return rv;
+}
+
+int asm_fprintf_footer( FILE * f, enum asm_format_t fmt ) {
+	int rv = 0;
+	switch (fmt) {
+		case asmfmt_asm:
+		case asmfmt_dump:
+		case asmfmt_delim:
+		case asmfmt_xml:
+		case asmfmt_custom:
+			break;
+	}
+	return rv;
+}
+
+/* ---------------------------------------------------------------------- */
 static int dump_insn( FILE * f, opdis_insn_t * insn ) {
 	int i, prev_op = 0, rv = 0;
 
@@ -84,8 +112,8 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 	return 0;
 }
 
-int asm_fprintf( FILE * f, enum asm_format_t fmt, const char * fmt_str,
-		 opdis_insn_t * insn ) {
+int asm_fprintf_insn( FILE * f, enum asm_format_t fmt, const char * fmt_str,
+		      opdis_insn_t * insn ) {
 	int rv = 0;
 	switch (fmt) {
 		case asmfmt_asm:

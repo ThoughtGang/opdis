@@ -20,6 +20,10 @@ enum asm_format_t {
 	asmfmt_xml
 };
 
-int asm_fprintf( FILE * f, enum asm_format_t fmt, const char * fmt_str, 
-		 opdis_insn_t * insn );
+int asm_fprintf_header( FILE * f, enum asm_format_t fmt );
+
+int asm_fprintf_footer( FILE * f, enum asm_format_t fmt );
+
+int asm_fprintf_insn( FILE * f, enum asm_format_t fmt, const char * fmt_str, 
+		      opdis_insn_t * insn );
 #endif

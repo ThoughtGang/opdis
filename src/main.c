@@ -499,15 +499,15 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 	// TODO : have display track jump/call targets in a tree,
 	//        then emit a comment label line before the tree if
 	//        the format is .asm
-	asm_fprintf( opts->output_file, opts->fmt, opts->fmt_str, i );
+	asm_fprintf_insn( opts->output_file, opts->fmt, opts->fmt_str, i );
 
 	return 1;
 }
 
 static void output_disassembly( struct opdis_options * opts ) {
-	// todo xml header, pipe header, asm comment
+	asm_fprintf_header( opts->output_file, opts->fmt );
 	opdis_insn_tree_foreach( opts->insn_tree, print_insn, opts );
-	// todo xml footer
+	asm_fprintf_footer( opts->output_file, opts->fmt );
 }
 
 /* ---------------------------------------------------------------------- */
