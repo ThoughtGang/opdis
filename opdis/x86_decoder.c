@@ -15,14 +15,6 @@
 
 
 /* ---------------------------------------------------------------------- */
-/* UTILITY ROUTINES */
-
-static inline void rtrim( char * str ) {
-	int i;
-	for ( i = strlen(str) - 1; i >= 0 && isspace(str[i]); i++ )
-		str[i] = '\0';
-}
-/* ---------------------------------------------------------------------- */
 /* MNEMONICS */
 
 static const char * jcc_insns[] = {
@@ -90,9 +82,15 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 typedef void (*MNEMONIC_DECODE_FN) ( opdis_insn_t *, const char * );
 static int decode_mnemonic( opdis_insn_t * insn, MNEMONIC_DECODE_FN decode_fn, 
 			    const char * item ) {
-	opdis_insn_set_mnemonic( insn, item );
+	int i;
+	char buf[64];
+	for ( i=0; item[i] && ! isspace(item[i]); i++ ) {
+		buf[i] = item[i];
+	}
+	buf[i] = '\0';
 
-	rtrim( insn->mnemonic );
+	opdis_insn_set_mnemonic( insn, buf );
+
 	decode_fn( insn, item );
 }
 
@@ -356,7 +354,10 @@ static void add_comments( const opdis_insn_buf_t in, opdis_insn_t * out,
 	int i;
 
 	for ( i = parse->cmt; i > -1 && i < in->item_count; i++ ) {
-		opdis_insn_add_comment( out, in->items[i] );
+		char * c = in->items[i];
+		while ( *c && isspace(*c) )
+			c++;
+		opdis_insn_add_comment( out, c );
 	}
 
 	if ( parse->pfx > -1 && parse->mnem == -1 ) {
@@ -467,6 +468,8 @@ static void fill_att_expression( opdis_addr_expr_t *expr, const char * item,
 
 static void decode_att_operand( opdis_op_t * out, const char * item ) {
 	const char * start;
+	out->flags = 0;
+
 	switch ( item[0] ) {
 		case '$':			/* immediate value */
 			out->category = opdis_op_cat_immediate;
@@ -526,15 +529,24 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 
 	/* fill instruction info */
 	if ( parse.mnem > -1 ) {
-		const char * mnem = in->items[parse.mnem];
+		char *c, mnem[32];
+		int i;
+
 		/* check for branch hint */
-		const char * comma = strchr(mnem, ',');
-		if ( comma ) {
-			char buf[16] = {0};
-			strncpy( buf, mnem, 
-				 (comma - mnem > 15) ? 15 : comma - mnem );
+		for ( i = 0, c = in->items[parse.mnem]; 
+		      i < 32 && *c && *c != ','; i++, c++ ) {
+			mnem[i] = *c;
+		}
+		mnem[i] = '\0';
+		if ( *c == ',' ) {
+			char buf[16];
+
+			for ( i = 0, c++; i < 16 && *c && ! isspace(*c); 
+			      i++, c++ ) {
+				buf[i] = *c;
+			}
+			buf[i] = '\0';
 			opdis_insn_add_prefix( out, buf );
-			mnem = comma + 1;
 		}
 
 		decode_mnemonic( out, decode_att_mnemonic, mnem );
@@ -685,6 +697,8 @@ static void fill_intel_expression( opdis_addr_expr_t *expr, const char * item,
 static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 	const char * start;
 	int reg = intel_register_lookup( item );
+
+	op->flags = 0;
 	if ( reg != -1 ) {
 		op->category = opdis_op_cat_register;
 		fill_register_by_id( &op->value.reg, reg );
@@ -742,7 +756,7 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 
 	/* fill operands */
 	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
-		if ( in->items[i][0] != ',' ) {
+ 		if ( in->items[i][0] != ',' ) {
 			decode_operand( opdis_insn_next_avail_op(out),
 					decode_intel_operand, in->items[i] );
 		}
