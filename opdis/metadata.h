@@ -151,11 +151,11 @@ enum opdis_insn_cat_t {
  */
 enum opdis_cflow_flag_t {
 	opdis_cflow_flag_none=0,	/*!< No flags */
-	opdis_cflow_flag_call,		/*!< Call */
-	opdis_cflow_flag_callcc,	/*!< Conditional call */
-	opdis_cflow_flag_jmp,		/*!< Jump */
-	opdis_cflow_flag_jmpcc,		/*!< Conditional jump */
-	opdis_cflow_flag_ret		/*!< Return from call */
+	opdis_cflow_flag_call=1,	/*!< Call */
+	opdis_cflow_flag_callcc=2,	/*!< Conditional call */
+	opdis_cflow_flag_jmp=4,		/*!< Jump */
+	opdis_cflow_flag_jmpcc=8,	/*!< Conditional jump */
+	opdis_cflow_flag_ret=16		/*!< Return from call */
 };
 
 /*!
@@ -172,10 +172,10 @@ enum opdis_cflow_flag_t {
  */
 enum opdis_stack_flag_t {
 	opdis_stack_flag_none=0,	/*!< No flags */
-	opdis_stack_flag_push,		/*!< Push to stack */
-	opdis_stack_flag_pop,		/*!< Pop from stack */
-	opdis_stack_flag_frame,		/*!< Enter stack frame */
-	opdis_stack_flag_unframe	/*!< Exit stack frame */
+	opdis_stack_flag_push=1,	/*!< Push to stack */
+	opdis_stack_flag_pop=2,		/*!< Pop from stack */
+	opdis_stack_flag_frame=4,	/*!< Enter stack frame */
+	opdis_stack_flag_unframe=8	/*!< Exit stack frame */
 };
 
 /*!
@@ -192,18 +192,18 @@ enum opdis_stack_flag_t {
  */
 enum opdis_bit_flag_t {
 	opdis_bit_flag_none=0,	/*!< No flags */
-	opdis_bit_flag_and,	/*!< bitwise AND */
-	opdis_bit_flag_or,	/*!< bitwise OR */
-	opdis_bit_flag_xor,	/*!< bitwise XOR */
-	opdis_bit_flag_not,	/*!< bitwise NOT */
-	opdis_bit_flag_lsl,	/*!< Logical shift left */
-	opdis_bit_flag_lsr,	/*!< Logical shift right */
-	opdis_bit_flag_asl,	/*!< Arithmetic shift left */
-	opdis_bit_flag_asr,	/*!< Arithmetic shift right */
-	opdis_bit_flag_rol,	/*!< Rotate left */
-	opdis_bit_flag_ror,	/*!< Rotate right */
-	opdis_bit_flag_rcl,	/*!< Rotate left with carry */
-	opdis_bit_flag_rcr	/*!< Rotate right with carry */
+	opdis_bit_flag_and=1,	/*!< bitwise AND */
+	opdis_bit_flag_or=2,	/*!< bitwise OR */
+	opdis_bit_flag_xor=4,	/*!< bitwise XOR */
+	opdis_bit_flag_not=8,	/*!< bitwise NOT */
+	opdis_bit_flag_lsl=16,	/*!< Logical shift left */
+	opdis_bit_flag_lsr=32,	/*!< Logical shift right */
+	opdis_bit_flag_asl=64,	/*!< Arithmetic shift left */
+	opdis_bit_flag_asr=128,	/*!< Arithmetic shift right */
+	opdis_bit_flag_rol=256,	/*!< Rotate left */
+	opdis_bit_flag_ror=512,	/*!< Rotate right */
+	opdis_bit_flag_rcl=1024,/*!< Rotate left with carry */
+	opdis_bit_flag_rcr=2048	/*!< Rotate right with carry */
 };
 
 /*!
@@ -220,8 +220,8 @@ enum opdis_bit_flag_t {
  */
 enum opdis_io_flag_t {
 	opdis_io_flag_none=0,	/*!< No flags */
-	opdis_io_flag_in,	/*!< Input from port */
-	opdis_io_flag_out	/*!< Output from port */
+	opdis_io_flag_in=1,	/*!< Input from port */
+	opdis_io_flag_out=2	/*!< Output from port */
 };
 
 #endif
