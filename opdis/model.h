@@ -472,6 +472,14 @@ opdis_op_t * LIBCALL opdis_op_alloc_fixed( size_t ascii_sz );
 opdis_op_t * LIBCALL opdis_op_dupe(  opdis_op_t * op );
 
 /*!
+ * \fn void opdis_op_clear( opdis_op_t * )
+ * \ingroup model
+ * \brief Clear the contents of an operand object.
+ * \param o The operand to clear.
+ */
+void LIBCALL opdis_op_clear( opdis_op_t * o );
+
+/*!
  * \fn void opdis_op_free( opdis_op_t * )
  * \ingroup model
  * \brief Free an allocated operand object.

@@ -168,16 +168,22 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 	return new_insn;
 }
 
-void LIBCALL opdis_insn_clear( opdis_insn_t * i ) {
-	if ( i ) {
-		i->status = opdis_decode_invalid;
-		if (i->ascii) i->ascii[0] = '\0';
-		i->num_prefixes = 0;
-		if (i->prefixes) i->prefixes[0] = '\0';
-		if (i->mnemonic) i->mnemonic[0] = '\0';
-		if (i->comment) i->comment[0] = '\0';
-		i->num_operands = 0;
-		i->target = i->dest = i->src = NULL;
+void LIBCALL opdis_insn_clear( opdis_insn_t * insn ) {
+	int i;
+	if ( insn ) {
+		insn->status = opdis_decode_invalid;
+		insn->category = opdis_insn_cat_unknown;
+		insn->flags.cflow = 0;
+		if (insn->ascii) insn->ascii[0] = '\0';
+		insn->num_prefixes = 0;
+		if (insn->prefixes) insn->prefixes[0] = '\0';
+		if (insn->mnemonic) insn->mnemonic[0] = '\0';
+		if (insn->comment) insn->comment[0] = '\0';
+		for ( i = 0; i < insn->num_operands; i++ ) {
+			opdis_op_clear( insn->operands[i] );
+		}
+		insn->num_operands = 0;
+		insn->target = insn->dest = insn->src = NULL;
 	}
 }
 
@@ -414,6 +420,15 @@ opdis_op_t * LIBCALL opdis_op_dupe(  opdis_op_t * op ) {
 	}
 
 	return new_op;
+}
+
+void LIBCALL opdis_op_clear( opdis_op_t * op ) {
+	if ( op ) {
+		if (op->ascii) op->ascii[0] = '\0';
+		op->category = opdis_op_cat_unknown;
+		op->flags = opdis_op_flag_none;
+		memset( &op->value, 0, sizeof(op->value) );
+	}
 }
 
 void LIBCALL opdis_op_free( opdis_op_t * op ) {
