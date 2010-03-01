@@ -130,7 +130,7 @@ static int delim_operand( FILE * f, opdis_op_t * op ) {
 			/* {ascii;id;size;flags} */
 			buf[0] = '\0';
 			opdis_reg_flags_str( &op->value.reg, buf, 64, "," );
-			rv += fprintf( f, "{%s;%d;%d%s}", 
+			rv += fprintf( f, "{%s;%d;%d;%s}", 
 					op->value.reg.ascii,
 					op->value.reg.id,
 					op->value.reg.size, buf );
