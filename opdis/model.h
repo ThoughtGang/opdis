@@ -534,6 +534,19 @@ int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
  */
 int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
 				 const char * delim );
+/*!
+ * \fn int opdis_addr_expr_shift_str( opdis_addr_expr_t *, char *, int )
+ * \ingroup model
+ * \brief Generate a string representation of addr expression shift field.
+ * \param exp The address expression.
+ * \param buf The buffer to append the string to.
+ * \param buf_len The length of the buffer.
+ * \note If \e buf is not an empty string, it will be appended (not replaced).
+ * \sa opdis_op_cat_str
+ * \sa opdis_op_flags_str
+ */
+int LIBCALL opdis_addr_expr_shift_str( opdis_addr_expr_t * exp, char * buf, 
+					int buf_len );
 
 #ifdef __cplusplus
 }

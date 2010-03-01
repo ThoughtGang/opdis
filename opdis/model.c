@@ -712,3 +712,29 @@ int LIBCALL opdis_reg_cat_str( opdis_reg_t * reg, char * buf, int buf_len,
 
 	return strlen(buf);
 }
+
+int LIBCALL opdis_addr_expr_shift_str( opdis_addr_expr_t * exp, char * buf, 
+				       int buf_len ) {
+	int max_size, use_delim = 0;
+	if (! exp || ! buf || ! buf_len ) {
+		return 0;
+	}
+
+	max_size = buf_len - strlen(buf) - 1;
+	switch ( exp->shift ) {
+		case opdis_addr_expr_lsl:
+			strncat( buf, "lsl", max_size ); break;
+        	case opdis_addr_expr_lsr:
+			strncat( buf, "lsr", max_size ); break;
+        	case opdis_addr_expr_asl:
+			strncat( buf, "asl", max_size ); break;
+        	case opdis_addr_expr_ror:
+			strncat( buf, "ror", max_size ); break;
+		case opdis_addr_expr_rrx:
+			strncat( buf, "rrx", max_size ); break;
+		default:
+			strncat( buf, "unknown", max_size ); break;
+	}
+
+	return strlen(buf);
+}
