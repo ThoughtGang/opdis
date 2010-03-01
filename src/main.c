@@ -506,6 +506,9 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 
 static void output_disassembly( struct opdis_options * opts ) {
 	asm_fprintf_header( opts->output_file, opts->fmt );
+
+	// TODO: print targets and maps
+	
 	opdis_insn_tree_foreach( opts->insn_tree, print_insn, opts );
 	asm_fprintf_footer( opts->output_file, opts->fmt );
 }
