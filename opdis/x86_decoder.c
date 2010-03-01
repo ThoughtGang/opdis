@@ -229,8 +229,8 @@ static int intel_register_lookup( const char * item ) {
 
 static void fill_register_by_id(opdis_reg_t * reg, int id) {
 	if ( id > -1 ) {
-		reg->flags = lookup_register_type(id);
 		reg->id = intel_reg_id[id];
+		reg->flags = lookup_register_type(reg->id);
 		reg->size = intel_reg_size[id];
 		strncpy( reg->ascii, intel_registers[id], 
 			 OPDIS_REG_NAME_SZ - 1 );
