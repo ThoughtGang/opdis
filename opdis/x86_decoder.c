@@ -553,7 +553,7 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	}
 
 	/* fill operands */
-	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
+	for ( i = parse.first_op; i > -1 && i <= parse.last_op; i++ ) {
 		if ( in->items[i][0] != ',' ) {
 			decode_operand( opdis_insn_next_avail_op(out),
 					decode_att_operand, in->items[i] );
@@ -755,7 +755,7 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 	}
 
 	/* fill operands */
-	for ( i = parse.first_op; i > -1 && i < parse.last_op; i++ ) {
+	for ( i = parse.first_op; i > -1 && i <= parse.last_op; i++ ) {
  		if ( in->items[i][0] != ',' ) {
 			decode_operand( opdis_insn_next_avail_op(out),
 					decode_intel_operand, in->items[i] );
