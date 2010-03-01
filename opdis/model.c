@@ -667,8 +667,8 @@ int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
 	return strlen(buf);
 }
 
-int LIBCALL opdis_reg_cat_str( opdis_reg_t * reg, char * buf, int buf_len,
-				const char * delim ) {
+int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
+				 const char * delim ) {
 	int max_size, use_delim = 0;
 	if (! reg || ! buf || ! buf_len || ! delim ) {
 		return 0;
