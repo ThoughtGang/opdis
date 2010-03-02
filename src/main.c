@@ -204,9 +204,9 @@ static void parse_memspec( const char * memspec, unsigned int * target,
 	const char * o_start, *s_start, *v_start;
 
 	*target = 1;	/* default to first target */
-	*offset = OPDIS_INVALID_ADDR;
+	*offset = 0;	/* default to offset 0 */
 	*vma = OPDIS_INVALID_ADDR;
-	*size = 0;
+	*size = 0;	/* default to entire target */
 
 	o_start = strchr( memspec, ':' );
 	v_start = strchr( memspec, '@' );
@@ -252,11 +252,6 @@ static int add_job( job_list_t jobs, enum job_type_t type, const char * arg ) {
 	opdis_vma_t vma;
 
 	parse_memspec( arg, &target, &offset, &size, &vma );
-	if ( offset == OPDIS_INVALID_ADDR && vma == OPDIS_INVALID_ADDR ) {
-		fprintf( stderr, "Invalid memspec '%s' : no VMA or offset\n",
-			 arg );
-		return 0;
-	}
 
 	return job_list_add( jobs, type, arg, target, offset, vma, size );
 }
