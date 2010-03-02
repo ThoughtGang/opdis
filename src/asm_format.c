@@ -9,7 +9,7 @@
 
 #include "asm_format.h"
 
-#define FPRINTF_ADDR( rv, f, vma ) 					\
+#define FPRINTF_ADDR( rv, f, vma ) 				\
 	if ( vma == 0 ) {					\
 		rv += fprintf( f, "0x0" );			\
 	} else {						\
@@ -27,10 +27,50 @@ int asm_fprintf_header( FILE * f, enum asm_format_t fmt ) {
 			break;
 		case asmfmt_xml:
 			rv += fprintf( f, "<?xml version=\"1.0\"?>\n" );
-			rv += fprintf( f, "<!DOCTYPE catalog PUBLIC" );
-			rv += fprintf( f, " \"TITLE\"" );
-			rv += fprintf( f, " \"URI\"" );
-			rv += fprintf( f, ">\n" );
+			rv += fprintf( f, "<!DOCTYPE disassembly [\n" );
+			rv += fprintf( f, "<!ELEMENT disassembly " );
+			rv += fprintf( f, "(instruction*)>\n" );
+			rv += fprintf( f, "<!ELEMENT instruction (offset," );
+			rv += fprintf( f, "vma,bytes,ascii?,mnemonic?,");
+			rv += fprintf( f, "prefix?,isa?,category?,flags?," );
+			rv += fprintf( f, "operands?,invalid?)>\n" );
+			rv += fprintf( f, "<!ELEMENT offset (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT vma (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT bytes (byte+)>\n" );
+			rv += fprintf( f, "<!ELEMENT byte (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT ascii (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT mnemonic (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT prefix (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT isa (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT category (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT flags (flag+)>\n" );
+			rv += fprintf( f, "<!ELEMENT flag (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT operands (operand*)>\n" );
+			rv += fprintf( f, "<!ELEMENT operand (ascii," );
+			rv += fprintf( f, "category,flags,value)>\n" );
+			rv += fprintf( f, "<!ATTLIST operand type " );
+			rv += fprintf( f, "(target|src|dest) \"\">\n" );
+			rv += fprintf( f, "<!ELEMENT value (register?," );
+			rv += fprintf( f, "immediate?,absolute?," );
+			rv += fprintf( f, "expression?)>\n" );
+			rv += fprintf( f, "<!ELEMENT register (ascii,id," );
+			rv += fprintf( f, "size,flags)>\n" );
+			rv += fprintf( f, "<!ELEMENT immediate (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT absolute (segment," );
+			rv += fprintf( f, "immediate)>\n" );
+			rv += fprintf( f, "<!ELEMENT segment (register)>\n" );
+			rv += fprintf( f, "<!ELEMENT expression (base?," );
+			rv += fprintf( f, "index?,scale,shift?," );
+			rv += fprintf( f, "displacement?)>\n" );
+			rv += fprintf( f, "<!ELEMENT base (register)>\n" );
+			rv += fprintf( f, "<!ELEMENT index (register)>\n" );
+			rv += fprintf( f, "<!ELEMENT scale (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT shift (#PCDATA)>\n" );
+			rv += fprintf( f, "<!ELEMENT displacement " );
+			rv += fprintf( f, "(absolute?,immediate?)>\n" );
+			rv += fprintf( f, "]>\n" );
+
+			rv += fprintf( f, "<disassembly>\n" );
 			break;
 		case asmfmt_asm:
 		case asmfmt_dump:
@@ -46,6 +86,7 @@ int asm_fprintf_footer( FILE * f, enum asm_format_t fmt ) {
 	switch (fmt) {
 		/* only XML requires a footer */
 		case asmfmt_xml:
+			rv += fprintf( f, "</disassembly>\n" );
 			break;
 		case asmfmt_asm:
 		case asmfmt_dump:
@@ -258,7 +299,7 @@ static int xml_flags( FILE * f, char * buf, const char *indent ) {
 	for ( c = buf, flag = buf; *c; c++ ) {
 		if ( *c == ',' ) {
 			*c = '\0';
-			rv += fprintf( f, "%s  <flag value=\"%s\"/>\n",
+			rv += fprintf( f, "%s  <flag>%s</flag>\n",
 					indent, flag );
 			flag = c + 1;
 		}
@@ -266,7 +307,7 @@ static int xml_flags( FILE * f, char * buf, const char *indent ) {
 
 	if ( c != buf ) {
 		/* handle last flag */
-		rv += fprintf( f, "%s  <flag value=\"%s\"/>\n", indent, flag );
+		rv += fprintf( f, "%s  <flag>%s</flag>\n", indent, flag );
 	}
 
 	rv += fprintf( f, "%s</flags>\n", indent );
@@ -274,12 +315,12 @@ static int xml_flags( FILE * f, char * buf, const char *indent ) {
 }
 
 static int xml_immediate_s( FILE * f, int64_t val, const char * indent ) {
-	return fprintf( f, "%s<immediate value=\"%lld\"/>\n", indent,
+	return fprintf( f, "%s<immediate>%lld</immediate>\n", indent,
 			(long long int) val );
 }
 
 static int xml_immediate( FILE * f, uint64_t val, const char * indent ) {
-	return fprintf( f, "%s<immediate value=\"%#llX\"/>\n", indent,
+	return fprintf( f, "%s<immediate>%#llX</immediate>\n", indent,
 			(unsigned long long int) val );
 }
 
@@ -290,8 +331,8 @@ static int xml_register( FILE * f, opdis_reg_t * reg, const char * indent ) {
 
 	rv += fprintf( f, "%s<register>\n", indent );
 	rv += fprintf( f, "%s  <ascii>%s</ascii>\n", indent, reg->ascii );
-	rv += fprintf( f, "%s  <id value=\"%d\"/>\n", indent, reg->id );
-	rv += fprintf( f, "%s  <size value=\"%d\"/>\n", indent, reg->size );
+	rv += fprintf( f, "%s  <id>%d</id>\n", indent, reg->id );
+	rv += fprintf( f, "%s  <size>%d</size>\n", indent, reg->size );
 	buf[0] = 0;
 	opdis_reg_flags_str( reg, buf, 96, "," );
 	sprintf( indent_buf, "%s  ", indent );
@@ -310,9 +351,7 @@ static int xml_abs_addr(FILE * f, opdis_abs_addr_t * abs, const char * indent) {
 	rv += fprintf( f, "%s  <segment>\n", indent );
 	rv += xml_register( f, &abs->segment, indent_buf );
 	rv += fprintf( f, "%s  </segment>\n", indent );
-	rv += fprintf( f, "%s  <displacement>\n", indent );
 	rv += xml_immediate( f, abs->offset, indent_buf );
-	rv += fprintf( f, "%s  </displacement>\n", indent );
 	rv += fprintf( f, "%s</absolute>\n", indent );
 	return rv;
 }
@@ -341,12 +380,10 @@ static int xml_addr_expr( FILE * f, opdis_addr_expr_t * expr,
 	}
 
 	/* scale */
-	rv += fprintf( f, "%s  <scale>\n", indent );
-	rv += fprintf( f, "%s    <value>%d</value>\n", indent, expr->scale );
+	rv += fprintf( f, "%s  <scale>%d</scale>\n", indent, expr->scale );
 	buf[0] = '\0';
 	opdis_addr_expr_shift_str( expr, buf, 8 );
-	rv += fprintf( f, "%s    <shift value=\"%s\">\n", indent, buf );
-	rv += fprintf( f, "%s  </scale>\n", indent );
+	rv += fprintf( f, "%s  <shift>%s</shift>\n", indent, buf );
 
 	/* displacement */
 	if ( (expr->elements & opdis_addr_expr_disp) != 0 ) {
@@ -376,7 +413,7 @@ static int xml_operand( FILE * f, opdis_op_t * op ) {
 	rv += fprintf( f, "    <ascii>%s</ascii>\n", op->ascii );
 	buf[0] = 0;
 	opdis_op_cat_str( op, buf, 64 );
-	rv += fprintf( f, "    <category \"%s\"/>\n", buf );
+	rv += fprintf( f, "    <category>%s</category>\n", buf );
 	buf[0] = 0;
 	opdis_op_flags_str( op, buf, 64, "," );
 	rv += xml_flags( f, buf, "    " ); 
@@ -416,35 +453,37 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 	char buf[64];
 
 	rv += fprintf( f, "<instruction>\n" );
+
+	rv += fprintf( f, "  <offset>" );
+	FPRINTF_ADDR( rv, f, insn->offset );
+	rv += fprintf( f, "</offset>\n  <vma>" );
+	FPRINTF_ADDR( rv, f, insn->vma );
+	rv += fprintf( f, "</vma>\n  <bytes>\n" );
+	for ( i = 0; i < insn->size; i++ ) {
+		rv += fprintf( f, "    <byte>%02X</byte>\n", 
+				insn->bytes[i] );
+	}
+	rv += fprintf( f, "  </bytes>\n" );
+
 	if ( insn->status == opdis_decode_invalid ) {
 		rv += fprintf( f, "  <invalid />\n</instruction>\n" );
 		return rv;
 	}
 
-	rv += fprintf( f, "  <ascii>%s</ascii>\n", insn->ascii );
-	rv += fprintf( f, "  <offset value=\"" );
-	FPRINTF_ADDR( rv, f, insn->offset );
-	rv += fprintf( f, "\"/>\n  <vma value=\"" );
-	FPRINTF_ADDR( rv, f, insn->vma );
-	rv += fprintf( f, "\"/>\n  <bytes>\n" );
-	for ( i = 0; i < insn->size; i++ ) {
-		rv += fprintf( f, "    <byte value=\"%02X\"/>\n", 
-				insn->bytes[i] );
-	}
-	rv += fprintf( f, "  </bytes>\n" );
-
 	/* ascii, prefix, mnemonic */
-	rv += fprintf( f, "  <ascii value=\"%s\"/>\n", insn->ascii );
-	rv += fprintf( f, "  <prefix value=\"%s\"/>\n", insn->prefixes );
-	rv += fprintf( f, "  <mnemonic value=\"%s\"/>\n", insn->mnemonic );
+	rv += fprintf( f, "  <ascii>%s</ascii>\n", insn->ascii );
+	if ( insn->num_prefixes ) {
+		rv += fprintf( f, "  <prefix>%s</prefix>\n", insn->prefixes );
+	}
+	rv += fprintf( f, "  <mnemonic>%s</mnemonic>\n", insn->mnemonic );
 
 	/* isa, cat, flags */
 	buf[0] = 0;
 	opdis_insn_isa_str( insn, buf, 64 );
-	rv += fprintf( f, "  <isa \"%s\"/>\n", buf );
+	rv += fprintf( f, "  <isa>%s</isa>\n", buf );
 	buf[0] = 0;
 	opdis_insn_cat_str( insn, buf, 64 );
-	rv += fprintf( f, "  <category \"%s\"/>\n", buf );
+	rv += fprintf( f, "  <category>%s</category>\n", buf );
 
 	buf[0] = 0;
 	opdis_insn_flags_str( insn, buf, 64, "," );
