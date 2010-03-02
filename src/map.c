@@ -101,11 +101,13 @@ static int vma_search( map_t * map, void * arg ) {
 		return 1;
 	}
 
+	/* note: map of size 0 means "map through end of target */
 	if ( request->offset >= map->offset && 
-	     request->offset < (map->offset + map->size) ) {
+	     (! map->size || request->offset < (map->offset + map->size)) ) {
 		request->vma = map->vma;
 		return 0;
 	}
+
 
 	return 1;
 }

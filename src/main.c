@@ -133,6 +133,7 @@ static void set_defaults( struct opdis_options * opts ) {
 	opts->insn_tree = opdis_insn_tree_init( 1 );
 	opts->output_file = stdout;
 
+	// TODO get first available arch
 	// TODO: use 64-bit detection?
 	opts->arch_str = "i386";
 	opts->arch = bfd_mach_i386_i386;

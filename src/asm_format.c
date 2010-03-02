@@ -813,6 +813,10 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 				c += inc;
 				rv += inc;
 				break;
+			case 'l':	/* length */
+				COND_DELIM( f, cond_delim );
+				rv += fprintf(f, "%d", (int) insn->size);
+				break;
 			case 'p':	/* prefix */
 				if ( insn->num_prefixes ) {
 					COND_DELIM( f, cond_delim );
@@ -867,28 +871,6 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 	}
 
 	return rv;
-/*
- * Objects: i (insn), o (operand), r (register)
- * Numeric Format : BDXO binary decimal hex octal char
- * Component Format: ACF Ascii, Cat, Flags. Default is ascii.
- * %i[cfmt] - instruction
- * %c - comment
- * %b[numfmt|C] - bytes : takes BDXOC
- * %m - mnemonic
- * %p - prefix(es)
- * %o[atds#][numfmt]
- * %oa[cfmt] - all operands
- * %o#[cfmt] - operand '#'
- * %ot[cfmt] - operand target
- * %od[cfmt] - operand dest
- * %os[cfmt] - operand src
- * %a[v|o][format] - address (vma or offset) BDXO
- * %?[char] - conditional delimiter char (only if next % is true)
- * %t - conditional tab
- * %s - conditional space
- * %n - conditional newline
- * %%
- */
 }
 
 int asm_fprintf_insn( FILE * f, enum asm_format_t fmt, const char * fmt_str,

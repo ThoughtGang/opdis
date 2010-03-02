@@ -117,6 +117,7 @@ static void set_buffer_vma( unsigned int target, opdis_buf_t buf,
 static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf ) {
 	opdis_vma_t vma;
 	if ( job->vma == OPDIS_INVALID_ADDR ) {
+		/* attempt to get VMA from buffer */
 		if ( job->offset >= buf->len ) {
 			fprintf( stderr, "" );
 			return OPDIS_INVALID_ADDR;
@@ -271,6 +272,12 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 	}
 
 	target = tgt_list_find( o->targets, job->target );
+
+	/* attempt to get VMA from memory map */
+	if ( job->vma == OPDIS_INVALID_ADDR ) {
+		job->vma = mem_map_vma_for_target( o->map, job->target,
+						   job->offset );
+	}
 
 	switch (job->type) {
 		case job_cflow:
