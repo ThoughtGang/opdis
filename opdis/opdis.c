@@ -87,7 +87,14 @@ int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			   opdis_vma_t vma, opdis_off_t length, void * arg ) {
 	opdis_insn_set_ascii( out, in->string );
 
-	out->bytes = &buf[offset ];
+	if (! out->bytes ) {
+		out->bytes = calloc(1, length);
+		if (! out->bytes ) {
+			return 0;
+		}
+	}
+	memcpy( out->bytes, &buf[offset], length );
+
 	out->size = length;
 	out->offset = offset;
 	out->vma = vma;
@@ -310,7 +317,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 	o->buf->target2 = o->config.target2;
 
 	if (! o->decoder( o->buf, insn, o->config.buffer, 
-			  o->config.buffer_vma - vma, vma, size,
+			  vma - o->config.buffer_vma, vma, size,
 			  o->decoder_arg ) ) {
 		char msg[64];
 		snprintf( msg, 63, "VMA %p: '%s'\n", (void *) vma,

@@ -47,13 +47,14 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 		return NULL;
 	}
 
+	insn->bytes = calloc( 1, 128 );	/* plenty */
 	insn->ascii = calloc( 1, ascii_sz );
 	insn->prefixes = calloc( 1, PREFIX_SIZE(mnemonic_sz) );
 	insn->mnemonic = calloc( 1, mnemonic_sz );
 	insn->comment = calloc( 1, ascii_sz );
 
 	if (! insn->ascii || ! insn->prefixes || ! insn->mnemonic ||
-	    ! insn->prefixes || ! insn->comment ) {
+	    ! insn->prefixes || ! insn->comment || ! insn->bytes ) {
 		opdis_insn_free( insn );
 		return NULL;
 	}
@@ -100,11 +101,19 @@ opdis_insn_t * LIBCALL opdis_insn_dupe( const opdis_insn_t * insn ) {
 	new_operands = new_insn->operands;
 	memcpy( new_insn, insn, sizeof(opdis_insn_t) );
 
+	new_insn->bytes = NULL;
 	new_insn->ascii = NULL;
 	new_insn->mnemonic = NULL;
 	new_insn->prefixes = NULL;
 	new_insn->operands = new_operands;
 	new_insn->fixed_size = new_insn->ascii_sz = new_insn->mnemonic_sz = 0;
+
+	new_insn->bytes = calloc( 1, insn->size );
+	if (! new_insn->bytes ) {
+		opdis_insn_free(new_insn);
+		return NULL;
+	}
+	memcpy( new_insn->bytes, insn->bytes, insn->size );
 
 	if ( insn->ascii ) {
 		new_insn->ascii = strdup(insn->ascii);
@@ -191,6 +200,10 @@ void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
 	int i; 
 	if (! insn ) {
 		return;
+	}
+
+	if ( insn->bytes ) {
+		free( (void *) insn->bytes);
 	}
 
 	if ( insn->ascii ) {

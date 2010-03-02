@@ -180,7 +180,7 @@ typedef struct {
 	opdis_vma_t vma;		/*!< Virtual memory address of insn */
 
 	opdis_off_t size;		/*!< Size (# bytes) of insn */
-	const opdis_byte_t * bytes;	/*!< Pointer to insn bytes in buffer */
+	opdis_byte_t * bytes;		/*!< Array of insn bytes */
 
 	/* instruction  */
 	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */
