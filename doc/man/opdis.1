@@ -203,33 +203,56 @@ Print a list of the targets, jobs, and memory maps without actually doing any di
 
 .SH DISASSEMBLY
 stuff
+jobs
+if no jobs, linear disasm of all targets is performed
 
 .SH DATA MODEL
 stuff
+vma vs offset
+insn
+operand
+register
+expression
+absolute
 
 .SH TARGETS
 stuff
+a target is a buffer
+every -b and arg is a target
+they are numbered in order
+it is recommended to use --drt-run to review targets
 
 .SH MEMORY MAPS
 stuff
+maps associate vmas to offsets
+these are useful when you want the addresses in the target to appear to be at a specific load address
+it is recommened to use --dry-run to preview maps
 
 .SH BFD SUPPORT
 stuff
+entry
+symbol
+section
+architectures
 
 .SH ADDRESS FORMAT
 	[target]:offset|@vma[+size]
+memspec
+target defaults to 1
+offset defaults to 0
+size defaults to 0 (entire target)
 
 .SH FORMAT STRINGS
 Custom output formats are supported via a printf-style format string that allows the user to determine what information about an instruction or operand is printed.
 
 .PP
-.B Component Selection
+.SS Component Selection
 .PP
 A single character specifying what metadata to print. The \fB%i\fR (instruction) and \fB%o\fR (operand) operators represent complex objects. The metadata for these objects are available as arguments to the operator, allowing the display of categories, flags, etc.
 .IP
 \fBA\fR
 .PD
-The \fBascii\fR field of the operator. This is the default, and prints the raw linopcodes representation of the object.
+The \fBascii\fR field of the operator. This is the default, and prints the raw libopcodes representation of the object.
 
 .IP
 \fBC\fR
@@ -247,10 +270,8 @@ The \fBflags\fR field of the object. The flags are comma-delimited.
 The \fBisa\fR field of the object. This is only applicable to instruction objects.
 
 .PP
-.B Base Selection
-A single character specifying the base to print data in.
-.PP
-Addresses, and bytes can be printed in a user-specified base.
+.SS Base Selection
+A single character specifying the base to print addresses or bytes in.
 
 .IP
 \fBX\fR
@@ -273,8 +294,7 @@ Print data in octal format.
 Print the ASCII (character) value for a byte. Only applicable to the \fB%b\rR operator.
 
 .PP
-.B
-Operand Selection
+.SS Operand Selection
 .PP
 A single character specifying which operand to print. If the operand is not present in the instruction, nothing will be printed.
 
@@ -304,8 +324,7 @@ Print the \fBsource\fR operand of the instruction.
 Print the #th operand of the instruction, where # is a number between 0 and 9.
 
 .PP
-.B
-Operators
+.SS Operators
 .PP
 A single character specifying what data to print.
 
@@ -329,6 +348,11 @@ See \fBOperand Selection\fR and \fBComponent Selection\fR.
 Print the instruction bytes. Can be followed by a base selection argument. By default, the base is hexadecimal.
 .PD
 See \fBBase Selection\fR.
+
+.IP
+\fB%l\fR
+.PD
+Print the length of the instruction in bytes.
 
 .IP
 \fB%m\fR
@@ -389,8 +413,62 @@ See \fB%?\fR.
 .SH NOTES
 .PP
 The level of detail available to \fBopdis\fR is determined by the decoders available in \fBlibopdis\fR. Currently, \fBlibopdis\fR provides three decoders: x86 AT&T syntax, x86 Intel syntax, and generic. The AT&T syntax decoder (used by default or when \fI-s at\fR is supplied) provides the most detail, and generates output that is best suited for analysis. The generic decoder, the only decoder available for non-x86 architectures, only provides the raw libopcodes representation (the \fIascii\rR field) of the instruction and no operand information. Additional architecture-specific decoders must be added to \fBlibopdis\fR to overcome this limitation.
+.PP
+\fBopdis\fR does not emit instructions as they are disassembled. Instead, instructions are stored in a binary tree and printed in order of VMA after all dfisassembly jobs have completed.
 
 .SH EXAMPLES
+
+.PP
+Disassemble an object file from its entry point:
+.IP
+opdis -E a.out
+
+.PP
+Disassemble an object file from the symbol 'main':
+.IP
+opdis -N main a.out
+
+.PP
+Disassemble the .text section of an object file:
+.IP
+opdis -S .text a.out
+
+.PP
+Disassemble the .text section of an object file and write to disasm.xml:
+.IP
+opdis -S .text -o asm.xml -f xml a.out
+
+.PP
+Perform a linear disassembly of 1024 bytes at offset 0x100 in an object file:
+.IP
+opdis -l :0x100+1024 a.out
+
+.PP
+Perform an intel-syntax control disassembly starting at offset 0x200 in an object file:
+.IP
+opdis -s intel -c :0x200 a.out
+
+.PP
+Disassemble shellcode: 
+.IP
+dist/opdis -b '31 c0 bb 08 84 04 08 53 89 e1 31 d2 b0 0b cd 80 00 00'
+.PP
+(see http://www.shell-storm.org/shellcode/files/shellcode-44.php)
+
+.PP
+Map the specified bytes to VMA 0x1000 and disassemble:
+.IP
+opdis -m :0@0x1000 -b '2e 2e 74 50 90'
+
+.PP
+Map target 1 to VMA 0x1000, target 2 to VMA 0x1100 and disassemble:
+.IP
+opdis -m 1@0x1000 -m 2@0x1100 -b '2e 2e 74 50 90' -b 'cc cc cc cc'
+
+.PP
+Print the size, bytes, and mnemonic (if present) of each instruction:
+.IP
+opdis -f '%l:%b%?:%m' a.out
 
 .SH "SEE ALSO"
 
