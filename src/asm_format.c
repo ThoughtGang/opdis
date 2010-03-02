@@ -769,7 +769,7 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 			continue;
 		}
 		c++;
-		if ( *c != '%' ) {
+		if ( *c == '%' ) {
 			rv += fprintf( f, "%%" );
 			cond_delim = '\0'; /* clear cond-delim */
 			continue;
