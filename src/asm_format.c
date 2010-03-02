@@ -518,7 +518,328 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 	return rv;
 }
 
+static int handle_insn( FILE * f, const opdis_insn_t * insn, 
+			const char * c ) {
+	int rv = 0;
+	char buf[64];
+	buf[0] = 0;
+
+	switch (*c) {
+		case 'I':
+			opdis_insn_isa_str( insn, buf, 64 );
+			fprintf( f, "%s", buf );
+			rv++;
+			break;
+		case 'C':
+			opdis_insn_cat_str( insn, buf, 64 );
+			fprintf( f, "%s", buf );
+			rv++;
+			break;
+		case 'F':
+			opdis_insn_flags_str( insn, buf, 64, "|" );
+			fprintf( f, "%s", buf );
+			rv++;
+			break;
+		case 'A':
+			rv++;
+			/* fall-through */
+		default:
+			fprintf( f, "%s", insn->ascii );
+	}
+
+	return rv;
+}
+
+static int handle_addr( FILE * f, const opdis_insn_t * insn, 
+			const char * c ) {
+	int rv = 0, junk;
+	opdis_vma_t val;
+
+	if ( *c == 'v' ) {
+		val = insn->vma;
+		c++;
+		rv++;
+	} else if ( *c == 'o' ) {
+		val = insn->offset;
+		c++;
+		rv++;
+	} else {
+		val = insn->vma;
+	}
+
+	switch (*c) {
+		case 'D':
+			fprintf( f, "%lld", (long long int) val );
+			rv++;
+			break;
+		case 'O':
+			fprintf( f, "%llo", (long long int) val );
+			rv++;
+			break;
+		case 'X':
+			rv++;
+			/* fall-through */
+		default:
+			FPRINTF_ADDR( junk, f, val );
+	}
+
+	return rv;
+}
+
+static int handle_bytes( FILE * f, const opdis_insn_t * insn, 
+			 const char * c ) {
+	int i, rv = 0, preceding = 0;
+	char * fmt_str = "%02X";
+	char buf[64];
+
+	switch (*c) {
+		case 'C':
+			fmt_str = "%c";
+			rv++;
+			break;
+		case 'D':
+			fmt_str = "%2d";
+			rv++;
+			break;
+		case 'O':
+			fmt_str = "%02o";
+			rv++;
+			break;
+		case 'X':
+			rv++;
+			/* fall-through */
+		default:
+			break;
+
+	}
+
+	for ( i = 0; i < insn->size; i++ ) {
+		if ( preceding ) {
+			fprintf( f, " " );
+		}
+		fprintf( f, fmt_str, insn->bytes[i] ); 
+		preceding = 1;
+	}
+
+	return rv;
+}
+
+#define OP_CAT( f, op, buf )				\
+	buf[0] = '\0';					\
+	opdis_op_cat_str( op, buf, 64 );		\
+	fprintf( f, "%s", buf );
+
+#define OP_FLAGS( f, op, buf )				\
+	buf[0] = '\0';					\
+	opdis_op_flags_str( op, buf, 64, "|" );		\
+	fprintf( f, "%s", buf );
+
+static int handle_op( FILE * f, const opdis_insn_t * insn, const char * c ) {
+	int rv = 0, all_operands = 0;
+	opdis_op_t * op = NULL;
+	char buf[64];
+
+	if ( *c == 'a' ) {
+		all_operands = 1;
+		c++;
+		rv++;
+	} else if ( *c == 't' ) {
+		op = insn->target;
+		c++;
+		rv++;
+	} else if ( *c == 'd' ) {
+		op = insn->dest;
+		c++;
+		rv++;
+	} else if ( *c == 's' ) {
+		op = insn->src;
+		c++;
+		rv++;
+	} else if ( isdigit(*c) ) {
+		int i = *c - '0';
+		c++;
+		rv++;
+		if ( i < insn->num_operands ) {
+			op = insn->operands[i];
+		} else {
+			return rv;
+		}
+	} else {
+		all_operands = 1;
+	}
+
+	if (! all_operands && ! op ) {
+		return rv;
+	}
+
+	switch (*c) {
+		case 'C':
+			if ( all_operands ) {
+				int i;
+				for ( i = 0; i < insn->num_operands; i++ ) {
+					if ( i > 0 ) {
+						fprintf( f, ", " );
+					}
+					OP_CAT(f, insn->operands[i], buf);
+				}
+			} else {
+				OP_CAT(f, op, buf);
+			}
+			rv++;
+			break;
+		case 'F':
+			if ( all_operands ) {
+				int i;
+				for ( i = 0; i < insn->num_operands; i++ ) {
+					if ( i > 0 ) {
+						fprintf( f, ", " );
+					}
+					OP_FLAGS(f, insn->operands[i], buf);
+				}
+			} else {
+				OP_FLAGS(f, op, buf);
+			}
+			rv++;
+			break;
+		case 'A':
+			rv++;
+			/* fall-through */
+		default:
+			if ( all_operands ) {
+				int i;
+				for ( i = 0; i < insn->num_operands; i++ ) {
+					if ( i > 0 ) {
+						fprintf( f, ", " );
+					}
+					fprintf( f, "%s", 
+						insn->operands[i]->ascii );
+				}
+			} else {
+				fprintf( f, "%s", op->ascii );
+			}
+	}
+
+	return rv;
+}
+
+static int op_is_present( const opdis_insn_t * insn, char c ) {
+	if (! insn->num_operands ) {
+		return 0;
+	}
+
+	if ( c == 't' && ! insn->target ) {
+		return 0;
+	}
+
+	if ( c == 'd' && ! insn->dest ) {
+		return 0;
+	}
+
+	if ( c == 's' && ! insn->src ) {
+		return 0;
+	}
+
+	if ( isdigit(c) ) {
+		if ( (c - '0') >= insn->num_operands ) {
+			return 0;
+		}
+	}
+
+	/* default is all operands */
+	return 1;
+}
+
+#define COND_DELIM(f, d)			\
+	if ( d != '\0' ) {			\
+		fprintf( f, "%c", d );		\
+		d = '\0';			\
+	}
+
+
 static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
+	const char *c;
+	char cond_delim = '\0';
+	int rv = 0;
+
+	for ( c = fmt_str; *c; c++ ) {
+		/* very lame and slow implementation */
+		if ( *c != '%' ) {
+			rv += fprintf( f, "%c", *c );
+			cond_delim = '\0'; /* clear cond-delim */
+			continue;
+		}
+		c++;
+		if ( *c != '%' ) {
+			rv += fprintf( f, "%%" );
+			cond_delim = '\0'; /* clear cond-delim */
+			continue;
+		}
+
+		switch (*c) {
+			case 'i':	/* instruction */
+				COND_DELIM( f, cond_delim );
+				c += handle_insn( f, insn, &c[1] );
+				break;
+			case 'a':	/* address */
+				COND_DELIM( f, cond_delim );
+				c += handle_addr( f, insn, &c[1] );
+				break;
+			case 'b':	/* bytes */
+				COND_DELIM( f, cond_delim );
+				c += handle_bytes( f, insn, &c[1] );
+				break;
+			case 'p':	/* prefix */
+				if ( insn->num_prefixes ) {
+					COND_DELIM( f, cond_delim );
+					rv += fprintf(f, "%s", insn->prefixes);
+				} else {
+					cond_delim = '\0';
+				}
+				break;
+			case 'm':	/* mnemonic */
+				if ( insn->mnemonic[0] ) {
+					COND_DELIM( f, cond_delim );
+					rv += fprintf(f, "%s", insn->mnemonic);
+				} else {
+					cond_delim = '\0';
+				}
+				break;
+			case 'c':	/* comment */
+				if ( insn->comment[0] ) {
+					COND_DELIM( f, cond_delim );
+					rv += fprintf( f, "%s", insn->comment );
+				} else {
+					cond_delim = '\0';
+				}
+				break;
+			case 'o':	/* operand */
+				if ( op_is_present( insn, c[1] ) ) {
+					COND_DELIM( f, cond_delim );
+					c += handle_op( f, insn, &c[1] );
+				} else {
+					cond_delim = '\0';
+				} 
+
+				break;
+			case '?':	/* conditional delim */
+				c++;
+				cond_delim = *c;
+				break;
+			case 't':	/* conditional tab */
+				cond_delim = '\t';
+				break;
+			case 's':	/* conditional space */
+				cond_delim = ' ';
+				break;
+			case 'n':	/* conditional newline */
+				cond_delim = '\n';
+				break;
+			default:
+				continue;
+		}
+	}
+
+	return rv;
 /*
  * Objects: i (insn), o (operand), r (register)
  * Numeric Format : BDXO binary decimal hex octal char
@@ -541,8 +862,6 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
  * %n - conditional newline
  * %%
  */
-	// TODO
-	return 0;
 }
 
 int asm_fprintf_insn( FILE * f, enum asm_format_t fmt, const char * fmt_str,
