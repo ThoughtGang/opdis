@@ -251,18 +251,121 @@ static int delim_insn( FILE * f, opdis_insn_t * insn ) {
 	return rv;
 }
 
-// indent
-static int xml_abs_addr( FILE * f, opdis_abs_addr_t * abs ) {
-	return 0;
+static int xml_flags( FILE * f, char * buf, const char *indent ) {
+	int rv = 0;
+	char *c, *flag;
+	rv += fprintf( f, "%s<flags>\n", indent );
+	for ( c = buf, flag = buf; *c; c++ ) {
+		if ( *c == ',' ) {
+			*c = '\0';
+			rv += fprintf( f, "%s  <flag value=\"%s\"/>\n",
+					indent, flag );
+			flag = c + 1;
+		}
+	}
+
+	if ( c != buf ) {
+		/* handle last flag */
+		rv += fprintf( f, "%s  <flag value=\"%s\"/>\n", indent, flag );
+	}
+
+	rv += fprintf( f, "%s</flags>\n", indent );
+	return rv;
 }
 
-static int xml_addr_expr( FILE * f, opdis_addr_expr_t * expr ) {
-	return 0;
+static int xml_immediate_s( FILE * f, int64_t val, const char * indent ) {
+	return fprintf( f, "%s<immediate value=\"%lld\"/>\n", indent,
+			(long long int) val );
 }
 
-// indent
-static int xml_register( FILE * f, opdis_reg_t * reg ) {
-	return 0;
+static int xml_immediate( FILE * f, uint64_t val, const char * indent ) {
+	return fprintf( f, "%s<immediate value=\"%#llX\"/>\n", indent,
+			(unsigned long long int) val );
+}
+
+static int xml_register( FILE * f, opdis_reg_t * reg, const char * indent ) {
+	int rv = 0;
+	char buf[96];
+	char indent_buf[24];
+
+	rv += fprintf( f, "%s<register>\n", indent );
+	rv += fprintf( f, "%s  <ascii>%s</ascii>\n", indent, reg->ascii );
+	rv += fprintf( f, "%s  <id value=\"%d\"/>\n", indent, reg->id );
+	rv += fprintf( f, "%s  <size value=\"%d\"/>\n", indent, reg->size );
+	buf[0] = 0;
+	opdis_reg_flags_str( reg, buf, 96, "," );
+	sprintf( indent_buf, "%s  ", indent );
+	rv += xml_flags( f, buf, indent_buf ); 
+	rv += fprintf( f, "%s</register>\n", indent );
+
+	return rv;
+}
+
+static int xml_abs_addr(FILE * f, opdis_abs_addr_t * abs, const char * indent) {
+	int rv = 0;
+	char indent_buf[24];
+
+	sprintf( indent_buf, "%s    ", indent );
+	rv += fprintf( f, "%s<absolute>\n", indent );
+	rv += fprintf( f, "%s  <segment>\n", indent );
+	rv += xml_register( f, &abs->segment, indent_buf );
+	rv += fprintf( f, "%s  </segment>\n", indent );
+	rv += fprintf( f, "%s  <displacement>\n", indent );
+	rv += xml_immediate( f, abs->offset, indent_buf );
+	rv += fprintf( f, "%s  </displacement>\n", indent );
+	rv += fprintf( f, "%s</absolute>\n", indent );
+	return rv;
+}
+
+static int xml_addr_expr( FILE * f, opdis_addr_expr_t * expr, 
+			  const char * indent ) {
+	int rv = 0;
+	char buf[8], indent_buf[24];
+
+	rv += fprintf( f, "%s<expression>\n", indent );
+
+	/* base */
+	if ( (expr->elements & opdis_addr_expr_base) != 0 ) {
+		rv += fprintf( f, "%s  <base>\n", indent );
+		sprintf( indent_buf, "%s    ", indent );
+		rv += xml_register( f, &expr->base, indent_buf );
+		rv += fprintf( f, "%s  </base>\n", indent );
+	}
+
+	/* index */
+	if ( (expr->elements & opdis_addr_expr_index) != 0 ) {
+		rv += fprintf( f, "%s  <index>\n", indent );
+		sprintf( indent_buf, "%s    ", indent );
+		rv += xml_register( f, &expr->index, indent_buf );
+		rv += fprintf( f, "%s  </index>\n", indent );
+	}
+
+	/* scale */
+	rv += fprintf( f, "%s  <scale>\n", indent );
+	rv += fprintf( f, "%s    <value>%d</value>\n", indent, expr->scale );
+	buf[0] = '\0';
+	opdis_addr_expr_shift_str( expr, buf, 8 );
+	rv += fprintf( f, "%s    <shift value=\"%s\">\n", indent, buf );
+	rv += fprintf( f, "%s  </scale>\n", indent );
+
+	/* displacement */
+	if ( (expr->elements & opdis_addr_expr_disp) != 0 ) {
+		rv += fprintf( f, "%s  <displacement>\n", indent );
+		if ( (expr->elements & opdis_addr_expr_disp_abs) != 0 ) {
+			rv += xml_abs_addr( f, &expr->displacement.a, 
+					    indent_buf );
+		} else if ( (expr->elements & opdis_addr_expr_disp_s) != 0 ) {
+			rv += xml_immediate_s( f, expr->displacement.s, 
+					       indent_buf );
+		} else {
+			rv += xml_immediate( f, expr->displacement.u, 
+					     indent_buf );
+		}
+		rv += fprintf( f, "%s  </displacement>\n", indent );
+	}
+
+	rv += fprintf( f, "%s</expression>\n", indent );
+	return rv;
 }
 
 static int xml_operand( FILE * f, opdis_op_t * op ) {
@@ -270,91 +373,38 @@ static int xml_operand( FILE * f, opdis_op_t * op ) {
 	char buf[64];
 
 	/* ascii:cat:flags: */
-	rv += fprintf( f, "    <ascii>\n%s\n    </ascii>\n", op->ascii );
+	rv += fprintf( f, "    <ascii>%s</ascii>\n", op->ascii );
 	buf[0] = 0;
 	opdis_op_cat_str( op, buf, 64 );
 	rv += fprintf( f, "    <category \"%s\"/>\n", buf );
-	// TODO : flags
-	// buf[0] = 0;
-	// opdis_op_flags_str( op, buf, 64, "," );
-	// rv += fprintf( f, "%s:", buf );
+	buf[0] = 0;
+	opdis_op_flags_str( op, buf, 64, "," );
+	rv += xml_flags( f, buf, "    " ); 
 
 	/* value */
 	rv += fprintf( f, "    <value>\n" );
 
 	switch (op->category) {
 		case opdis_op_cat_register:
-		case opdis_op_cat_absolute:
-		case opdis_op_cat_expr:
-		case opdis_op_cat_immediate:
-		case opdis_op_cat_unknown:
-			break;
-#if 0
-		case opdis_op_cat_register:
-			/* {ascii;id;size;flags} */
-			buf[0] = '\0';
-			opdis_reg_flags_str( &op->value.reg, buf, 64, "," );
-			rv += fprintf( f, "{%s;%d;%d;%s}", 
-					op->value.reg.ascii,
-					op->value.reg.id,
-					op->value.reg.size, buf );
+			rv += xml_register( f, &op->value.reg, "      " );
 			break;
 		case opdis_op_cat_absolute:
-			/* {segment;offset} */
-			rv += fprintf( f, "{%s;%llX}", 
-					op->value.abs.segment.ascii,
-				 	(long long unsigned int)
-					op->value.abs.offset );
+			rv += xml_abs_addr( f, &op->value.abs, "      " );
 			break;
 		case opdis_op_cat_expr:
-			/* {base;index;scale;op;seg;disp} */
-			rv += fprintf( f, "{%s;%s;%d;", 
-				 op->value.expr.base.ascii,
-				 op->value.expr.index.ascii,
-				 op->value.expr.scale );
-
-			buf[0] = '\0';
-			opdis_addr_expr_shift_str( &op->value.expr, buf, 64 );
-			rv += fprintf( f, "%s;%s;", buf,
-					(op->value.expr.elements &
-					 opdis_addr_expr_disp_abs) ?
-			     op->value.expr.displacement.a.segment.ascii : "" );
-
-
-			if ( op->value.expr.elements & 
-			     opdis_addr_expr_disp_abs )  {
-				rv += fprintf( f, "%llX", 
-					(long long unsigned int)
-					op->value.expr.displacement.a.offset);
-			} else if ( op->value.expr.elements &
-				    opdis_addr_expr_disp_s ) {
-				rv += fprintf( f, "%lld", (long long int)
-					op->value.expr.displacement.s);
-			} else {
-				rv += fprintf( f, "%llX", 
-					(long long unsigned int)
-					op->value.expr.displacement.u);
-			}
-			rv += fprintf( f, "}" );
-			
+			rv += xml_addr_expr( f, &op->value.expr, "      " );
 			break;
 		case opdis_op_cat_immediate:
 		case opdis_op_cat_unknown:
-			if ( op->flags & opdis_op_flag_signed ) {
-				rv += fprintf( f, "%lld", 
-						(long long int)
-						op->value.immediate.s );
+			if ( (op->flags & opdis_op_flag_signed) != 0 ) {
+				rv += xml_immediate_s( f, op->value.immediate.s,
+							"      ");
 			} else {
-				rv += fprintf( f, "%#llX", 
-						(long long unsigned int)
-						op->value.immediate.u );
+				rv += xml_immediate( f, op->value.immediate.u, 
+						     "      ");
 			}
 			break;
-#endif
-	
 	}
-
-	return 0;
 
 	rv += fprintf( f, "    </value>\n" );
 
@@ -366,11 +416,12 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 	char buf[64];
 
 	rv += fprintf( f, "<instruction>\n" );
-	//if ( insn->status == opdis_decode_invalid ) {
-	//	fprintf( f, "" );
-	//}
+	if ( insn->status == opdis_decode_invalid ) {
+		rv += fprintf( f, "  <invalid />\n</instruction>\n" );
+		return rv;
+	}
 
-	rv += fprintf( f, "  <ascii>\n%s\n  </ascii>\n", insn->ascii );
+	rv += fprintf( f, "  <ascii>%s</ascii>\n", insn->ascii );
 	rv += fprintf( f, "  <offset value=\"" );
 	FPRINTF_ADDR( rv, f, insn->offset );
 	rv += fprintf( f, "\"/>\n  <vma value=\"" );
@@ -384,7 +435,7 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 
 	/* ascii, prefix, mnemonic */
 	rv += fprintf( f, "  <ascii value=\"%s\"/>\n", insn->ascii );
-	// TODO: insn->prefixes, 
+	rv += fprintf( f, "  <prefix value=\"%s\"/>\n", insn->prefixes );
 	rv += fprintf( f, "  <mnemonic value=\"%s\"/>\n", insn->mnemonic );
 
 	/* isa, cat, flags */
@@ -395,12 +446,10 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 	opdis_insn_cat_str( insn, buf, 64 );
 	rv += fprintf( f, "  <category \"%s\"/>\n", buf );
 
-	// TODO : flags
-	//buf[0] = 0;
-	//if buf[0]
-	//opdis_insn_flags_str( insn, buf, 64, "," );
-	//rv += fprintf( f, "%s|", buf );
-
+	buf[0] = 0;
+	opdis_insn_flags_str( insn, buf, 64, "," );
+	rv += xml_flags( f, buf, "  " ); 
+	
 	/* operands */
 	rv += fprintf( f, "  <operands>\n" );
 	for ( i=0; i < insn->num_operands; i++ ) {
@@ -431,6 +480,28 @@ static int xml_insn( FILE * f, opdis_insn_t * insn ) {
 }
 
 static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
+/*
+ * Objects: i (insn), o (operand), r (register)
+ * Numeric Format : BDXO binary decimal hex octal char
+ * Component Format: ACF Ascii, Cat, Flags. Default is ascii.
+ * %i[cfmt] - instruction
+ * %c - comment
+ * %b[numfmt|C] - bytes : takes BDXOC
+ * %m - mnemonic
+ * %p - prefix(es)
+ * %o[atds#][numfmt]
+ * %oa[cfmt] - all operands
+ * %o#[cfmt] - operand '#'
+ * %ot[cfmt] - operand target
+ * %od[cfmt] - operand dest
+ * %os[cfmt] - operand src
+ * %a[v|o][format] - address (vma or offset) BDXO
+ * %?[char] - conditional delimiter char (only if next % is true)
+ * %t - conditional tab
+ * %s - conditional space
+ * %n - conditional newline
+ * %%
+ */
 	// TODO
 	return 0;
 }
