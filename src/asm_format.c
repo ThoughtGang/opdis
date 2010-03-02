@@ -661,14 +661,16 @@ static int handle_op( FILE * f, const opdis_insn_t * insn, const char * c ) {
 		rv++;
 		if ( i < insn->num_operands ) {
 			op = insn->operands[i];
-		} else {
-			return rv;
 		}
 	} else {
 		all_operands = 1;
 	}
 
-	if (! all_operands && ! op ) {
+	if (! op && (! all_operands || ! insn->num_operands ) ) {
+		if ( *c == 'C' || *c == 'F' || *c == 'A' ) {
+			/* consume next */
+			rv++;
+		}
 		return rv;
 	}
 
@@ -759,12 +761,29 @@ static int op_is_present( const opdis_insn_t * insn, char c ) {
 static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 	const char *c;
 	char cond_delim = '\0';
-	int rv = 0;
+	int rv = 0, inc;
 
 	for ( c = fmt_str; *c; c++ ) {
 		/* very lame and slow implementation */
 		if ( *c != '%' ) {
-			rv += fprintf( f, "%c", *c );
+			char out = *c;
+			if ( *c == '\\' ) {
+				c++;
+				switch ( *c ) {
+					case 'n': out = '\n'; break;
+					case 't': out = '\t'; break;
+					case '\\': out = '\\'; break;
+					case '\'': out = '\''; break;
+					case '\"': out = '\"'; break;
+					case 'r': out = '\r'; break;
+					case 'b': out = '\b'; break;
+					case 'v': out = '\v'; break;
+					case 'a': out = '\a'; break;
+					case '?': out = '\?'; break;
+					default: out = *c;
+				}
+			}
+			rv += fprintf( f, "%c", out );
 			cond_delim = '\0'; /* clear cond-delim */
 			continue;
 		}
@@ -778,15 +797,21 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 		switch (*c) {
 			case 'i':	/* instruction */
 				COND_DELIM( f, cond_delim );
-				c += handle_insn( f, insn, &c[1] );
+				inc = handle_insn( f, insn, &c[1] );
+				c += inc;
+				rv += inc;
 				break;
 			case 'a':	/* address */
 				COND_DELIM( f, cond_delim );
-				c += handle_addr( f, insn, &c[1] );
+				inc = handle_addr( f, insn, &c[1] );
+				c += inc;
+				rv += inc;
 				break;
 			case 'b':	/* bytes */
 				COND_DELIM( f, cond_delim );
-				c += handle_bytes( f, insn, &c[1] );
+				inc = handle_bytes( f, insn, &c[1] );
+				c += inc;
+				rv += inc;
 				break;
 			case 'p':	/* prefix */
 				if ( insn->num_prefixes ) {
@@ -815,10 +840,12 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 			case 'o':	/* operand */
 				if ( op_is_present( insn, c[1] ) ) {
 					COND_DELIM( f, cond_delim );
-					c += handle_op( f, insn, &c[1] );
 				} else {
 					cond_delim = '\0';
-				} 
+				}
+				inc = handle_op( f, insn, &c[1] );
+				c += inc;
+				rv += inc;
 
 				break;
 			case '?':	/* conditional delim */
