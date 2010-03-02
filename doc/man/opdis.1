@@ -2,7 +2,7 @@
 .TH OPDIS 1 "March 2010" "opdis 1.0" "Development Tools"
 
 .SH NAME
-opdis \- program for...
+opdis \- disassemble binary data
 
 .SH SYNOPSIS
 opdis [\fB\-c\fR|\fB\-\-cflow\fR=\fImemspec\fR]
@@ -27,34 +27,43 @@ opdis [\fB\-c\fR|\fB\-\-cflow\fR=\fImemspec\fR]
 .br
 
 .SH DESCRIPTION
-This manual page explains the
+
 .B opdis
-program. This program...
+disassembles binary data into assembly language according the options specified by the user.
 .PP
-\fBopdis\fP is for...
+\fBopdis\fP is a front-end to \fBlibopdis\fR, which in turn is a wrapper for \fBlibopcodes\fR, part of the GNU \fIbinutils\fR distribution. It differs from \fBobjdump\fR in the following ways:
+.IP
+* it can disassemble files that \fBlibbfd\fR does not support
+.IP
+* the user can specify the addresses to disassemble
+.IP
+* control-flow disassembly can be performed
+.IP
+* the bytes to disassemble can be specified on the command line
 
 .SH OPTIONS
 .IP \fB-c\fR \fImemspec\fR
 .PD 0
 .IP \fB--cflow\fR=\fImemspec\fR
 .PD
-control flow disassembly job
+Add a control flow disassembly job with entry point \fImemspec\fR.
 .PD
-See \fBADDRESS FORMAT\fR.
+See \fBADDRESS FORMAT\fR and \fBDISASSEMBLY\fR.
 
 .IP \fB-l\fR [\fImemspec\fR]
 .PD 0
 .IP \fB--linear\fR=[\fImemspec\fR]
 .PD
 linear disassembly job
+Add a linear disassembly job for bytes at \fImemspec\fR. If \fImemspec\fR is not supplied, opdis will disassemble all bytes in the first target starting at offset 0.
 .PD
-See \fBADDRESS FORMAT\fR.
+See \fBADDRESS FORMAT\fR and \fBDISASSEMBLY\fR.
 
 .IP \fB-a\fR \fIname\fR
 .PD 0
 .IP \fB--architecture\fR=\fIname\fR
 .PD
-arch.
+Set the BFD architecture for the target. The default architecture is "i386".
 .PD
 See \fB--list-architectures\fR.
 
@@ -62,45 +71,84 @@ See \fB--list-architectures\fR.
 .PD 0
 .IP \fB--syntax\fR=\fIatt\fR|\fIintel\fR
 .PD
-syntax..
+Set the assembler syntax to use for disassembly. This allows the user to select from the print_insn functions provided by libopcodes for the x86 architecture. This option is ignored for non-x86 targets. TheR default value is \fIatt\fR.
+.PD
+See \fB--list-syntaxes\fR.
 
 .IP \fB-f\fR \fIformat_string\fR
 .PD 0
 .IP \fB--format\fR=\fIformat_string\fR
 .PD
-output format
+Set the output format. The supported formats are:
+.IP
+\fIasm\fR : Print the raw output of libopcodes with the VMA of each instruction included as a trailing comment.
+.IP
+\fIdelim\fR : Print all components of each instruction and operand in a pipe-delimited format. The format for each instruction is
+.PP
+\fBoffset|vma|bytes|ascii|prefixes|mnemonic|isa|category|flags|op1|op2|\fR...
+.IP
+Note that the number of operand fields is variable, and could be zero. This means that the pipe-delimited format is irregular: one line may have multiple operand fields, while another line will have none.
+.IP
+The format for each operand is
+.IP
+\fBascii:category:flags:value[:name]\fR
+.IP
+The \fBname\fR field only appears if the operand is named (e.g. TARGET,DEST,SRC). The \fBvalue\fR field will have one of the following formats, depending on the \fBcategory\fR field:
+.IP
+\fB{ascii;id;size;flags}\fR for \fIregister\fR operands
+.IP
+\fB{segment_reg;offset}\fR for \fIabsolute\fR operands
+.IP
+\fB{base_reg;index_reg;scale;shift_op;segment_reg;displacement}\fR for \fIexpression\fR operands
+.IP
+All other operand categories display the immediate value. 
+.IP
+\fIdump\fR : Print the VMA of each instruction followed by the instruction bytes, prefixes, mnemonic, operand ascii values, and instruction comments.
+.IP
+\fIxml\fR : Print the complete instruction and operand data structures in XML format, with an embedded DTD.
+.IP
+fmt_str : An sprintf-style format string for custom output formats.
 .PD
 See \fBFORMAT STRINGS\fR.
+.PP
+The default value is \fIdump\fR.
+.PD
+See \fB--list-formats\fR.
 
 .IP \fB-o\fR \fIfilename\fR
 .PD 0
 .IP \fB--output\fR=\fIfilename\fR
 .PD
-output file
-
+Set the output file to print the disassembly to. The default is STDOUT.
 .IP \fB-q\fR
 .PD 0
 .IP \fB--quiet\fR
 .PD
-suppress notifications
+Suppress runtime messages.
 
 .IP \fB-E\fR
 .PD 0
 .IP \fB--bfd-entry\fR
 .PD
-cflow disasm from BFD entry point
+Add a control flow disassembly job using the BFD entry point of the file as its entry point. This will load the file using the BFD library, and will attempt to detect the target architecture.
+.PD
+See \fBBFD SUPPORT\fR.
 
 .IP \fB-N\fR [\fIbfdname\fR]
 .PD 0
 .IP \fB--bfd-symbol\fR[=\fIbfdname\fR]
 .PD
-cflow disasm from bfd symbol
+Add a control flow disassembly job using the BFD symbol \fIbfdname\fR as its entry point. This will load the file using the BFD library, and will attempt to detect the target architecture.
+.PD
+See \fBBFD SUPPORT\fR.
 
 .IP \fB-S\fR [\fIbfdname\fR]
 .PD 0
 .IP \fB--bfd-section\fR[=\fIbfdname\fR]
 .PD
-linear disasm of bfd section
+Add a linear disassembly job for the contents of the BFD section named \fIbfdname\fR. This will load the file using the BFD library, and will attempt to detect the target architecture.
+.PD
+See \fBBFD SUPPORT\fR.
 
 .IP \fB-m\fR \fImemspec\fR
 .PD 0
@@ -108,13 +156,14 @@ linear disasm of bfd section
 .PD
 map
 .PD
-See \fBADDRESS FORMAT\fR.
+See \fBADDRESS FORMAT\fR and \fBMEMORY MAPS\fR.
 
 .IP \fB-b\fR \fIstring\fR
 .PD 0
 .IP \fB--bytes\fR=\fIstring\fR
 .PD
 target
+.PD See \fBTARGETS\fR.
 
 .IP \fB-O\fR [\fIstring\fR]
 .PD 0
@@ -150,58 +199,67 @@ See \fB--format\fR.
 
 .IP \fB--dry-run\fR
 .PD
-do nothing
+Print a list of the targets, jobs, and memory maps without actually doing any disassembly.
 
-.IP -OPTION
-This option...
+.SH DISASSEMBLY
+stuff
+
+.SH TARGETS
+stuff
+
+.SH MEMORY MAPS
+stuff
+
+.SH BFD SUPPORT
+stuff
 
 .SH ADDRESS FORMAT
 	[target]:offset|@vma[+size]
 
 .SH FORMAT STRINGS
-printf-style format string for output.
+Custom output formats are supported via a printf-style format string that allows the user to determine what information about an instruction or operand is printed.
 
 .PP
 .B Component Selection
 .PP
-stuff
+The \fB%i\fR (instruction) and \fB%o\fR (operand) operators represent complex objects. The metadata for these objects are available as arguments to the operator, allowing the display of categories, flags, etc.
 .IP
-        \fBA\fR
+\fBA\fR
 .PD
-ascii
+The \fBascii\fR field of the operator. This is the default, and prints the raw linopcodes representation of the object.
 .IP
-        \fBC\fR
+\fBC\fR
 .PD
-category
+The \fBcategory\fR field of the object.
 .IP
-        \fBF\fR
+\fBF\fR
 .PD
-flags
+The \fBflags\fR field of the object. The flags are comma-delimited.
 .IP
-        \fBI\fR
+\fBI\fR
 .PD
-isa. only applicable to instructions.
+The \fBisa\fR field of the object. This is only applicable to instruction objects.
 
 .PP
 .B Base Selection
 .PP
-stuff
+Immediate operands, addresses, and bytes can be printed in a user-specified base.
 .IP
-        \fBX\fR
+\fBX\fR
 .PD
-hex
+Print data in hexadecimal format.
 .IP
-        \fBD\fR
+\fBD\fR
 .PD
-decimal
+Print data in decimal format.
 .IP
-        \fBO\fR
+\fBO\fR
 .PD
-octal
+Print data in octal format.
 .IP
-        \fBC\fR
+\fBC\fR
 .PD
-char. only applicable to bytes.
+Print the ASCII (character) value for a byte. Only applicable to the \fB%b\rR operator.
 
 .PP
 .B
@@ -209,85 +267,111 @@ Operand Selection
 .PP
 stuff
 .IP
-        \fBa\fR
+\fBa\fR
 .PD
 all operands. this is the default.
 .IP
-        \fBt\fR
+\fBt\fR
 .PD
 target operand
 .IP
-        \fBd\fR
+\fBd\fR
 .PD
 dest operand
 .IP
-        \fBs\fR
+\fBs\fR
 .PD
 source operand
 .IP
-        \fB#\fR
+\fB#\fR
 .PD
 operand #
 
 .PP
 .B
-Operations
+Operators
 .PP
 stuff
 
 .IP
-        \fB%i\fR
+\fB%i\fR
 .PD
 instruction.
 .IP
-	\fB%o\fR
+\fB%o\fR
 .PD
 operand. Prints comma-delimited list of operands (%oa) or specified operand # ('' if not present in insn).
 .IP
-	\fB%b\fR 
+\fB%b\fR 
 .PD
 bytes: print bytes. takes an optional Base Selection argument which defaults to X.
 .IP
-	\fB%m\fR
+\fB%m\fR
 .PD
 mnemonic. insn mnemonic
 .IP
-	\fB%a\fR
+\fB%a\fR
 .PD
 address. takes an optional v or o argument, takes an optional base argument of DOX. defaults to v, X.
 .IP
-	\fB%p\fR 
+\fB%p\fR 
 .PD
 prefixes
 .IP
-	\fB%c\fR
+\fB%c\fR
 .PD
 comment.
 .IP
-	\fB%?\fR
+\fB%?\fR
 .PD
-conditional delimiter, delimiter is printed only if next % directive is not empty.
+Print a conditional delimiter. The delimiter, specified by the character following \fI?\fR, is only printed if next \fB%\fR directive returns a string. The intent of this operator is to allow delimiters to be printed between operands only if the operands appear in the output.
 .IP
-	\fB%t\fR
+\fB%t\fR
 .PD
-conditional tab.
+Print a conditional tab.
+.PD
+See \fB%?\fR.
+
 .IP
-	\fB%s\fR
+\fB%s\fR
 .PD
-conditional space.
+Print a conditional space.
+.PD
+See \fB%?\fR.
+
 .IP
-	\fB%n\fR
+\fB%n\fR
 .PD
-conditional newline.
+Print a conditional newline.
+.PD
+See \fB%?\fR.
+
 .IP
-	\fB%%\fR
+\fB%%\fR
 .PD
-print a literal '%'.
+Print a literal '%'.
+.PD
+See \fB%?\fR.
 	
 
 .SH NOTES
+.PP
+The level of detail available to \fBopdis\fR is determined by the decoders available in \fBlibopdis\fR. Currently, \fBlibopdis\fR provides three decoders: x86 AT&T syntax, x86 Intel syntax, and generic. The AT&T syntax decoder (used by default or when \fI-s at\fR is supplied) provides the most detail, and generates output that is best suited for analysis. The generic decoder, the only decoder available for non-x86 architectures, only provides the raw libopcodes representation (the \fIascii\rR field) of the instruction and no operand information. Additional architecture-specific decoders must be added to \fBlibopdis\fR to overcome this limitation.
 
 .SH EXAMPLE
 
 .SH "SEE ALSO"
 
+.IP
+\fIobjdump\fR(1), \fIod\fR(1), \fIreadelf\fR(1), and the Info entries for \fIbinutils\fR.
+
+.SH COPYRIGHT
+
+Copyright (c) 2010 thoughtgang.org.
+.PP
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 3.0
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, with no Front-Cover Texts, and with no
+Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".              
