@@ -1,17 +1,27 @@
 .NOTE man 7 man
-.TH OPDIS 1 "February 13, 2010" "" "Development Tools"
+.TH OPDIS 1 "March 2010" "opdis 1.0" "Development Tools"
 
 .SH NAME
 opdis \- program for...
 
 .SH SYNOPSIS
-opdis [\fB\-a\fR|\fB\-\-action\fR=\fIjobspec\fR]
+opdis [\fB\-c\fR|\fB\-\-cflow\fR=\fImemspec\fR]
+      [\fB\-l\fR|\fB\-\-linear\fR[=\fImemspec\fR]]
+      [\fB\-a\fR|\fB\-\-architecture\fR=\fIname\fR]
       [\fB\-s\fR|\fB\-\-syntax\fR=\fIatt\fR|\fIintel\fR]
       [\fB\-f\fR|\fB\-\-format\fR=\fIfmtspec\fR]
       [\fB\-o\fR|\fB\-\-output\fR=\fIfilename\fR]
+      [\fB\-q\fR|\fB\-\-quiet\fR]
+      [\fB\-E\fR|\fB\-\-bfd\-entry\fR\]
+      [\fB\-N\fR|\fB\-\-bfd\-symbol\fR[=\fIbfdname\fR\]
+      [\fB\-S\fR|\fB\-\-bfd\-section\fR[=\fIbfdname\fR\]
       [\fB\-m\fR|\fB\-\-map\fR=\fImapspec\fR]
       [\fB\-b\fR|\fB\-\-bytes\fR=\fIstring\fR]
-      [\fB\-B\fR|\fB\-\-bfd\fR[=\fIbfdspec\fR\]
+      [\fB\-O\fR|\fB\-\-disassembler\-options\fR[=\fIstring\fR\]
+      [\fB\-\-list\-architectures\fR]
+      [\fB\-\-list\-disassembler\-options\fR]
+      [\fB\-\-list\-syntaxes\fR]
+      [\fB\-\-list\-formats\fR]
       [\fB\-\-dry\-run\fR]
       \fIobjfile\fR...
 .br
@@ -24,30 +34,74 @@ program. This program...
 \fBopdis\fP is for...
 
 .SH OPTIONS
-.IP \fB-a\fR \fIcflow\fR|\fIlinear\fR[\fImemspec\fR]
+.IP \fB-c\fR \fImemspec\fR
 .PD 0
-.IP \fB--action\fR=\fIjobspec\fR
+.IP \fB--cflow\fR=\fImemspec\fR
 .PD
-action...
+control flow disassembly job
 .PD
 See \fBADDRESS FORMAT\fR.
+
+.IP \fB-l\fR [\fImemspec\fR]
+.PD 0
+.IP \fB--linear\fR=[\fImemspec\fR]
+.PD
+linear disassembly job
+.PD
+See \fBADDRESS FORMAT\fR.
+
+.IP \fB-a\fR \fIname\fR
+.PD 0
+.IP \fB--architecture\fR=\fIname\fR
+.PD
+arch.
+.PD
+See \fB--list-architectures\fR.
+
 .IP \fB-s\fR \fIatt\fR|\fIintel\fR
 .PD 0
 .IP \fB--syntax\fR=\fIatt\fR|\fIintel\fR
 .PD
 syntax..
-.IP \fB-F\fR \fIformat_string\fR
+
+.IP \fB-f\fR \fIformat_string\fR
 .PD 0
 .IP \fB--format\fR=\fIformat_string\fR
 .PD
 output format
 .PD
 See \fBFORMAT STRINGS\fR.
+
 .IP \fB-o\fR \fIfilename\fR
 .PD 0
 .IP \fB--output\fR=\fIfilename\fR
 .PD
 output file
+
+.IP \fB-q\fR
+.PD 0
+.IP \fB--quiet\fR
+.PD
+suppress notifications
+
+.IP \fB-E\fR
+.PD 0
+.IP \fB--bfd-entry\fR
+.PD
+cflow disasm from BFD entry point
+
+.IP \fB-N\fR [\fIbfdname\fR]
+.PD 0
+.IP \fB--bfd-symbol\fR[=\fIbfdname\fR]
+.PD
+cflow disasm from bfd symbol
+
+.IP \fB-S\fR [\fIbfdname\fR]
+.PD 0
+.IP \fB--bfd-section\fR[=\fIbfdname\fR]
+.PD
+linear disasm of bfd section
+
 .IP \fB-m\fR \fImemspec\fR
 .PD 0
 .IP \fB--map\fR=\fImemspec\fR
@@ -55,16 +109,45 @@ output file
 map
 .PD
 See \fBADDRESS FORMAT\fR.
+
 .IP \fB-b\fR \fIstring\fR
 .PD 0
 .IP \fB--bytes\fR=\fIstring\fR
 .PD
 target
-.IP \fB-B\fR [\fIbfdspec\fR]
+
+.IP \fB-O\fR [\fIstring\fR]
 .PD 0
-.IP \fB--bfd\fR[=\fIbfdspec\fR]
+.IP \fB--disassembler-options\fR[=\fIstring\fR]
 .PD
-bfd lib
+libopcodes options
+.PD
+See \fB--list-disassembler-options\fR.
+
+.IP \fB--list-architectures\fR
+.PD
+list supported architectures
+.PD
+See \fB--architecture\fR.
+
+.IP \fB--list-disassembler-options\fR
+.PD
+list libopcodes disassembler options for specified architecture
+.PD
+See \fB--disassembler-options\fR.
+
+.IP \fB--list-syntaxes\fR
+.PD
+list available syntax options
+.PD
+See \fB--syntax\fR.
+
+.IP \fB--list-formats\fR
+.PD
+list available output formats
+.PD
+See \fB--format\fR.
+
 .IP \fB--dry-run\fR
 .PD
 do nothing
@@ -78,65 +161,129 @@ This option...
 .SH FORMAT STRINGS
 printf-style format string for output.
 
+.PP
+.B Component Selection
+.PP
+stuff
+.IP
+        \fBA\fR
+.PD
+ascii
+.IP
+        \fBC\fR
+.PD
+category
+.IP
+        \fBF\fR
+.PD
+flags
+.IP
+        \fBI\fR
+.PD
+isa. only applicable to instructions.
+
+.PP
+.B Base Selection
+.PP
+stuff
+.IP
+        \fBX\fR
+.PD
+hex
+.IP
+        \fBD\fR
+.PD
+decimal
+.IP
+        \fBO\fR
+.PD
+octal
+.IP
+        \fBC\fR
+.PD
+char. only applicable to bytes.
+
+.PP
+.B
+Operand Selection
+.PP
+stuff
+.IP
+        \fBa\fR
+.PD
+all operands. this is the default.
+.IP
+        \fBt\fR
+.PD
+target operand
+.IP
+        \fBd\fR
+.PD
+dest operand
+.IP
+        \fBs\fR
+.PD
+source operand
+.IP
+        \fB#\fR
+.PD
+operand #
+
+.PP
 .B
 Operations
+.PP
+stuff
+
 .IP
         \fB%i\fR
 .PD
-instruction. Print the raw instruction ASCII representation, untouched.
+instruction.
 .IP
-	\fB%o[l|#]\fR
+	\fB%o\fR
 .PD
-operand. Prints comma-delimitedlist of operands (%ol) or specified operand # ('' if not present in insn).
+operand. Prints comma-delimited list of operands (%oa) or specified operand # ('' if not present in insn).
 .IP
-	\fB%b[b|h|w|d]\fR 
+	\fB%b\fR 
 .PD
-bytes: print hex bytes in specified word size (byte, half, word, dword). Defaults to byte-size words of hex format.
+bytes: print bytes. takes an optional Base Selection argument which defaults to X.
 .IP
 	\fB%m\fR
 .PD
-mnemonic. insn mnemonic or ''
+mnemonic. insn mnemonic
 .IP
-	\fB%v\fR
+	\fB%a\fR
 .PD
-vma: virtual memory address. Defaults to hex.
+address. takes an optional v or o argument, takes an optional base argument of DOX. defaults to v, X.
 .IP
-	\fB%a\fR 
+	\fB%p\fR 
 .PD
-address (offset). Defaults to hex.
+prefixes
 .IP
-	\fB%fi|o#\fR 
+	\fB%c\fR
 .PD
-insn (i) or operand (o) flags. default ia string; use format conversion (e.g. d) to print as integer.
+comment.
 .IP
-	\fB%p\fR
+	\fB%?\fR
 .PD
-prefixes: insn prefixes or ''
+conditional delimiter, delimiter is printed only if next % directive is not empty.
 .IP
-	\fB%c[delim]\fR
+	\fB%t\fR
 .PD
-conditional delimiter. Print ',' if an operand follows.
+conditional tab.
+.IP
+	\fB%s\fR
+.PD
+conditional space.
+.IP
+	\fB%n\fR
+.PD
+conditional newline.
+.IP
+	\fB%%\fR
+.PD
+print a literal '%'.
 	
-.B
-Field width
-.PD
-applies to all. 
-
-.B
-Flag Characters 
-.PD
-such as 0, #, -, and + can be used, though everything but - will only apply to bytes, addresses, and numeric operands.
-
-.B
-Conversion specifier
-.PD
-apply to all.
-d,i
-o,u,x,X
-c
-s
-p
-%
 
 .SH NOTES
 

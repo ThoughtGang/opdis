@@ -27,12 +27,16 @@ To build binaries from src distro:
 SPECIAL BUILD TARGETS
 ---------------------
 
+	# Install opdis, libopdis, and man pages
 	make install
 
+	# Build and run test programs
 	make check
 
+	# Make source tarball for distribution
 	make dist
 
+	# Make doxygen documentation in doc/api
 	make doxygen
 
 MISC
@@ -48,3 +52,7 @@ To debug from the local directory:
 
 To run test utilities from the local directory:
 	libtool execute test/tree_test
+
+NOTES
+-----
+	* decoder is not fully implemented
