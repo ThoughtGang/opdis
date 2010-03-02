@@ -134,17 +134,17 @@ Add a control flow disassembly job using the BFD entry point of the file as its 
 .PD
 See \fBBFD SUPPORT\fR.
 
-.IP \fB-N\fR [\fIbfdname\fR]
+.IP \fB-N\fR \fIbfdname\fR
 .PD 0
-.IP \fB--bfd-symbol\fR[=\fIbfdname\fR]
+.IP \fB--bfd-symbol\fR=\fIbfdname\fR
 .PD
 Add a control flow disassembly job using the BFD symbol \fIbfdname\fR as its entry point. This will load the file using the BFD library, and will attempt to detect the target architecture.
 .PD
 See \fBBFD SUPPORT\fR.
 
-.IP \fB-S\fR [\fIbfdname\fR]
+.IP \fB-S\fR \fIbfdname\fR
 .PD 0
-.IP \fB--bfd-section\fR[=\fIbfdname\fR]
+.IP \fB--bfd-section\fR=\fIbfdname\fR
 .PD
 Add a linear disassembly job for the contents of the BFD section named \fIbfdname\fR. This will load the file using the BFD library, and will attempt to detect the target architecture.
 .PD
@@ -154,7 +154,7 @@ See \fBBFD SUPPORT\fR.
 .PD 0
 .IP \fB--map\fR=\fImemspec\fR
 .PD
-map
+Map bytes at an offset into a target to a VMA.
 .PD
 See \fBADDRESS FORMAT\fR and \fBMEMORY MAPS\fR.
 
@@ -162,38 +162,38 @@ See \fBADDRESS FORMAT\fR and \fBMEMORY MAPS\fR.
 .PD 0
 .IP \fB--bytes\fR=\fIstring\fR
 .PD
-target
+Specify bytes to disassemble. The bytes must be in a space-delimited string, and can be in octal, decimal, or hexadecimal format. The interpretation of the bytes in the string is performed by running \fBstrtoul\fR on each byte. The base can be forced by placing a directive at the start of the string: \fI\\b\fR or \fI\\B\fR for binary, \fI\o\\fR or \fI\\O\fR for octal, \fI\\d\fR or \fI\\D\fR for decimal, and \fI\\x\fR or \fI\\X\fR for hexadecimal. Any number of \fB-b\fR options can be present.
 .PD See \fBTARGETS\fR.
 
 .IP \fB-O\fR [\fIstring\fR]
 .PD 0
 .IP \fB--disassembler-options\fR[=\fIstring\fR]
 .PD
-libopcodes options
+Set the options string for the libopcodes disassembler.
 .PD
 See \fB--list-disassembler-options\fR.
 
 .IP \fB--list-architectures\fR
 .PD
-list supported architectures
+List the supported BFD architectures.
 .PD
 See \fB--architecture\fR.
 
 .IP \fB--list-disassembler-options\fR
 .PD
-list libopcodes disassembler options for specified architecture
+List the libopcodes disassembler options for the target architecture.
 .PD
-See \fB--disassembler-options\fR.
+See \fB--disassembler-options\fR and \fB-a\fR.
 
 .IP \fB--list-syntaxes\fR
 .PD
-list available syntax options
+List the available syntax options.
 .PD
 See \fB--syntax\fR.
 
 .IP \fB--list-formats\fR
 .PD
-list available output formats
+List the available output formats.
 .PD
 See \fB--format\fR.
 
@@ -202,6 +202,9 @@ See \fB--format\fR.
 Print a list of the targets, jobs, and memory maps without actually doing any disassembly.
 
 .SH DISASSEMBLY
+stuff
+
+.SH DATA MODEL
 stuff
 
 .SH TARGETS
@@ -222,19 +225,22 @@ Custom output formats are supported via a printf-style format string that allows
 .PP
 .B Component Selection
 .PP
-The \fB%i\fR (instruction) and \fB%o\fR (operand) operators represent complex objects. The metadata for these objects are available as arguments to the operator, allowing the display of categories, flags, etc.
+A single character specifying what metadata to print. The \fB%i\fR (instruction) and \fB%o\fR (operand) operators represent complex objects. The metadata for these objects are available as arguments to the operator, allowing the display of categories, flags, etc.
 .IP
 \fBA\fR
 .PD
 The \fBascii\fR field of the operator. This is the default, and prints the raw linopcodes representation of the object.
+
 .IP
 \fBC\fR
 .PD
 The \fBcategory\fR field of the object.
+
 .IP
 \fBF\fR
 .PD
 The \fBflags\fR field of the object. The flags are comma-delimited.
+
 .IP
 \fBI\fR
 .PD
@@ -242,20 +248,25 @@ The \fBisa\fR field of the object. This is only applicable to instruction object
 
 .PP
 .B Base Selection
+A single character specifying the base to print data in.
 .PP
-Immediate operands, addresses, and bytes can be printed in a user-specified base.
+Addresses, and bytes can be printed in a user-specified base.
+
 .IP
 \fBX\fR
 .PD
 Print data in hexadecimal format.
+
 .IP
 \fBD\fR
 .PD
 Print data in decimal format.
+
 .IP
 \fBO\fR
 .PD
 Print data in octal format.
+
 .IP
 \fBC\fR
 .PD
@@ -265,66 +276,87 @@ Print the ASCII (character) value for a byte. Only applicable to the \fB%b\rR op
 .B
 Operand Selection
 .PP
-stuff
+A single character specifying which operand to print. If the operand is not present in the instruction, nothing will be printed.
+
 .IP
 \fBa\fR
 .PD
-all operands. this is the default.
+Print all operands, separated by commas.
+
 .IP
 \fBt\fR
 .PD
-target operand
+Print the \fBtarget\fR operand of the instruction.
+
 .IP
 \fBd\fR
 .PD
-dest operand
+Print the \fBdestination\fR operand of the instruction.
+
 .IP
 \fBs\fR
 .PD
-source operand
+Print the \fBsource\fR operand of the instruction.
+
 .IP
 \fB#\fR
 .PD
-operand #
+Print the #th operand of the instruction, where # is a number between 0 and 9.
 
 .PP
 .B
 Operators
 .PP
-stuff
+A single character specifying what data to print.
 
 .IP
 \fB%i\fR
 .PD
-instruction.
+Print an instruction component. Can be followed by a component selection argument. By default, the \fBascii\rR component is printed.
+.PD
+See \fBComponent Selection\fR.
+
 .IP
 \fB%o\fR
 .PD
-operand. Prints comma-delimited list of operands (%oa) or specified operand # ('' if not present in insn).
+Print one or all operands. Can be followed by an operand selection argument and/or a component selection argument (NOTE: operand selection must always precede component selection). By default, the \fBascii\rR component of all operands is printed.
+.PD
+See \fBOperand Selection\fR and \fBComponent Selection\fR.
+
 .IP
 \fB%b\fR 
 .PD
-bytes: print bytes. takes an optional Base Selection argument which defaults to X.
+Print the instruction bytes. Can be followed by a base selection argument. By default, the base is hexadecimal.
+.PD
+See \fBBase Selection\fR.
+
 .IP
 \fB%m\fR
 .PD
-mnemonic. insn mnemonic
+Print the instruction \fBmnemonic\fR field.
+
 .IP
 \fB%a\fR
 .PD
-address. takes an optional v or o argument, takes an optional base argument of DOX. defaults to v, X.
+Print the address of the instruction. Can be followed by a \fBv\fR argument or a \fBo\fR argument to specify which address to print (vma of offset, respectively). Can be followed by a base selection argument (NOTE: address selection must precede base selection). The default is to print the VMA in hexadecimal format.
+.PD
+See \fBBase Selection\fR.
+
 .IP
 \fB%p\fR 
 .PD
-prefixes
+Print the instruction \fBprefixes\fR field.
+
 .IP
 \fB%c\fR
 .PD
-comment.
+Print the instruction \fBcomment\fR field.
+
 .IP
 \fB%?\fR
 .PD
 Print a conditional delimiter. The delimiter, specified by the character following \fI?\fR, is only printed if next \fB%\fR directive returns a string. The intent of this operator is to allow delimiters to be printed between operands only if the operands appear in the output.
+
 .IP
 \fB%t\fR
 .PD
@@ -358,7 +390,7 @@ See \fB%?\fR.
 .PP
 The level of detail available to \fBopdis\fR is determined by the decoders available in \fBlibopdis\fR. Currently, \fBlibopdis\fR provides three decoders: x86 AT&T syntax, x86 Intel syntax, and generic. The AT&T syntax decoder (used by default or when \fI-s at\fR is supplied) provides the most detail, and generates output that is best suited for analysis. The generic decoder, the only decoder available for non-x86 architectures, only provides the raw libopcodes representation (the \fIascii\rR field) of the instruction and no operand information. Additional architecture-specific decoders must be added to \fBlibopdis\fR to overcome this limitation.
 
-.SH EXAMPLE
+.SH EXAMPLES
 
 .SH "SEE ALSO"
 
