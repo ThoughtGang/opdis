@@ -471,7 +471,8 @@ void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
 	op->ascii = strdup(ascii);
 }
 
-int LIBCALL opdis_insn_isa_str( opdis_insn_t * insn, char * buf, int buf_len ) {
+int LIBCALL opdis_insn_isa_str( const opdis_insn_t * insn, char * buf, 
+				int buf_len ) {
 	int max_size;
 	if (! insn || ! buf || ! buf_len ) {
 		return 0;
@@ -495,7 +496,8 @@ int LIBCALL opdis_insn_isa_str( opdis_insn_t * insn, char * buf, int buf_len ) {
 	return strlen(buf);
 }
 
-int LIBCALL opdis_insn_cat_str( opdis_insn_t * insn, char * buf, int buf_len ) {
+int LIBCALL opdis_insn_cat_str( const opdis_insn_t * insn, char * buf, 
+				int buf_len ) {
 	int max_size;
 	if (! insn || ! buf || ! buf_len ) {
 		return 0;
@@ -542,8 +544,8 @@ int LIBCALL opdis_insn_cat_str( opdis_insn_t * insn, char * buf, int buf_len ) {
 	max_size -= strlen(str);				\
 	use_delim = 1;
 
-int LIBCALL opdis_insn_flags_str( opdis_insn_t * insn, char * buf, int buf_len,
-				  const char * delim ) {
+int LIBCALL opdis_insn_flags_str( const opdis_insn_t * insn, char * buf, 
+				  int buf_len, const char * delim ) {
 	int max_size, use_delim = 0;
 	if (! insn || ! buf || ! buf_len ) {
 		return 0;
@@ -669,7 +671,7 @@ int LIBCALL opdis_insn_flags_str( opdis_insn_t * insn, char * buf, int buf_len,
 	return strlen(buf);
 }
 
-int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len ) {
+int LIBCALL opdis_op_cat_str( const opdis_op_t * op, char * buf, int buf_len ) {
 	int max_size;
 	if (! op || ! buf || ! buf_len ) {
 		return 0;
@@ -693,7 +695,7 @@ int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len ) {
 	return strlen(buf);
 }
 
-int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
+int LIBCALL opdis_op_flags_str( const opdis_op_t * op, char * buf, int buf_len,
 				const char * delim ) {
 	int max_size, use_delim = 0;
 	if (! op || ! buf || ! buf_len || ! delim ) {
@@ -724,8 +726,8 @@ int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
 	return strlen(buf);
 }
 
-int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
-				 const char * delim ) {
+int LIBCALL opdis_reg_flags_str( const opdis_reg_t * reg, char * buf, 
+				 int buf_len, const char * delim ) {
 	int max_size, use_delim = 0;
 	if (! reg || ! buf || ! buf_len || ! delim ) {
 		return 0;
@@ -787,8 +789,8 @@ int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
 	return strlen(buf);
 }
 
-int LIBCALL opdis_addr_expr_shift_str( opdis_addr_expr_t * exp, char * buf, 
-				       int buf_len ) {
+int LIBCALL opdis_addr_expr_shift_str( const opdis_addr_expr_t * exp, 
+					char * buf, int buf_len ) {
 	int max_size, use_delim = 0;
 	if (! exp || ! buf || ! buf_len ) {
 		return 0;

@@ -393,7 +393,7 @@ int LIBCALL opdis_insn_is_branch( opdis_insn_t * insn );
 int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
 
 /*!
- * \fn int opdis_insn_isa_str( opdis_insn_t *, char *, int )
+ * \fn int opdis_insn_isa_str( const opdis_insn_t *, char *, int )
  * \ingroup model
  * \brief Generate a string representation of instruction isa field.
  * \param i The instruction.
@@ -403,10 +403,11 @@ int LIBCALL opdis_insn_fallthrough( opdis_insn_t * insn );
  * \sa opdis_insn_flags_str
  * \note If \e buf is not an empty string, it will be appended (not replaced).
  */
-int LIBCALL opdis_insn_isa_str( opdis_insn_t * i, char * buf, int buf_len );
+int LIBCALL opdis_insn_isa_str( const opdis_insn_t * i, char * buf, 
+				int buf_len );
 
 /*!
- * \fn int opdis_insn_cat_str( opdis_insn_t *, char *, int )
+ * \fn int opdis_insn_cat_str( const opdis_insn_t *, char *, int )
  * \ingroup model
  * \brief Generate a string representation of instruction category field.
  * \param i The instruction.
@@ -418,10 +419,11 @@ int LIBCALL opdis_insn_isa_str( opdis_insn_t * i, char * buf, int buf_len );
  * \sa opdis_insn_flags_str
  * \note If \e buf is not an empty string, it will be appended (not replaced).
  */
-int LIBCALL opdis_insn_cat_str( opdis_insn_t * i, char * buf, int buf_len );
+int LIBCALL opdis_insn_cat_str( const opdis_insn_t * i, char * buf, 
+				int buf_len );
 
 /*!
- * \fn int opdis_insn_flags_str( opdis_insn_t *, char *, int, const char * )
+ * \fn int opdis_insn_flags_str(const opdis_insn_t *, char *, int, const char *)
  * \ingroup model
  * \brief Generate a string representation of instruction flags field.
  * \param i The instruction.
@@ -432,8 +434,8 @@ int LIBCALL opdis_insn_cat_str( opdis_insn_t * i, char * buf, int buf_len );
  * \sa opdis_insn_isa_str
  * \note If \e buf is not an empty string, it will be appended (not replaced).
  */
-int LIBCALL opdis_insn_flags_str( opdis_insn_t * i, char * buf, int buf_len,
-				  const char * delim );
+int LIBCALL opdis_insn_flags_str( const opdis_insn_t * i, char * buf, 
+				  int buf_len, const char * delim );
 
 /*!
  * \fn opdis_op_t * opdis_op_alloc()
@@ -501,7 +503,7 @@ void LIBCALL opdis_op_free( opdis_op_t * op );
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
 
 /*!
- * \fn int opdis_op_cat_str( opdis_op_t *, char *, int )
+ * \fn int opdis_op_cat_str( const opdis_op_t *, char *, int )
  * \ingroup model
  * \brief Generate a string representation of operand category field.
  * \param op The operand.
@@ -511,10 +513,10 @@ void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii );
  * \sa opdis_op_flags_str
  * \sa opdis_reg_flags_str
  */
-int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len );
+int LIBCALL opdis_op_cat_str( const opdis_op_t * op, char * buf, int buf_len );
 
 /*!
- * \fn int opdis_op_flags_str( opdis_op_t *, char *, int, const char * )
+ * \fn int opdis_op_flags_str( const opdis_op_t *, char *, int, const char * )
  * \ingroup model
  * \brief Generate a string representation of operand flags field.
  * \param op The operand.
@@ -525,11 +527,11 @@ int LIBCALL opdis_op_cat_str( opdis_op_t * op, char * buf, int buf_len );
  * \sa opdis_op_cat_str
  * \sa opdis_reg_flags_str
  */
-int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
+int LIBCALL opdis_op_flags_str( const opdis_op_t * op, char * buf, int buf_len,
 				const char * delim );
 
 /*!
- * \fn int opdis_reg_flags_str( opdis_reg_t *, char *, int, const char * )
+ * \fn int opdis_reg_flags_str( const opdis_reg_t *, char *, int, const char * )
  * \ingroup model
  * \brief Generate a string representation of register flags field.
  * \param reg The register.
@@ -540,10 +542,10 @@ int LIBCALL opdis_op_flags_str( opdis_op_t * op, char * buf, int buf_len,
  * \sa opdis_op_cat_str
  * \sa opdis_op_flags_str
  */
-int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
-				 const char * delim );
+int LIBCALL opdis_reg_flags_str( const opdis_reg_t * reg, char * buf, 
+				 int buf_len, const char * delim );
 /*!
- * \fn int opdis_addr_expr_shift_str( opdis_addr_expr_t *, char *, int )
+ * \fn int opdis_addr_expr_shift_str( const opdis_addr_expr_t *, char *, int )
  * \ingroup model
  * \brief Generate a string representation of addr expression shift field.
  * \param exp The address expression.
@@ -553,8 +555,8 @@ int LIBCALL opdis_reg_flags_str( opdis_reg_t * reg, char * buf, int buf_len,
  * \sa opdis_op_cat_str
  * \sa opdis_op_flags_str
  */
-int LIBCALL opdis_addr_expr_shift_str( opdis_addr_expr_t * exp, char * buf, 
-					int buf_len );
+int LIBCALL opdis_addr_expr_shift_str( const opdis_addr_expr_t * exp, 
+					char * buf, int buf_len );
 
 #ifdef __cplusplus
 }
