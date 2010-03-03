@@ -22,7 +22,7 @@
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
-const char * argp_program_version = "opdis 0.1";
+const char * argp_program_version = "opdis 1.0";
 const char * argp_program_bug_address = "<dev@thoughtgang.org>";
 static const char usage_str[] = "[FILE]...";
 static const char help_str[] = 
@@ -30,16 +30,12 @@ static const char help_str[] =
 "Opdis command-line disassembler" 
 "\v" /* delim */ 
 /* detailed documentation:  */
-"Disassembler that uses libopcodes in a less sucky way than objdump.\n"
-"  memspec = [target]:offset|@rva[+size]\n"
+"Disassembler based on libopcodes.\n"
+"  memspec = [target]:offset|@vma[+size]\n"
 "  bfdname = [target:]name\n"
-"  mapspec = [target]:offset@rva[+size]\n"
+"  mapspec = [target]:offset@vma[+size]\n"
 "  target  = ID (#) of target; use --dry-run to see IDs\n" 
 "  fmtspec = asm|dump|delim|xml|fmt_str\n"
-"Targets...(bytes). at least one target must be specified\n"
-"Actions... If no actions specified, linear disasm is performed on each tgt.\n"
-"Map...\n"
-"BFD...\n"
 ;
 
 
@@ -62,6 +58,8 @@ static struct argp_option options[] = {
 	  "File to output to"},
 	{ "quiet", 'q', 0, 0, 
 	  "Suppress status messages"},
+	{ "debug", 'd', 0, 0, 
+	  "Print libopdis debug messages"},
 	{ 0, 0, 0, OPTION_DOC, "BFD Options:" },
 	{ "bfd-entry", 'E', 0, 0,
 	  "Perform control flow disassembly on BFD entry point"},
@@ -120,6 +118,7 @@ struct opdis_options {
 	int		list_format;
 	int		dry_run;
 	int		quiet;
+	int 		debug;
 
 	FILE *			output_file;
 	opdis_insn_tree_t	insn_tree;
@@ -429,6 +428,7 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			break;
 
 		case 'q': opts->quiet = 1; break;
+		case 'd': opts->debug = 1; break;
 		case 1: opts->list_arch = 1; break;
 		case 2: opts->list_disasm_opt = 1; break;
 		case 3: opts->list_syntax = 1; break;
@@ -549,6 +549,8 @@ static void configure_opdis( struct opdis_options * opts ) {
 
 	opdis_set_display( o, opdis_display_cb, opts->insn_tree );
 	opdis_set_resolver( o, opdis_resolver_cb, opts->map );
+
+	o->debug = opts->debug;
 }
 
 static void set_job_opts( struct opdis_options * o, job_opts_t j ) {

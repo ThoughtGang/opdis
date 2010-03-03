@@ -114,6 +114,15 @@ static void set_buffer_vma( unsigned int target, opdis_buf_t buf,
 	buf->vma = (vma == OPDIS_INVALID_ADDR) ? 0 : vma;
 }
 
+static opdis_vma_t get_bfd_vma( job_list_item_t * job, bfd * abfd ) {
+	if ( job->vma != OPDIS_INVALID_ADDR ) {
+		return job->vma;
+	}
+
+	// TODO : find a way to get section containing offset and return VMA
+	return OPDIS_INVALID_ADDR;
+}
+
 static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf ) {
 	opdis_vma_t vma;
 	if ( job->vma == OPDIS_INVALID_ADDR ) {
@@ -131,11 +140,6 @@ static opdis_vma_t get_job_vma( job_list_item_t * job, opdis_buf_t buf ) {
 }
 
 static int check_bfd_job( job_opts_t o, tgt_list_item_t * tgt ) {
-	if (! o->bfd_opdis ) {
-		fprintf( stderr, "No opdis_t for BFD targets\n" );
-		return 0;
-	}
-
 	if (! tgt->tgt_bfd ) {
 		fprintf( stderr, "No bfd created for target\n" );
 		return 0;
@@ -155,6 +159,7 @@ static opdis_t opdis_for_bfd( bfd * abfd, opdis_t orig ) {
 	o->handler_arg = orig->handler_arg;
 	o->resolver = orig->resolver;
 	o->resolver_arg = orig->resolver_arg;
+	o->debug = orig->debug;
 
 	/* if user has overridden syntax or decoder, defer to it */
 	if ( orig->config.arch == o->config.arch ) {
@@ -167,6 +172,46 @@ static opdis_t opdis_for_bfd( bfd * abfd, opdis_t orig ) {
 	}
 
 	return o;
+}
+
+static int bfd_cflow_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+			  job_opts_t o ) {
+	opdis_t opdis;
+	opdis_vma_t vma = get_bfd_vma( job, tgt->tgt_bfd );
+	if (! check_bfd_job(o, tgt) ) {
+		return 0;
+	}
+
+	if (! o->quiet ) {
+		printf( "Control Flow disassembly of " );
+		if ( vma ) {
+			printf( "%p\n", (void *) vma );
+		} else {
+			printf( "0x0\n" );
+		}
+	}
+
+	return opdis_disasm_bfd_cflow( o->opdis, tgt->tgt_bfd, vma );
+}
+
+static int bfd_linear_job( job_list_item_t * job, tgt_list_item_t * tgt, 
+			   job_opts_t o ) {
+	opdis_t opdis;
+	opdis_vma_t vma = get_bfd_vma( job, tgt->tgt_bfd );
+	if (! check_bfd_job(o, tgt) ) {
+		return 0;
+	}
+
+	if (! o->quiet ) {
+		printf( "Linear disassembly of " );
+		if ( vma ) {
+			printf( "%p\n", (void *) vma );
+		} else {
+			printf( "0x0\n" );
+		}
+	}
+
+	return opdis_disasm_bfd_linear(o->opdis, tgt->tgt_bfd, vma, job->size);
 }
 
 static int bfd_symbol_job( job_list_item_t * job, tgt_list_item_t * tgt, 
@@ -281,10 +326,18 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 
 	switch (job->type) {
 		case job_cflow:
-			rv = cflow_job( job, target, o );
+			if ( target->tgt_bfd ) {
+				rv = bfd_cflow_job( job, target, o );
+			} else {
+				rv = cflow_job( job, target, o );
+			}
 			break;
 		case job_linear:
-			rv = linear_job( job, target, o );
+			if ( target->tgt_bfd ) {
+				rv = bfd_linear_job( job, target, o );
+			} else {
+				rv = linear_job( job, target, o );
+			}
 			break;
 		case job_bfd_entry:
 			rv = bfd_entry_job( job, target, o );
