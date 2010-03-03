@@ -245,7 +245,7 @@ static opdis_tree_node_t * rotate_right(opdis_tree_node_t * node, int num) {
 
 static opdis_tree_node_t * insert_node( opdis_tree_t tree, 
 					opdis_tree_node_t * start, 
-					void * data ) {
+					void * data, int * exists ) {
 	int lr;
 	void * key;
 
@@ -257,7 +257,7 @@ static opdis_tree_node_t * insert_node( opdis_tree_t tree,
 	lr = tree->cmp_fn( key, tree->key_fn(start->data) );
 
 	if ( lr < 0 ) {
-		start->left = insert_node(tree, start->left, data);
+		start->left = insert_node(tree, start->left, data, exists);
 		start->left->parent = start;
 
 		if ( start->right &&
@@ -273,7 +273,7 @@ static opdis_tree_node_t * insert_node( opdis_tree_t tree,
 			start = rotate_right(start, 1);
 		}
 	} else if ( lr > 0 ) {
-		start->right = insert_node(tree, start->right, data);
+		start->right = insert_node(tree, start->right, data, exists);
 		start->right->parent = start;
 
 		if ( start->left &&
@@ -289,6 +289,7 @@ static opdis_tree_node_t * insert_node( opdis_tree_t tree,
 			start = rotate_left(start, 1);
 		}
 	} else {
+		exists = 1;
 		return start;
 	}
 
@@ -422,13 +423,19 @@ opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn,
 }
 
 int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data ) {
+	int exists = 0;
+
 	if (! tree || ! data ) {
 		return 0;
 	}
 
-	tree->root = insert_node(tree, tree->root, data);
-	tree->root->parent = NULL;
+	tree->root = insert_node(tree, tree->root, data, &exists);
+	if ( exists ) {
+		/* tree is unchanged */
+		return 0;
+	}
 
+	tree->root->parent = NULL;
 	tree->num++;
 
 	return 1;

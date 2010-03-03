@@ -132,7 +132,7 @@ opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn,
  * \brief Insert a node into the tree.
  * \param tree The AVL tree.
  * \param data The data to insert.
- * \return 1 on success, 0 on failure.
+ * \return 1 on if the node was inserted, 0 on if node exists.
  * \sa opdis_tree_update opdis_tree_delete
  * \note If the data already exists in the tree (i.e. the key compare
  *       callback returns 0), then the tree is unchanged and this routine
@@ -294,7 +294,7 @@ opdis_vma_tree_t LIBCALL opdis_vma_tree_init( void );
  * \brief Insert an address into the tree.
  * \param tree The Address Tree.
  * \param addr The address to insert.
- * \return 1 on success, 0 on failure.
+ * \return 1 if address was added, 0 if address exists.
  * \sa opdis_vma_tree_delete
  */
 
@@ -393,7 +393,7 @@ opdis_insn_tree_t LIBCALL opdis_insn_tree_init( int manage );
  * \brief Insert an instruction into the tree.
  * \param tree The Instruction Tree.
  * \param insn The instruction to insert.
- * \return 1 on success, 0 on failure.
+ * \return 1 if instruction was added, 0 if instruction exists.
  * \sa opdis_insn_tree_delete
  */
 
