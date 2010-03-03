@@ -14,6 +14,19 @@
 #include <opdis/opdis.h>
 #include <opdis/x86_decoder.h>
 
+void opdis_debug( opdis_t o, int min_level, const char * format, ... ) {
+	if (  o->debug >= min_level ) {
+		va_list args;
+		va_start (args, format);
+
+		fprintf( stderr, "[DEBUG] " );
+		vfprintf( stderr, format, args );
+		fprintf( stderr, "\n" );
+
+		va_end (args);
+	}
+}
+
 /* ---------------------------------------------------------------------- */
 /* Default callbacks */
 
@@ -30,14 +43,8 @@ int opdis_default_handler( const opdis_insn_t * insn, void * arg ) {
 		return 1;
 	}
 
-	if ( opdis_vma_tree_contains( visited, insn->vma ) ) {
-		/* address has already been visited */
-		return 0;
-	}
-
-	opdis_vma_tree_add( visited, insn->vma );
-
-	return 1;
+	/* returns 0 if address already exists in tree */
+	return opdis_vma_tree_add( visited, insn->vma );
 }
 
 void opdis_default_display( const opdis_insn_t * i, void * arg ) {
@@ -308,6 +315,11 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 		return 0;
 	}
 
+	opdis_debug( o, 3, "Disassembled %d bytes at %p", size, (void *) vma );
+
+	opdis_debug( o, 4, "%p : %s", (void *) vma, o->buf->string[0] );
+
+
 	/* fill insn_buf with libopcodes meta-info */
 	o->buf->insn_info_valid = o->config.insn_info_valid;
 	o->buf->branch_delay_insns = o->config.branch_delay_insns;
@@ -351,12 +363,13 @@ unsigned int LIBCALL opdis_disasm_insn_size( opdis_t o, opdis_buf_t buf,
 }
 
 static void set_opdis_buffer( opdis_t o, opdis_buf_t buf ) {
+	opdis_debug( o, 2, "Buffer VMA %p size %d\n", (void *) buf->vma,
+		     buf->len );
 	o->config.buffer_vma = buf->vma;
 	o->config.buffer = (bfd_byte *) buf->data;
 	o->config.buffer_length = buf->len;
 }
 
-// disasm single insn at address
 unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf, 
 					opdis_vma_t vma, 
 					opdis_insn_t * insn ) {
@@ -395,17 +408,23 @@ static int disasm_linear( opdis_t o, opdis_vma_t vma, opdis_off_t length ) {
 		return 0;
 	}
 
+	opdis_debug( o, 1, "Start linear from %p max %p", (void *) vma,
+		     (void *) max_pos );
+
 	while ( cont && pos < max_pos ) {
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
 		if ( pos - vma > length ) {
-			/* exceeded length of disasm request */
+			opdis_debug( o, 1, "Instruction at %p exceeds buffer", 
+				    (void *) vma );
 			break;
 		}
 		count++;
 		o->display( insn, o->display_arg );
 		cont = o->handler( insn, o->handler_arg );
 	}
+
+	opdis_debug( o, 1, "End linear %p (count %d)", (void *) vma, count );
 
 	return count;
 }
@@ -429,6 +448,9 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 		return 0;
 	}
 
+	opdis_debug( o, 1, "Start cflow from %p max %p", (void *) vma,
+		     (void *) max_pos );
+
 	while ( cont && pos < max_pos ) {
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
@@ -443,9 +465,14 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 
 		if ( cont ) {
 			o->display( insn, o->display_arg );
+		} else {
+			opdis_debug( o, 2, "VMA %p invalid or already visited",
+			             (void *) pos );
 		}
 
 		if (! opdis_insn_fallthrough( insn ) ) {
+			opdis_debug( o, 2, "CFLOW BRANCH END: %s",
+				     insn->ascii );
 			cont = 0;
 		}
 
@@ -453,10 +480,17 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 			opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
 			/* recurse on branch target */
 			if ( vma != OPDIS_INVALID_ADDR ) {
+				opdis_debug( o, 2, "CFLOW BRANCH START: %p",
+						(void *) vma );
 				count +=  disasm_cflow( o, vma );
+			} else {
+				opdis_debug( o, 2, "Cannot Resolve: %s",
+					     insn->ascii );
 			}
 		}
 	}
+
+	opdis_debug( o, 1, "End cflow %p (count %d)", (void *) vma, count );
 
 	return count;
 }

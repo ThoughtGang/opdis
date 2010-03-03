@@ -428,7 +428,7 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 			break;
 
 		case 'q': opts->quiet = 1; break;
-		case 'd': opts->debug = 1; break;
+		case 'd': opts->debug++; break;
 		case 1: opts->list_arch = 1; break;
 		case 2: opts->list_disasm_opt = 1; break;
 		case 3: opts->list_syntax = 1; break;

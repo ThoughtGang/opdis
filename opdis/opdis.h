@@ -612,6 +612,13 @@ int LIBCALL opdis_disasm_bfd_entry( opdis_t o, bfd * abfd );
 void LIBCALL opdis_error( opdis_t o, enum opdis_error_t error, 
 			  const char * msg );
 
+/*!
+ * \fn opdis_debug( opdis_t, int, const char *, ... )
+ * \ingroup internal
+ * \brief Print debug message to STDERR
+ */
+void LIBCALL opdis_debug( opdis_t o, int min_level, const char * format, ... );
+
 #ifdef __cplusplus
 }
 #endif
