@@ -398,6 +398,10 @@ static int disasm_linear( opdis_t o, opdis_vma_t vma, opdis_off_t length ) {
 	while ( cont && pos < max_pos ) {
 		unsigned int size = disasm_single_insn( o, pos, insn );
 		pos += size;
+		if ( pos - vma > length ) {
+			/* exceeded length of disasm request */
+			break;
+		}
 		count++;
 		o->display( insn, o->display_arg );
 		cont = o->handler( insn, o->handler_arg );
