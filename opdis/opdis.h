@@ -273,6 +273,10 @@ typedef struct {
 	 */
 	opdis_vma_tree_t visited_addr;
 
+	/*! \var debug
+	 *  \brief Print debug info to STDERR
+	 */
+	int debug;
 } opdis_info_t;
 
 /*!
