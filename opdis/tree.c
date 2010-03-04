@@ -250,6 +250,7 @@ static opdis_tree_node_t * insert_node( opdis_tree_t tree,
 	void * key;
 
 	if (! start ) {
+		*exists = 0;
 		return node_alloc( data );
 	}
 
@@ -289,7 +290,7 @@ static opdis_tree_node_t * insert_node( opdis_tree_t tree,
 			start = rotate_left(start, 1);
 		}
 	} else {
-		exists = 1;
+		//exists = 1;
 		return start;
 	}
 
@@ -423,7 +424,7 @@ opdis_tree_t LIBCALL opdis_tree_init( OPDIS_TREE_KEY_FN key_fn,
 }
 
 int LIBCALL opdis_tree_add( opdis_tree_t tree, void * data ) {
-	int exists = 0;
+	int exists = 1;
 
 	if (! tree || ! data ) {
 		return 0;
