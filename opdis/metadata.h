@@ -129,7 +129,6 @@ enum opdis_insn_cat_t {
 	opdis_insn_cat_test,	/*!< Test/compare instruction */
 	opdis_insn_cat_math,	/*!< Arithmetic instruction */
 	opdis_insn_cat_bit,	/*!< Bitwise (shift/and/or/etc) instruction */
-	opdis_insn_cat_flag,	/*!< Flag register test/set instruction */
 	opdis_insn_cat_io,	/*!< I/O port instruction */
 	opdis_insn_cat_trap,	/*!< Interrupt/trap instruction */
 	opdis_insn_cat_priv,	/*!< Privileged (ring0) instruction */
