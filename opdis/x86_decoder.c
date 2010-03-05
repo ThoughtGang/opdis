@@ -17,8 +17,7 @@
 /* ---------------------------------------------------------------------- */
 /* MNEMONICS */
 
-static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
-	int i, num;
+static void set_isa( opdis_insn_t * out, const char * item ) {
 
 	/* check for obvious subsets */
 	if ( item[0] == 'f' ) {
@@ -26,8 +25,29 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 		return;
 	}
 
+	if ( strstr( item, "pd" ) || strstr( item, "ps" ) ||
+	     strstr( item, "ss" ) || strstr( item, "sd" ) ) {
+		out->isa = opdis_insn_subset_simd;
+		return;
+	}
+
+	if ( item[0] == 'p' && strncmp( "pause", item, 5 ) &&
+	     strncmp( "pop", item, 3 ) && strncmp( "push", item, 4 ) &&
+	     strncmp( "prefetch", item, 8 ) ) {
+		out->isa = opdis_insn_subset_simd;
+		return;
+	}
+
+	out->isa = opdis_insn_subset_gen;
+}
+
+static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
+	int i, num;
+
+	set_isa( out, item );
+
 	/* detect NOP */
-	if (! strcmp( "nop", item ) ) {
+	if (! strcmp( "nop", item ) || ! strcmp( "fnop", item ) ) {
 		out->category = opdis_insn_cat_nop;
 		return;
 	}
@@ -55,7 +75,7 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 		out->flags.cflow = opdis_cflow_flag_call;
 		return;
 	}
-	if ( item[0] == 'j' ) {
+	if ( item[0] == 'j' || ! strncmp( "loop", item, 4) ) {
 		/* all mnemonics starting with J are either JMP or Jcc */
 		out->category = opdis_insn_cat_cflow;
 		out->flags.cflow = opdis_cflow_flag_jmpcc;
@@ -85,36 +105,37 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	}
 
 	/* load/store instructions */
-	if (! strncmp( "mov", item, 3 ) || ! strncmp( "xchg", item, 4 ) ||
-	    ! strncmp( "lod", item, 3 ) || ! strncmp( "sto", item, 3 ) ) {
+	if ( strstr( item, "mov" ) || strstr( item, "xch" ) ||
+	    ! strncmp( "lod", item, 3 ) || ! strncmp( "sto", item, 3 ) || 
+	    ! strncmp( "fild", item, 4 ) || ! strncmp( "fist", item, 4 ) ||
+	    ! strncmp( "fld", item, 3 ) || ! strncmp( "fst", item, 3 ) ||
+	    ! strncmp( "ld", item, 2 ) || ! strncmp( "la", item, 2 ) ||
+	    ! strncmp( "ll", item, 2 ) || ! strncmp( "lf", item, 2 ) ||
+	    ! strncmp( "lg", item, 2 ) || ! strncmp( "lm", item, 2 ) ||
+	    ! strncmp( "mask", item, 4 ) || ! strncmp( "rd", item, 2 ) ||
+	    ! strncmp( "sahf", item, 4 ) || ! strncmp( "sg", item, 2 ) ||
+	    ! strncmp( "si", item, 2 ) || ! strncmp( "sl", item, 2 ) ||
+	    ! strncmp( "sm", item, 2 ) || ! strncmp( "stm", item, 3 ) ||
+	    ! strncmp( "str", item, 3 ) || ! strncmp( "swap", item, 4 ) ||
+	    ! strncmp( "wrm", item, 3 ) || ! strncmp( "xget", item, 4 ) ||
+	    ! strncmp( "xset", item, 4 ) || ! strncmp( "xsave", item, 5 ) ||
+	    ! strncmp( "xrstor", item, 6 ) ) {
 		out->category = opdis_insn_cat_lost;
 		return;
 	}
 
-	/* i/o instructions */
-	if (! strcmp( "in", item ) ) {
-		out->category = opdis_insn_cat_io;
-		out->flags.io = opdis_io_flag_in;
-		return;
-	}
-	if (! strcmp( "out", item ) ) {
-		out->category = opdis_insn_cat_io;
-		out->flags.io = opdis_io_flag_out;
-		return;
-	}
-
 	/* bitwise instructions */
-	if (! strncmp( "and", item, 3 ) ) {
+	if (! strncmp( "and", item, 3 ) || ! strncmp( "pand", item, 4 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_and;
 		return;
 	}
-	if (! strncmp( "or", item, 2 ) ) {
+	if (! strncmp( "or", item, 2 ) || ! strncmp( "por", item, 3 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_or;
 		return;
 	}
-	if (! strncmp( "xor", item, 3 ) ) {
+	if (! strncmp( "xor", item, 3 ) || ! strncmp( "pxor", item, 4 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_xor;
 		return;
@@ -129,17 +150,17 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 		out->flags.bit = opdis_bit_flag_asl;
 		return;
 	}
-	if (! strncmp( "sar", item, 3 ) ) {
+	if (! strncmp( "sar", item, 3 ) || ! strncmp( "psra", item, 4 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_asr;
 		return;
 	}
-	if (! strncmp( "shl", item, 3 ) ) {
+	if (! strncmp( "shl", item, 3 ) || ! strncmp( "psll", item, 4 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_lsl;
 		return;
 	}
-	if (! strncmp( "shr", item, 3 ) ) {
+	if (! strncmp( "shr", item, 3 ) || ! strncmp( "psrl", item, 4 ) ) {
 		out->category = opdis_insn_cat_bit;
 		out->flags.bit = opdis_bit_flag_lsr;
 		return;
@@ -166,8 +187,56 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	}
 
 	/* trap */
+	if (! strncmp( "int", item, 3 ) || ! strcmp( "cli", item ) ||
+	    ! strcmp( "sti", item ) || ! strcmp( "ud2", item ) ) {
+		out->category = opdis_insn_cat_trap;
+		return;
+	}
+
 	/* test */
-	/* flag */
+	if ( strstr( item, "cmp" ) || strstr( item, "test" ) ||
+	     strstr( item, "com" ) || strstr( item, "min" ) ||
+	     strstr( item, "max" ) || ! strncmp( "mps", item, 3 ) ||
+	    ! strncmp( "bt", item , 2 ) || ! strncmp( "ftst", item, 4 ) ) {
+		out->category = opdis_insn_cat_test;
+		return;
+	}
+
+	/* math */
+	if ( strstr( item, "add" ) || strstr( item, "sub" ) ||
+	     strstr( item, "div" ) || strstr( item, "mul" ) ||
+	     strstr( item, "cos" ) || strstr( item, "sin" ) ||
+	     strstr( item, "sqrt" ) || strstr( item, "abs" ) ||
+	     strstr( item, "avg" ) || ! strncmp( "rou", item, 3 ) ||
+	    ! strncmp( "inc", item, 3 ) || ! strncmp( "dec", item, 3 ) ||
+	    ! strncmp( "adc", item, 3 ) || ! strncmp( "fp", item, 2 ) ||
+	    ! strncmp( "fy", item, 2 ) || ! strncmp( "f2", item, 2 ) ||
+	    ! strncmp( "dp", item, 2 ) || ! strncmp( "rcp", item, 2 ) ||
+	    ! strncmp( "lea", item, 3 ) || ! strncmp( "fscale", item, 6 ) ||
+	    ! strncmp( "psad", item, 4 ) ) {
+		out->category = opdis_insn_cat_math;
+		return;
+	}
+
+	/* system instructions */
+	if (! strncmp( "inv", item, 3 ) || ! strncmp( "halt", item, 4 ) ||
+	    ! strncmp( "clts", item, 4 ) || ! strncmp( "ltr", item, 3 ) ||
+	    ! strncmp( "rsm", item, 3 ) || ! strncmp( "wbinvd", item, 6 ) ) {
+		out->category = opdis_insn_cat_priv;
+		return;
+	}
+
+	/* i/o instructions */
+	if (! strncmp( "in", item, 2 ) ) {
+		out->category = opdis_insn_cat_io;
+		out->flags.io = opdis_io_flag_in;
+		return;
+	}
+	if (! strncmp( "out", item, 3 ) ) {
+		out->category = opdis_insn_cat_io;
+		out->flags.io = opdis_io_flag_out;
+		return;
+	}
 }
 
 typedef void (*MNEMONIC_DECODE_FN) ( opdis_insn_t *, const char * );
@@ -697,7 +766,7 @@ static int is_intel_operand( const char * item ) {
 			return 1;
 	}
 
-	if ( strstr( "PTR", item ) != NULL ) {
+	if ( strstr( item, "PTR" ) != NULL ) {
 		return 1;
 	}
 
