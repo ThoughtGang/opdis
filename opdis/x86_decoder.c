@@ -17,66 +17,157 @@
 /* ---------------------------------------------------------------------- */
 /* MNEMONICS */
 
-static const char * jcc_insns[] = {
-	"ja", "jae", "jb", "jbe", "jc", "jcxz", "jecxz", 
-	"jrcxz", "je", "jg", "jge", "jl", "jle", "jna", "jnae", "jnb", "jnbe", 
-	"jnc", "jne", "jng", "jnge", "jnl", "jnle", "jno", "jnp", "jns", "jnz",
-	"jo", "jp", "jpe", "js", "jz"
-};
-
-static const char * call_insns[] = { "lcall", "call", "callq" };
-
-static const char * jmp_insns[] = { "jmp", "ljmp", "jmpq" };
-
-static const char * ret_insns[] = {
-	"ret", "lret", "retq", "retf", "iret", "iretd", "iretq"
-};
-
 static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	int i, num;
 
+	/* check for obvious subsets */
 	if ( item[0] == 'f' ) {
 		out->isa = opdis_insn_subset_fpu;
 		return;
 	}
 
+	/* detect NOP */
+	if (! strcmp( "nop", item ) ) {
+		out->category = opdis_insn_cat_nop;
+		return;
+	}
+
 	/* detect JMP */
-	num = (int) sizeof(jmp_insns) / sizeof(char *);
-	for ( i = 0; i < num; i++ ) {
-		if (! strcmp(jmp_insns[i], item) ) {
-			out->category = opdis_insn_cat_cflow;
-			out->flags.cflow = opdis_cflow_flag_jmp;
-			return;
-		}
+	if (! strncmp( "jmp", item, 3 ) || ! strncmp( "ljmp", item, 4) ) {
+		out->category = opdis_insn_cat_cflow;
+		out->flags.cflow = opdis_cflow_flag_jmp;
+		return;
 	}
 
 	/* detect RET */
-	num = (int) sizeof(ret_insns) / sizeof(char *);
-	for ( i = 0; i < num; i++ ) {
-		if (! strcmp(ret_insns[i], item) ) {
-			out->category = opdis_insn_cat_cflow;
-			out->flags.cflow = opdis_cflow_flag_ret;
-			return;
-		}
+	if (! strncmp( "ret", item, 3 ) || ! strncmp( "lret", item, 4) ||
+	    ! strncmp( "iret", item, 4 ) || ! strcmp( "sysexit", item ) ||
+	    ! strcmp( "sysret", item ) ) {
+		out->category = opdis_insn_cat_cflow;
+		out->flags.cflow = opdis_cflow_flag_ret;
+		return;
 	}
 
 	/* detect branch (call/jcc) */
-	num = (int) sizeof(call_insns) / sizeof(char *);
-	for ( i = 0; i < num; i++ ) {
-		if (! strcmp(call_insns[i], item) ) {
-			out->category = opdis_insn_cat_cflow;
-			out->flags.cflow = opdis_cflow_flag_call;
-			return;
-		}
+	if (! strncmp( "call", item, 4 ) || ! strncmp( "lcall", item, 5) ||
+	    ! strcmp( "syscall", item ) || ! strcmp("sysenter", item ) ) {
+		out->category = opdis_insn_cat_cflow;
+		out->flags.cflow = opdis_cflow_flag_call;
+		return;
 	}
-	num = (int) sizeof(jcc_insns) / sizeof(char *);
-	for ( i = 0; i < num; i++ ) {
-		if (! strcmp(jcc_insns[i], item) ) {
-			out->category = opdis_insn_cat_cflow;
-			out->flags.cflow = opdis_cflow_flag_jmpcc;
-			return;
-		}
+	if ( item[0] == 'j' ) {
+		/* all mnemonics starting with J are either JMP or Jcc */
+		out->category = opdis_insn_cat_cflow;
+		out->flags.cflow = opdis_cflow_flag_jmpcc;
+		return;
 	}
+
+	/* stack instructions */
+	if (! strncmp( "pop", item, 3 ) && strcmp( "popcnt", item ) ) {
+		out->category = opdis_insn_cat_stack;
+		out->flags.cflow = opdis_stack_flag_pop;
+		return;
+	}
+	if (! strncmp( "push", item, 4 ) ) {
+		out->category = opdis_insn_cat_stack;
+		out->flags.cflow = opdis_stack_flag_push;
+		return;
+	}
+	if (! strncmp( "enter", item, 5 ) ) {
+		out->category = opdis_insn_cat_stack;
+		out->flags.cflow = opdis_stack_flag_frame;
+		return;
+	}
+	if (! strncmp( "leave", item, 5 ) ) {
+		out->category = opdis_insn_cat_stack;
+		out->flags.cflow = opdis_stack_flag_unframe;
+		return;
+	}
+
+	/* load/store instructions */
+	if (! strncmp( "mov", item, 3 ) || ! strncmp( "xchg", item, 4 ) ||
+	    ! strncmp( "lod", item, 3 ) || ! strncmp( "sto", item, 3 ) ) {
+		out->category = opdis_insn_cat_lost;
+		return;
+	}
+
+	/* i/o instructions */
+	if (! strcmp( "in", item ) ) {
+		out->category = opdis_insn_cat_io;
+		out->flags.io = opdis_io_flag_in;
+		return;
+	}
+	if (! strcmp( "out", item ) ) {
+		out->category = opdis_insn_cat_io;
+		out->flags.io = opdis_io_flag_out;
+		return;
+	}
+
+	/* bitwise instructions */
+	if (! strncmp( "and", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_and;
+		return;
+	}
+	if (! strncmp( "or", item, 2 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_or;
+		return;
+	}
+	if (! strncmp( "xor", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_xor;
+		return;
+	}
+	if (! strncmp( "neg", item, 3 ) || ! strncmp( "not", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_not;
+		return;
+	}
+	if (! strncmp( "sal", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_asl;
+		return;
+	}
+	if (! strncmp( "sar", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_asr;
+		return;
+	}
+	if (! strncmp( "shl", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_lsl;
+		return;
+	}
+	if (! strncmp( "shr", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_lsr;
+		return;
+	}
+	if (! strncmp( "rcl", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_rcl;
+		return;
+	}
+	if (! strncmp( "rcr", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_rcr;
+		return;
+	}
+	if (! strncmp( "rol", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_rol;
+		return;
+	}
+	if (! strncmp( "ror", item, 3 ) ) {
+		out->category = opdis_insn_cat_bit;
+		out->flags.bit = opdis_bit_flag_ror;
+		return;
+	}
+
+	/* trap */
+	/* test */
+	/* flag */
 }
 
 typedef void (*MNEMONIC_DECODE_FN) ( opdis_insn_t *, const char * );
