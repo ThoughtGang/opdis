@@ -676,7 +676,7 @@ static void decode_att_operand( opdis_op_t * out, const char * item ) {
 
 int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		           const opdis_byte_t * buf, opdis_off_t offset,
-			   opdis_vma_t vma, opdis_off_t length ) {
+			   opdis_vma_t vma, opdis_off_t length, void * arg ) {
 
 	int i, max_i, rv;
 	struct INSN_BUF_PARSE parse;
@@ -898,7 +898,7 @@ static void decode_intel_operand( opdis_op_t * op, const char * item ) {
 
 int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		             const opdis_byte_t * buf, opdis_off_t offset,
-			     opdis_vma_t vma, opdis_off_t length ) {
+			     opdis_vma_t vma, opdis_off_t length, void * arg ) {
 
 	struct INSN_BUF_PARSE parse;
 	int i, max_i, rv;

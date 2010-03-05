@@ -317,7 +317,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 
 	opdis_debug( o, 3, "Disassembled %d bytes at %p", size, (void *) vma );
 
-	opdis_debug( o, 4, "%p : %s", (void *) vma, o->buf->string[0] );
+	opdis_debug( o, 4, "%p : %s", (void *) vma, o->buf->string );
 
 
 	/* fill insn_buf with libopcodes meta-info */
@@ -518,8 +518,10 @@ struct BFD_VMA_SECTION {
 static int load_section( opdis_t o, asection * s ) {
 	int size;
 	unsigned char *buf;
+	opdis_vma_t vma;
 
 	size = bfd_section_size( s->owner, s );
+	vma = bfd_section_vma( s->owner, s );
 	buf = calloc( size, 1 );
 	if (! buf || ! bfd_get_section_contents( s->owner, s, buf, 0, size ) ) {
 		char msg[32];
@@ -528,10 +530,12 @@ static int load_section( opdis_t o, asection * s ) {
 		return 0;
 	}
 
+	opdis_debug( o, 2, "Loaded section of %d bytes [%p-%p]\n", size,
+		     (void *) vma, (void *) (vma + size - 1) );
 	o->config.section = s;
 	o->config.buffer = buf;
 	o->config.buffer_length = size;
-	o->config.buffer_vma = bfd_section_vma( s->owner, s );
+	o->config.buffer_vma = vma;
 
 	return 1;
 }
