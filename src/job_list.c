@@ -36,7 +36,7 @@ static job_list_item_t * add_item( job_list_t jobs, enum job_type_t type,
 			   const char * spec, unsigned int target ) {
 	job_list_item_t * item, *prev;
 
-	if (! jobs || ! spec ) {
+	if (! jobs ) {
 		return 0;
 	}
 

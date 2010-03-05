@@ -285,7 +285,7 @@ static int add_bfd_target( struct opdis_options * opts, unsigned int id ) {
 
 static int add_bfd_job( struct opdis_options * opts, enum job_type_t type, 
 			const char * arg ) {
-	unsigned int target;
+	unsigned int target = 1;
 	const char * name = NULL;
 
 	if ( arg ) {
