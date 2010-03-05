@@ -520,8 +520,6 @@ int LIBCALL opdis_insn_cat_str( const opdis_insn_t * insn, char * buf,
 			strncat( buf, "arithmetic", max_size ); break;
 		case opdis_insn_cat_bit:
 			strncat( buf, "bitwise", max_size ); break;
-		case opdis_insn_cat_flag:
-			strncat( buf, "flag", max_size ); break;
 		case opdis_insn_cat_io:
 			strncat( buf, "i/o", max_size ); break;
 		case opdis_insn_cat_trap:
