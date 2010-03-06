@@ -186,7 +186,6 @@ opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
 
 /* ---------------------------------------------------------------------- */
 /* Configuration */
-// NOTE: void disassembler_usage (FILE *);
 
 void LIBCALL opdis_set_defaults( opdis_t o ) {
 	opdis_set_handler( o, opdis_default_handler, o );
@@ -391,6 +390,7 @@ unsigned int LIBCALL opdis_disasm_insn( opdis_t o, opdis_buf_t buf,
 
 static inline opdis_insn_t * alloc_fixed_insn() {
 	// TODO: verify these values across architectures
+	//       or use per-arch values
 	return opdis_insn_alloc_fixed( 128, 32, 16, 32 );
 }
 
@@ -448,6 +448,10 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 		return 0;
 	}
 
+	if ( pos < o->config.buffer_vma ) {
+		return 0;
+	}
+
 	opdis_debug( o, 1, "Start cflow from %p max %p", (void *) vma,
 		     (void *) max_pos );
 
@@ -479,13 +483,23 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 		if ( opdis_insn_is_branch( insn ) ) {
 			opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
 			/* recurse on branch target */
-			if ( vma != OPDIS_INVALID_ADDR ) {
+			if ( vma == OPDIS_INVALID_ADDR ) {
+				opdis_debug( o, 2, "Cannot Resolve: %s",
+					     insn->ascii );
+			} else if ( vma < o->config.buffer_vma || 
+				    vma >= max_pos ) {
+				opdis_debug( o, 2, 
+					"Branch target %p not in buffer %p", 
+			    		(void *) vma, 
+					(void *) o->config.buffer_vma );
+			} else if ( opdis_vma_tree_contains( o->visited_addr, 
+							     vma) ) {
+				opdis_debug( o, 3, "VMA %p already visited\n",
+			    		(void *) vma );
+			} else {
 				opdis_debug( o, 2, "CFLOW BRANCH START: %p",
 						(void *) vma );
 				count +=  disasm_cflow( o, vma );
-			} else {
-				opdis_debug( o, 2, "Cannot Resolve: %s",
-					     insn->ascii );
 			}
 		}
 	}
@@ -634,11 +648,13 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 	}
 
 	if (! o->visited_addr ) {
+fprintf( stderr, "CREATING TREE\n" );
 		/* ensure visited address tree is initialized */
 		o->visited_addr = opdis_vma_tree_init();
 	}
 
 	if ( load_section( o, sec ) ) {
+fprintf( stderr, "TREE %p\n", o->visited_addr );
 		count = disasm_cflow( o, sym->value );
 		free( o->config.buffer );
 		o->config.buffer = NULL;
