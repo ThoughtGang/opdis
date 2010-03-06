@@ -155,11 +155,14 @@ static opdis_t opdis_for_bfd( bfd * abfd, opdis_t orig ) {
 	o->error_reporter_arg = orig->error_reporter_arg;
 	o->display = orig->display;
 	o->display_arg = orig->display_arg;
+	o->display_arg = (orig->display_arg) == orig ? o : orig->display_arg;
 	o->handler = orig->handler;
-	o->handler_arg = orig->handler_arg;
+	o->handler_arg = (orig->handler_arg) == orig ? o : orig->handler_arg;
 	o->resolver = orig->resolver;
 	o->resolver_arg = orig->resolver_arg;
+	o->resolver_arg = (orig->resolver_arg) == orig ? o : orig->resolver_arg;
 	o->debug = orig->debug;
+	o->visited_addr = orig->visited_addr;
 
 	/* if user has overridden syntax or decoder, defer to it */
 	if ( orig->config.arch == o->config.arch ) {
