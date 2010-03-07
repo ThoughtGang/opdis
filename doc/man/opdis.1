@@ -536,6 +536,8 @@ See \fB%?\fR.
 The level of detail available to \fBopdis\fR is determined by the decoders available in \fBlibopdis\fR. Currently, \fBlibopdis\fR provides three decoders: x86 AT&T syntax, x86 Intel syntax, and generic. The AT&T syntax decoder (used by default or when \fI-s at\fR is supplied) provides the most detail, and generates output that is best suited for analysis. The generic decoder, the only decoder available for non-x86 architectures, only provides the raw libopcodes representation (the \fIascii\rR field) of the instruction and no operand information. Additional architecture-specific decoders must be added to \fBlibopdis\fR to overcome this limitation.
 .PP
 \fBopdis\fR does not emit instructions as they are disassembled. Instead, instructions are stored in a binary tree and printed in order of VMA after all dfisassembly jobs have completed.
+.PP
+Control Flow disassembly is very slow due to the visited-address tracking.
 
 .SH EXAMPLES
 
