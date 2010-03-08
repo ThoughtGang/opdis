@@ -7,6 +7,11 @@
 <p>
 \ref opdis
  - \ref faq_opdis_arch
+ - \ref faq_opdis_bfd
+ - \ref faq_opdis_format
+ - \ref faq_opdis_fmt_str
+ - \ref faq_opdis_target
+ - \ref faq_opdis_job
  - \ref faq_opdis_map
  - \ref faq_opdis_map_size
 <p>
@@ -23,32 +28,32 @@
   \section faq_general General
 <p>
   \subsection faq_general_objdump Why use opdis instead of objdump?
-The GNU <em>objdump(1)</em> utility is intended to examine the output of the
-<em>gcc</em> compiler and the utilities in the GNU <em>binutils</em> 
+The GNU <b>objdump(1)</b> utility is intended to examine the output of the
+<b>gcc</b> compiler and the utilities in the GNU <b>binutils</b> 
 distribution. It cannot be used when examining file formats not supported by
 BFD (e.g. ROM images), and its disassembly options are limited.
 <p>
-The \e opdis utility is intended to complement \e objdump by providing a
-simple disassembler for object code. Features which distinguish \e opdis
-from \e objdump include:
+The \b opdis utility is intended to complement \b objdump by providing a
+simple disassembler for object code. Features which distinguish \b opdis
+from \b objdump include:
  - the ability to disassemble from an arbitrary starting point in a file
  - the ability to disassemble a string of hex bytes (e.g. shellcode)
  - a disassembly algorithm that follows control flow in the target
  - support for custom output formats via a printf-style format string
 <p>
-The intended audience for \e opdis includes embedded system developers working 
+The intended audience for \b opdis includes embedded system developers working 
 with ROM images, security personnel examining shellcode strings, and
 software developers reverse engineering hostile or non-BFD-compliant binaries.
 <p>
 
   \subsection faq_general_libopcodes Why not use libopcodes directly?
-The \e libopcodes library is a very serviceable disassembler, but it has three
+The \b libopcodes library is a very serviceable disassembler, but it has three
 shortcomings:
  - it is under-documented, making it difficult for new users to understand
  - its feature set is limited to the disassembly of a single address
  - it is designed mainly to print disassembled instructions to a stream
 <p>
-This last point in particular makes \e libopcodes unsuitable for binary
+This last point in particular makes \b libopcodes unsuitable for binary
 analysis.
 <p>
 
@@ -58,30 +63,351 @@ Both opdis and libopdis are released under the terms of the GNU Public License
 of the GPL too restrictive can contact community@thoughtgang.org to discuss
 alternate licensing terms.
 <p>
+
 <hr>
   \section faq_opdis opdis
 <p>
+
   \subsection faq_opdis_arch What target architectures does opdis support?
+\b opdis will support whatever architectures are supported by the 
+locally-installed GBU \b binutils. A list of supported architectures can be 
+displayed by using the <b>--list-architectures</b> option.
 <p>
-  \subsection faq_opdis_map What memory maps used for?
+Note that while an architecture is supported, it may not support advanced 
+features such as generation of metadata or control flow disassembly (which
+relies on metadata). A warning will be printed to STDERR if control flow
+disassembly is not supported on the target architecture.
 <p>
+
+  \subsection faq_opdis_bfd What are BFD targets?
+A BFD target is a file that has been loaded using \b libbfd, part of the GNU
+\b binutils distribution. BFD targets have many advantages: the target
+architecture is automatically detected, memory maps are not required, and
+elements of the object file structure such as sections and symbols are
+available. Use of BFD targets is recommended when the target is supported
+by \b libbfd.
+<p>
+
+  \subsection faq_opdis_format What output formats are available?
+The built-in output formats are:
+ - asm : raw libopcodes output
+ - dump : standard disassembled listing
+ - delim : pipe-delimited table of instructions
+ - xml : xml representation of instructions
+The default output format is 'dump'.
+<p>
+The \b asm format consists of the libopcodes strings followed by a comment
+containing the VMA of the instruction.
+\code
+bash$ opdis -f asm -E /bin/ls  |more
+xor    %ebp,%ebp	# [0x4026e0]
+mov    %rdx,%r9	# [0x4026e2]
+pop    %rsi	# [0x4026e5]
+...
+callq  *%rax	# [0x40271c]
+add    $0x8,%rsp	# [0x40271e]
+retq   	# [0x402722]
+\endcode
+<p>
+The \b dump format consists of the instruction VMA and bytes followed by the
+assembly language representation of the instruction. Up to eight bytes of
+the instruction are printed per line.
+\code
+bash$ opdis -f dump -E /bin/ls 
+0x4026e0: 31 ED                      xor	%ebp, %ebp
+0x4026e2: 49 89 D1                   mov	%rdx, %r9
+0x4026e5: 5E                         pop	%rsi
+...
+0x40271c: FF D0                      callq	*%rax
+0x40271e: 48 83 C4 08                add	$0x8, %rsp
+0x402722: C3                         retq
+\endcode
+<p>
+The \b delim format consists of all fields of the instruction (offset, vma, 
+bytes, ascii, prefixes, mnemonic, isa, category, flags, and each operand)
+separated by pipe characters. Note that the number of operand fields will
+vary on each line, and there are no empty fields for operands (the maximum 
+number of operands is not defined). The contents of each operand field are
+colon-delimited and consist of the fields ascii, category, flags, value, and 
+an option (i.e. not always present) name field. The value for each operand will
+be a number or an object contained in curly braces; the object will be
+semi-colon-delimited and can be a register, absolute address, or address
+expression.
+\code
+bash$ opdis -f delim -E /bin/ls 
+offset|vma|bytes|ascii|prefixes|mnemonic|isa|category|flags|op|...
+0x0|0x4026e0|31 ED|xor    %ebp,%ebp||xor|general purpose|bitwise|bitwise xor||%e
+bp:register:read:{ebp;6;4;general,frame ptr}:SRC|%ebp:register:write:{ebp;6;4;ge
+neral,frame ptr}:DEST
+0x2|0x4026e2|49 89 D1|mov    %rdx,%r9||mov|general purpose|load/store|||%rdx:reg
+ister:read:{rdx;3;8;general}:SRC|%r9:register:write:{r9;10;8;general}:DEST
+0x5|0x4026e5|5E|pop    %rsi||pop|general purpose|stack|pop||%rsi:register:read:{
+rsi;7;8;general}:SRC
+...
+0x3c|0x40271c|FF D0|callq  *%rax||callq|general purpose|control flow|call||*%rax:register:read,exec:{rax;1;8;general}:TARGET
+0x3e|0x40271e|48 83 C4 08|add    $0x8,%rsp||add|general purpose|arithmetic|||$0x8:immediate:read:0X8:SRC|%rsp:register:write:{rsp;5;8;general,stack ptr}:DEST
+0x42|0x402722|C3|retq   ||retq|general purpose|control flow|return|
+\endcode
+<p>
+The \b xml format produces an XML representation of each instruction along with
+an embedded DTD.
+\code
+bash$ opdis -f xml -E /bin/ls 
+<?xml version="1.0"?>
+<!DOCTYPE disassembly [
+<!ELEMENT disassembly (instruction*)>
+<!ELEMENT instruction (offset,vma,bytes,ascii?,mnemonic?,prefix?,isa?,category?,
+flags?,operands?,invalid?)>
+<!ELEMENT offset (#PCDATA)>
+<!ELEMENT vma (#PCDATA)>
+<!ELEMENT bytes (byte+)>
+<!ELEMENT byte (#PCDATA)>
+<!ELEMENT ascii (#PCDATA)>
+<!ELEMENT mnemonic (#PCDATA)>
+<!ELEMENT prefix (#PCDATA)>
+<!ELEMENT isa (#PCDATA)>
+<!ELEMENT category (#PCDATA)>
+<!ELEMENT flags (flag+)>
+<!ELEMENT flag (#PCDATA)>
+<!ELEMENT operands (operand*)>
+<!ELEMENT operand (ascii,category,flags,value)>
+<!ATTLIST operand type (target|src|dest) "">
+<!ELEMENT value (register?,immediate?,absolute?,expression?)>
+<!ELEMENT register (ascii,id,size,flags)>
+<!ELEMENT immediate (#PCDATA)>
+<!ELEMENT absolute (segment,immediate)>
+<!ELEMENT segment (register)>
+<!ELEMENT expression (base?,index?,scale,shift?,displacement?)>
+<!ELEMENT base (register)>
+<!ELEMENT index (register)>
+<!ELEMENT scale (#PCDATA)>
+<!ELEMENT shift (#PCDATA)>
+<!ELEMENT displacement (absolute?,immediate?)>
+]>
+<disassembly>
+<instruction>
+  <offset>0x0</offset>
+  <vma>0x4026e0</vma>
+  <bytes>
+    <byte>31</byte>
+    <byte>ED</byte>
+  </bytes>
+  <ascii>xor    %ebp,%ebp</ascii>
+  <mnemonic>xor</mnemonic>
+  <isa>general purpose</isa>
+  <category>bitwise</category>
+  <flags>
+    <flag>bitwise xor</flag>
+  </flags>
+  <operands>
+    <operand name="src">
+    <ascii>%ebp</ascii>
+    <category>register</category>
+    <flags>
+      <flag>read</flag>
+    </flags>
+    <value>
+      <register>
+        <ascii>ebp</ascii>
+        <id>6</id>
+        <size>4</size>
+        <flags>
+          <flag>general</flag>
+          <flag>frame ptr</flag>
+        </flags>
+      </register>
+    </value>
+    </operand>
+    <operand name="dest">
+    <ascii>%ebp</ascii>
+    <category>register</category>
+    <flags>
+      <flag>write</flag>
+    </flags>
+    <value>
+      <register>
+        <ascii>ebp</ascii>
+        <id>6</id>
+        <size>4</size>
+        <flags>
+          <flag>general</flag>
+          <flag>frame ptr</flag>
+        </flags>
+      </register>
+    </value>
+    </operand>
+  </operands>
+</instruction>
+...
+<instruction>
+  <offset>0x42</offset>
+  <vma>0x402722</vma>
+  <bytes>
+    <byte>C3</byte>
+  </bytes>
+  <ascii>retq   </ascii>
+  <mnemonic>retq</mnemonic>
+  <isa>general purpose</isa>
+  <category>control flow</category>
+  <flags>
+    <flag>return</flag>
+  </flags>
+  <operands>
+  </operands>
+</instruction>
+</disassembly>
+\endcode
+<p>
+
+  \subsection faq_opdis_fmt_str How can the output format be customized?
+Custom output formats can be specified using a printf- or strftime-style
+format string as the argument to <b>-f</b>.
+<p>
+The available format operators are:
+ - <b>\%i</b>[<b>ACFI</b>] : Instruction component. The component is specified
+   using <b>A</b> (ascii, the default), <b>C</b> (category), <b>F</b> (flags),
+   or <b>I</b> (isa).
+ - <b>\%o</b>[<b>atds</b><em>#</em>][<b>ACF</b>] : Operand component. The
+   operand is selected by specifying <b>a</b> (all operands, delimited by
+   comment, the default), <b>t</b> (branch target operand), <b>d</b>
+   (destination operand), <b>s</b> (source operand), or by specifying the
+   operand number (0-9).  The component is specified using <b>A</b> 
+   (ascii, the default), <b>C</b> (category), or <b>F</b> (flags).
+ - <b>\%b</b>[<b>XDOC</b>] : The bytes of the instruction. The base is 
+   specified using <b>X</b> (hexadecimal), <b>D</b> (decimal), <b>O</b> 
+   (octal), or <b>C</b> (character). 
+ - <b>\%l</b> : Length of instruction in bytes
+ - <b>\%m</b> : Instruction mnemonic
+ - <b>\%a</b>[<b>vo</b>][<b>XDO</b>] : Instruction address. <b>v</b> or <b>o</b>
+   selects VMA (default) or offset; the base is specified using <b>X</b>
+   (hexadecimal), <b>D</b> (decimal), or <b>O</b> (octal).
+ - <b>\%p</b> : Instruction prefixes
+ - <b>\%c</b> : Instruction comment
+ - <b>%?</b><em>c</em> : Conditional delimiter. The delimiter (\e c) is printed
+   only if the next <b>%</b> command (e.g. <b>\%o</b>) is not empty. 
+ - <b>\%t</b> : Conditional tab delimiter
+ - <b>\%s</b> : Conditional space delimiter
+ - <b>\%n</b> : Conditional newline delimiter
+ - <b>%%</b> : Print a literal '\%'
+<p>
+Examples:
+\code
+bash$ opdis -f '%a %i\n' -E /bin/ls  | head -3
+0x4026e0 xor    %ebp,%ebp
+0x4026e2 mov    %rdx,%r9
+0x4026e5 pop    %rsi
+\endcode
+
+\code
+bash$ opdis -f '%ao %l [%b]\n' -E /bin/ls  | head -3
+0x0 2 [31 ED]
+0x2 3 [49 89 D1]
+0x5 1 [5E]
+\endcode
+
+\code
+bash$ opdis -f '[%a]%p %m\t%o\t# %b\n' -E /bin/ls  | head -3
+[0x4026e0] xor	%ebp, %ebp	# 31 ED
+[0x4026e2] mov	%rdx, %r9	# 49 89 D1
+[0x4026e5] pop	%rsi	# 5E
+\endcode
+
+\code
+bash$ opdis -f '%m\t%os%?,%od\n' -E /bin/ls  | head -3
+xor	%ebp,%ebp
+mov	%rdx,%r9
+pop	%rsi
+\endcode
+
+\code
+opdis -f '%ao: %b "%bC"\n' -E /bin/ls  | head -3
+0x0: 31 ED "1 í"
+0x2: 49 89 D1 "I  Ñ"
+0x5: 5E "^"
+\endcode
+
+\code
+bash$ opdis -f '%a %i\t#%iC%?:%iF\n' -E /bin/ls  | head -3
+0x4026e0 xor    %ebp,%ebp	#bitwise:bitwise xor
+0x4026e2 mov    %rdx,%r9	#load/store
+0x4026e5 pop    %rsi	#stack:pop
+\endcode
+<p>
+
+  \subsection faq_opdis_target How are target IDs assigned?
+Each target specified on the command line is assigned an ID in the order it is
+encountered. This means that each <b>-b</b> option is assigned an ID, followed
+by each file argument.
+<p>
+The command
+\code
+opdis -b '90 90 90 90' -b 'cc cc cc cc' a.out rom.bin
+\endcode
+will assign target IDs as follows:
+ -# : buffer '90 90 90 90'
+ -# : buffer 'cc cc cc cc'
+ -# : file 'a.out'
+ -# : file 'rom.bin'
+Use the <b>--dry-run</b> option to preview the target list.
+<p>
+
+  \subsection faq_opdis_job How do jobs get created?
+Disassembly jobs are created with the <b>-l</b>, <b>-c</b>, <b>-E</b>,
+<b>-N</b>, and <b>-S</b> options. Jobs are scheduled in the order they
+are encountered. Use the <b>--dry-run</b> to preview the job list.
+<p>
+
+  \subsection faq_opdis_map What are memory maps used for?
+Memory maps have three main uses:
+ - to change the VMA that appears in the output
+ - to allow multiple files and buffers to appear contiguous in memory
+ - to disassemble multiple targets
+This last point is worth examining in more detail.
+<p>
+When \b opdis disassembles a target, it stores the disassembled instructions 
+using their VMA as a primary key. The same storage is used for all targets; if 
+an instruction is already stored for a VMA, all subsequent instructions with 
+the same VMA will be discarded.
+<p>
+By default, the VMA for every target will be 0 (i.e., each instruction in the
+target will use its offset in the target as its VMA). Thus, when disassembling
+two targets, the instructions in the second will be discarded. Creating a
+memory map that places the second target after the first in memory (i.e. map
+it to a VMA equal to the first target's size) fixes this issue.
+<p>
+Note that BFD targets do not require memory maps, as the BFD structure contains
+sections that provide their own mapping. Also, all <b>-b</b> options are
+mapped sequentially in memory, so that they appear to be part of the same
+contiguous memory region.
+<p>
+
   \subsection faq_opdis_map_size Why does a memory map size not limit disassembly?
+The memory maps are only used when scheduling jobs. Once disassembly starts,
+libopcodes is invoked in a loop using the \b disassemble_info structure
+contained in the \ref opdis_t. This structure uses the target buffer to
+determine the bounds of disassembly.
 <p>
 <hr>
   \section faq_libopdis libopdis
 <p>
   \subsection faq_libopdis_arch What target architectures does libopdis support?
 <p>
+
   \subsection faq_libopdis_algo What is the difference between linear and control flow disassembly?
 <p>
+
   \subsection faq_libopdis_bfd What are the various opdis_disasm_bfd functions used for?
 <p>
+
   \subsection faq_libopdis_cflow_arch Why does control flow disassembly not work for a particular architecture?
 <p>
+
   \subsection faq_libopdis_meta Why is metadata not being generated
 <p>
+
   \subsection faq_libopdis_decoder_when When will additional decoders be made available?
 <p>
+
   \subsection faq_libopdis_decoder_work How much work is it to write a decoder?
 <p>
 */
