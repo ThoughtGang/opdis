@@ -724,6 +724,17 @@ static int handle_op( FILE * f, const opdis_insn_t * insn, const char * c ) {
 	return rv;
 }
 
+static int insn_has_component( const opdis_insn_t * insn, char c ) {
+	if ( c == 'C' && (int) insn->category == 0 ) {
+		return 0;
+	}
+	if ( c == 'F' && (int) insn->flags.cflow == 0 ) {
+		return 0;
+	}
+
+	return 1;
+}
+
 static int op_is_present( const opdis_insn_t * insn, char c ) {
 	if (! insn->num_operands ) {
 		return 0;
@@ -796,7 +807,9 @@ static int custom_insn( FILE * f, const char * fmt_str, opdis_insn_t * insn ) {
 
 		switch (*c) {
 			case 'i':	/* instruction */
-				COND_DELIM( f, cond_delim );
+				if ( insn_has_component( insn, c[1] ) ) {
+					COND_DELIM( f, cond_delim );
+				}
 				inc = handle_insn( f, insn, &c[1] );
 				c += inc;
 				rv += inc;
