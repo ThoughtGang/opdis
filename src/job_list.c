@@ -311,6 +311,13 @@ static int cflow_job( job_list_item_t * job, tgt_list_item_t * tgt,
 	return opdis_disasm_cflow( o->opdis, tgt->data, vma );
 }
 
+static void decoder_check( opdis_t o ) {
+	if ( o->decoder == opdis_default_decoder ) {
+		fprintf( stderr, 
+			 "WARNING: cflow will not work on this architecture\n");
+	}
+}
+
 static int perform_job( job_list_item_t * job, job_opts_t o ) {
 	int rv;
 	tgt_list_item_t * target;
@@ -329,6 +336,7 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 
 	switch (job->type) {
 		case job_cflow:
+			decoder_check( o->opdis );
 			if ( target->tgt_bfd ) {
 				rv = bfd_cflow_job( job, target, o );
 			} else {
@@ -343,9 +351,11 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 			}
 			break;
 		case job_bfd_entry:
+			decoder_check( o->opdis );
 			rv = bfd_entry_job( job, target, o );
 			break;
 		case job_bfd_symbol:
+			decoder_check( o->opdis );
 			rv = bfd_symbol_job( job, target, o );
 			break;
 		case job_bfd_section:
