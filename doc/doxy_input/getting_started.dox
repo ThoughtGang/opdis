@@ -3,15 +3,42 @@
 This document provides some brief examples of how to use \e libopdis and the
 \e opdis command line utility.
 
- - \ref start_opdis_elf
- - \ref start_opdis_bytes
  - \ref start_opdis_main
+ - \ref start_opdis_bytes
+ - \ref start_opdis_elf
  - \ref start_libopdis_mem
  - \ref start_libopdis_file
  - \ref start_libopdis_bfd_section
  - \ref start_libopdis_bfd_entry
 <p>
 <hr>
+
+    \section start_opdis_main Using opdis to disassemble an object file symbol
+
+Use the <em>-N</em> option to disassemble a symbol in an object file using the 
+control-flow algorithm.
+\code
+opdis -N main a.out
+\endcode
+Note: Only symbols recognized by \e libbfd can be disassembled. The
+<em>--list-bfd-symbols</em> option can be used to list all available symbols 
+in a BFD target:
+\code
+opdis --list-bfd-symbols -B a.out
+\endcode
+<P>
+
+    \section start_opdis_bytes Using opdis to disassemble a hex string
+
+Enclose the hexadecimal bytes in quotes as an argument to the <em>-b</em> 
+option.
+
+\code
+opdis -b '90 90 90 90'
+opdis -b 'CC'
+opdis -b "`od -j 0x1C20 -t x1 -A x -N 16 -w16 dist/.libs/opdis | head -1 | cut -f 1 -d ' ' --complement `"
+\endcode
+<P>
 
     \section start_opdis_elf Using opdis to disassemble an ELF binary
 
@@ -46,33 +73,8 @@ Control-flow disassembly of entry point:
 \code
 opdis -m :0x1C20@0x401C20+0x4DE8 -c @0x4026C0
 \endcode
-
 <P>
-    \section start_opdis_bytes Using opdis to disassemble a hex string
 
-Enclose the hexadecimal bytes in quotes as an argument to the <em>-b</em> 
-option.
-
-\code
-opdis -b '90 90 90 90'
-opdis -b 'CC'
-opdis -b "`od -j 0x1C20 -t x1 -A x -N 16 -w16 dist/.libs/opdis | head -1 | cut -f 1 -d ' ' --complement `"
-\endcode
-
-<P>
-    \section start_opdis_main Using opdis to disassemble an object file symbol
-
-Use the <em>-N</em> option to disassemble a symbol in an object file using the 
-control-flow algorithm.
-\code
-opdis -N main a.out
-\endcode
-Note: Only symbols recognized by \e libbfd can be disassembled. Performing a 
-dry run of a BFD disassembly will list all available symbols:
-\code
-opdis --dry-run -B a.out
-\endcode
-<P>
     \section start_libopdis_mem Using libopdis to disassemble a memory location
 First, an \ref opdis_buf_t must be allocated and filled with the contents of the
 memory location. The VMA of the memory location can be used as the VMA of the
@@ -94,8 +96,8 @@ void disassemble_mem( void * src, opdis_offset_t length ) {
 Note that the \ref opdis_t is never configured, so the default values are used.
 This means that the architecture is i386, the syntax is Intel, and the
 instructions are written to STDOUT.
-
 <P>
+
     \section start_libopdis_file Using libopdis to disassemble a file
 This is the same as disassembling a memory location except that the opdis_buf_t
 is read from a file.
@@ -111,8 +113,8 @@ void disassemble_file( FILE * f, opdis_vma_t vma, opdis_offset_t offset ) {
         opdis_term( o );
 }
 \endcode
-
 <P>
+
     \section start_libopdis_bfd_section Using libopdis and BFD to disassemble an object file section
 Initializing an \ref opdis_t from a valid \e bfd pointer will configure the
 target architecture automatically. A valid BFD section can then be disassembled
@@ -150,8 +152,8 @@ int disassemble_bfd_section( const char * filename, const char * sec_name ) {
 Note: \ref opdis_init_from_bfd only configures the architecture of the
 \ref opdis_t. The other options will be set to their defaults, e.g. the
 instructions will be printed to STDOUT.
-
 <P>
+
     \section start_libopdis_bfd_entry Using libopdis and BFD to disassemble an object file entry point
 As with disassembling a BFD section, a valid \e bfd object can be used to
 configure an \ref opdis_t. The \re opdis_disasm_bfd_entry function can be used
