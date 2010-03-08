@@ -1,8 +1,21 @@
 /*! \page howtos Howtos
 
+Specific instructions on using features of \e opdis and \e libopdis.
+<p>
+\ref howto_cli
+ - \ref howto_cli_map
+<p>
+\ref howto_app
+ - \ref howto_app_resolve
+<p>
+<hr>
+  
   \section howto_cli CLI usage
+  \subsection howto_cli_map Mapping memory regions
 
+<hr>
   \section howto_app Using libopdis
+  \subsection howto_app_resolve Resolving branch targets
 
 */
 

@@ -20,7 +20,7 @@
  \defgroup types Types
   Datatypes used by opdis.
 
- \defgroup x86 Support
+ \defgroup x86 x86 Support
   Built-in support for the x86 architecture.
   
 */

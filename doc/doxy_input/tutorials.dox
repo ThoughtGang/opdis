@@ -1,8 +1,18 @@
 /*! \page tutorials Tutorials
 
+Step-by-step guides to writing applications with \e libopdis.
+<p>
+\ref tute_disasm
+ - \ref tute_linear_disasm
+ - \ref tute_cflow_disasm
+ - \ref tute_bfd_disasm
+<p>
+<hr>
   \section tute_disasm Disassembly Tutorials
   \subsection tute_linear_disasm Writing a Linear Disassembler
+<hr>
   \subsection tute_cflow_disasm Writing a Control-flow Disassembler
-  \subsection tute_bfd Writing a BFD-based disassembler
+<hr>
+  \subsection tute_bfd_disasm Writing a BFD-based disassembler
 */
 

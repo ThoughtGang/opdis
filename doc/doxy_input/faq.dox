@@ -1,5 +1,88 @@
 /*! \page faq FAQ
 
-  \section faq_basic Basic  
+\ref General
+ - \ref faq_general_libopcodes
+ - \ref faq_general_objdump
+ - \ref faq_general_commercial
+<p>
+\ref opdis
+ - \ref faq_opdis_arch
+ - \ref faq_opdis_map
+ - \ref faq_opdis_map_size
+<p>
+\ref libopdis
+ - \ref faq_libopdis_arch
+ - \ref faq_libopdis_algo
+ - \ref faq_libopdis_bfd
+ - \ref faq_libopdis_cflow_arch
+ - \ref faq_libopdis_meta
+ - \ref faq_libopdis_decoder_when
+ - \ref faq_libopdis_decoder_work
+<p>
+<hr>
+  \section faq_general General
+<p>
+  \subsection faq_general_objdump Why use opdis instead of objdump?
+The GNU <em>objdump(1)</em> utility is intended to examine the output of the
+<em>gcc</em> compiler and the utilities in the GNU <em>binutils</em> 
+distribution. It cannot be used when examining file formats not supported by
+BFD (e.g. ROM images), and its disassembly options are limited.
+<p>
+The \e opdis utility is intended to complement \e objdump by providing a
+simple disassembler for object code. Features which distinguish \e opdis
+from \e objdump include:
+ - the ability to disassemble from an arbitrary starting point in a file
+ - the ability to disassemble a string of hex bytes (e.g. shellcode)
+ - a disassembly algorithm that follows control flow in the target
+ - support for custom output formats via a printf-style format string
+<p>
+The intended audience for \e opdis includes embedded system developers working 
+with ROM images, security personnel examining shellcode strings, and
+software developers reverse engineering hostile or non-BFD-compliant binaries.
+<p>
+
+  \subsection faq_general_libopcodes Why not use libopcodes directly?
+The \e libopcodes library is a very serviceable disassembler, but it has three
+shortcomings:
+ - it is under-documented, making it difficult for new users to understand
+ - its feature set is limited to the disassembly of a single address
+ - it is designed mainly to print disassembled instructions to a stream
+<p>
+This last point in particular makes \e libopcodes unsuitable for binary
+analysis.
+<p>
+
+  \subsection faq_general_commercial Can opdis or libopdis be used in commercial projects?
+Both opdis and libopdis are released under the terms of the GNU Public License 
+(http://www.gnu.org/licenses/gpl.txt). Companies that find the terms
+of the GPL too restrictive can contact community@thoughtgang.org to discuss
+alternate licensing terms.
+<p>
+<hr>
+  \section faq_opdis opdis
+<p>
+  \subsection faq_opdis_arch What target architectures does opdis support?
+<p>
+  \subsection faq_opdis_map What memory maps used for?
+<p>
+  \subsection faq_opdis_map_size Why does a memory map size not limit disassembly?
+<p>
+<hr>
+  \section faq_libopdis libopdis
+<p>
+  \subsection faq_libopdis_arch What target architectures does libopdis support?
+<p>
+  \subsection faq_libopdis_algo What is the difference between linear and control flow disassembly?
+<p>
+  \subsection faq_libopdis_bfd What are the various opdis_disasm_bfd functions used for?
+<p>
+  \subsection faq_libopdis_cflow_arch Why does control flow disassembly not work for a particular architecture?
+<p>
+  \subsection faq_libopdis_meta Why is metadata not being generated
+<p>
+  \subsection faq_libopdis_decoder_when When will additional decoders be made available?
+<p>
+  \subsection faq_libopdis_decoder_work How much work is it to write a decoder?
+<p>
 */
 
