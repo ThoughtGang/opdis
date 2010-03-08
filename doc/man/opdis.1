@@ -314,20 +314,9 @@ An \fBabsolute\fR operand has the following fields:
 \fIoffset\fR : An offset or VMA added to the value in the segment register. 
 
 .SH TARGETS
-A target is a buffer for disassembly. Targets may be decared in one of two ways: by specifying the specific bytes to disassemble in an argument to the \fB-b\fR option, or by declaring object file arguments on the command line. Targets are assigned an ID in the order they appear in the command line, with the first target given ID 1. The first target is always the default target for all operations. It is recommended that \fB--dry-run\fR be used to preview targets before performing disassembly.
+A target is a buffer for disassembly. Targets may be declared in one of two ways: by specifying the specific bytes to disassemble in an argument to the \fB-b\fR option, or by declaring object file arguments on the command line. Targets are assigned an ID in the order they appear in the command line, with the first target given ID 1. The first target is always the default target for all operations. It is recommended that \fB--dry-run\fR be used to preview targets before performing disassembly.
 .PP
-While it is possible to combine multiple targets, the VMAs of the targets must not overlap. For example,
-.IP
-opdis -b '74 50 90' -b 'cc cc cc cc'
-.PP
-will generate the output
-.IP
-0x0: 74 50                           je	0x0000000000000052
-0x1: CC                              int3	
-0x2: 90                              nop	
-0x3: CC                              int3
-.PP
-The disassembler checks for unique addresses while disassembling, and will not disassemble addresses it has already encountered. Thus, the single-byte CC instructions at offsets 0x0 and 0x2 in target 2 are not stored, as the addresses 0x0 and 0x2 have already been encountered in disassembly of target 1.
+The disassembler checks for unique addresses while disassembling, and will not disassemble addresses it has already encountered. Thus, while it is possible to combine multiple targets, the VMAs of the targets must not overlap. Note that when multiple \fB-b\fR options are provided, and the user has not specified any memory maps, \fBopdis\fR will map the bytes sequentially into memory starting at VMA 0x0. The options "-b '90 90 90 90' -b 'cc cc cc cc'" will result in a memory map from VMA 0x00-0x03 containing the contents of the first buffer, and a second map from VMA 0x04-0x07 containing the contents of the second buffer.
 .PP
 It is not possible to load targets with different architectures in the same invocation of \fBopdis\fR.
 
