@@ -1,15 +1,183 @@
 /*! \page getting_started Getting started with Opdis
 
-    \section Using opdis to disassemble an ELF binary
+This document provides some brief examples of how to use \e libopdis and the
+\e opdis command line utility.
 
-    \section Using opdis to disassemble a hex string
+ - \ref start_opdis_elf
+ - \ref start_opdis_bytes
+ - \ref start_opdis_main
+ - \ref start_libopdis_mem
+ - \ref start_libopdis_file
+ - \ref start_libopdis_bfd_section
+ - \ref start_libopdis_bfd_entry
+<p>
+<hr>
 
-    \section Using libopdis to disassemble a memory location
+    \section start_opdis_elf Using opdis to disassemble an ELF binary
 
-    \section Using libopdis to disassemble a file
+1. Use readelf to get the offset, size, and vma of the .text section.
+\code
+readelf -S a.out | grep -A 1 text
+  [14] .text             PROGBITS         0000000000401c20  00001c20
+       0000000000004de8  0000000000000000  AX       0     0     16
+\endcode
+This section can be mapped to the load address with the option
+<em>-m :0x1C20\@0x401C20+0x4DE8</em>.
+The section can be disassembled using the option
+<em>-l \@0x401C20+0x4DE8</em>.
 
-    \section Using libopdis and BFD to disassemble an ELF binary
+2. Use readelf to get the address of the \e main symbol.
+\code
+readelf -s dist/.libs/opdis | grep main
+    17: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main\@GLIBC_2.2.5 (3)
+   124: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main\@\@GLIBC_
+   208: 00000000004026c0  1417 FUNC    GLOBAL DEFAULT   14 main
+\endcode
+The symbol can be disassembled using <em>-c \@0x4026C0</em>.
 
-    \section Using libopdis and BFD to disassemble an MZ binary
+3. Run opdis to generate the disassembly.
+
+Linear disassembly of text section:
+\code
+opdis -m :0x1C20@0x401C20+0x4DE8 -l @0x401C20+0x4DE8
+\endcode
+
+Control-flow disassembly of entry point:
+\code
+opdis -m :0x1C20@0x401C20+0x4DE8 -c @0x4026C0
+\endcode
+
+<P>
+    \section start_opdis_bytes Using opdis to disassemble a hex string
+
+Enclose the hexadecimal bytes in quotes as an argument to the <em>-b</em> 
+option.
+
+\code
+opdis -b '90 90 90 90'
+opdis -b 'CC'
+opdis -b "`od -j 0x1C20 -t x1 -A x -N 16 -w16 dist/.libs/opdis | head -1 | cut -f 1 -d ' ' --complement `"
+\endcode
+
+<P>
+    \section start_opdis_main Using opdis to disassemble an object file symbol
+
+Use the <em>-N</em> option to disassemble a symbol in an object file using the 
+control-flow algorithm.
+\code
+opdis -N main a.out
+\endcode
+Note: Only symbols recognized by \e libbfd can be disassembled. Performing a 
+dry run of a BFD disassembly will list all available symbols:
+\code
+opdis --dry-run -B a.out
+\endcode
+<P>
+    \section start_libopdis_mem Using libopdis to disassemble a memory location
+First, an \ref opdis_buf_t must be allocated and filled with the contents of the
+memory location. The VMA of the memory location can be used as the VMA of the
+\ref opdis_buf_t. Next, an \ref opdis_t is created using the default values, 
+and \ref opdis_disasm_linear is used to disassemble the bytes.
+\code
+#include <opdis/opdis.h>
+
+void disassemble_mem( void * src, opdis_offset_t length ) {
+	opdis_t o;
+        opdis_buf_t buf = opdis_buf_alloc( length, (opdis_vma_t) src );
+	opdis_buf_fill( buf, 0, src, length );
+
+        o = opdis_init();
+        opdis_disasm_linear( o, buf, (opdis_vma_t) src, length );
+        opdis_term( o );
+}
+\endcode
+Note that the \ref opdis_t is never configured, so the default values are used.
+This means that the architecture is i386, the syntax is Intel, and the
+instructions are written to STDOUT.
+
+<P>
+    \section start_libopdis_file Using libopdis to disassemble a file
+This is the same as disassembling a memory location except that the opdis_buf_t
+is read from a file.
+\code
+#include <opdis/opdis.h>
+
+void disassemble_file( FILE * f, opdis_vma_t vma, opdis_offset_t offset ) {
+	opdis_t o;
+        opdis_buf_t buf = opdis_buf_read( f, 0, 0 );
+
+        o = opdis_init();
+        opdis_disasm_linear( o, buf, offset, length );
+        opdis_term( o );
+}
+\endcode
+
+<P>
+    \section start_libopdis_bfd_section Using libopdis and BFD to disassemble an object file section
+Initializing an \ref opdis_t from a valid \e bfd pointer will configure the
+target architecture automatically. A valid BFD section can then be disassembled
+using \ref opdis_disasm_bfd_section.
+\code
+#include <opdis/opdis.h>
+
+int disassemble_bfd_section( const char * filename, const char * sec_name ) {
+	opdis_t o;
+	struct bfd_section * section;
+        bfd *abfd = bfd_openr( filename, NULL );
+        if (! abfd  ) {
+                fprintf( stderr, "Unable to create BFD for %s\n", filename );
+                return 0;
+        }
+
+        if ( bfd_get_flavour( abfd ) == bfd_target_unknown_flavour ) {
+                fprintf( stderr, "Unknown BFD flavor: cannot continue\n" );
+                return 0;
+        }
+
+        section = bfd_get_section_by_name( abfd, sec_name );
+        if (! section ) {
+                fprintf( stderr, "Cannot find BFD section %s\n", sec_name );
+                return 0;
+        }
+
+        o = opdis_init_from_bfd( abfd );
+        opdis_disasm_bfd_section( o, section )
+        opdis_term( o );
+
+        return 1;
+}
+\endcode
+Note: \ref opdis_init_from_bfd only configures the architecture of the
+\ref opdis_t. The other options will be set to their defaults, e.g. the
+instructions will be printed to STDOUT.
+
+<P>
+    \section start_libopdis_bfd_entry Using libopdis and BFD to disassemble an object file entry point
+As with disassembling a BFD section, a valid \e bfd object can be used to
+configure an \ref opdis_t. The \re opdis_disasm_bfd_entry function can be used
+to disassemble the entry point of the object file, if one exists.
+\code
+#include <opdis/opdis.h>
+
+int disassemble_bfd_entry( const char * filename ) {
+	opdis_t o;
+        bfd *abfd = bfd_openr( filename, NULL );
+        if (! abfd  ) {
+                fprintf( stderr, "Unable to create BFD for %s\n", filename );
+                return 0;
+        }
+
+        if ( bfd_get_flavour( abfd ) == bfd_target_unknown_flavour ) {
+                fprintf( stderr, "Unknown BFD flavor: cannot continue\n" );
+                return 0;
+        }
+
+        o = opdis_init_from_bfd( abfd );
+        opdis_disasm_bfd_entry( o, abfd )
+        opdis_term( o );
+
+        return 1;
+}
+\endcode
 */
 
