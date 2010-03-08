@@ -539,6 +539,25 @@ static void load_bfd_targets( struct opdis_options * opts ) {
 	}
 }
 
+static void map_buffer_args( struct opdis_options * opts ) {
+	tgt_list_item_t * tgt;
+	unsigned int id = 1;
+	opdis_vma_t vma = 0;
+
+	/* user has manually mapped memory: defer to them */
+	if ( opdis_tree_count( opts->map ) ) {
+		return;
+	}
+
+	for ( tgt = opts->targets->head; tgt; id++, tgt = tgt->next ) {
+		/* map all buffers sequentially into memory */
+		if ( tgt->type == tgt_bytes ) {
+			mem_map_add( opts->map, id, 0, tgt->data->len, vma );
+			vma += tgt->data->len;
+		}
+	}
+}
+
 static void configure_opdis( struct opdis_options * opts ) {
 	opdis_t o = opts->opdis;
 	const bfd_arch_info_type * arch_info = bfd_scan_arch( opts->arch_str );
@@ -692,6 +711,8 @@ int main( int argc, char ** argv ) {
 		fprintf( stderr, "No targets specified! Use -? for help.\n" );
 		return 1;
 	}
+
+	map_buffer_args( & opts );
 
 	configure_opdis( & opts );
 	set_job_opts( &opts, &job_opts );
