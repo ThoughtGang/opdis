@@ -24,6 +24,7 @@ opdis [\fB\-c\fR|\fB\-\-cflow\fR=\fImemspec\fR]
       [\fB\-\-list\-disassembler\-options\fR]
       [\fB\-\-list\-syntaxes\fR]
       [\fB\-\-list\-formats\fR]
+      [\fB\-\-list\-bfd\-symbols\fR]
       [\fB\-\-dry\-run\fR]
       \fIobjfile\fR...
 .br
@@ -215,6 +216,12 @@ List the available output formats.
 .PD
 See \fB--format\fR.
 
+.IP \fB--list-bfd-symbols\fR
+.PD
+List the symbols found in a BFD target.
+.PD
+See \fBBFD SUPPORT\fR.
+
 .IP \fB--dry-run\fR
 .PD
 Print a list of the targets, jobs, and memory maps without actually doing any disassembly.
@@ -348,7 +355,8 @@ The format for specifying a \fIbfdname\fR is
 .IP
 [target:]name
 .PP
-where \fBtarget\fR is the ID of the target containing the symbol and \fBname\fR is a valid BFD symbol. The \fBtarget\fR is only required if more than one target is being disassembled.
+where \fBtarget\fR is the ID of the target containing the symbol and \fBname\fR is a valid BFD symbol. The \fBtarget\fR is only required if more than one target is being disassembled. A list of symbols found in a target can be printed to
+STDOUT by using the \fB--list-bfd-symbols\fR option.
 
 .SH ADDRESS FORMAT
 
