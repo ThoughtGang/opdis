@@ -84,7 +84,9 @@ static struct argp_option options[] = {
 	  "Print available syntax options"},
 	{ "list-formats", 4, 0, 0, 
 	  "Print available format options"},
-	{ "dry-run", 5, 0, 0, 
+	{ "list-bfd-symbols", 5, 0, 0, 
+	  "Print symbols found in BFD target"},
+	{ "dry-run", 6, 0, 0, 
 	  "Print out disasm jobs and exit"},
 	{0}
 };
@@ -116,6 +118,7 @@ struct opdis_options {
 	int 		list_disasm_opt;
 	int		list_syntax;
 	int		list_format;
+	int		list_symbols;
 	int		dry_run;
 	int		quiet;
 	int 		debug;
@@ -433,7 +436,8 @@ static error_t parse_arg( int key, char * arg, struct argp_state *state ) {
 		case 2: opts->list_disasm_opt = 1; break;
 		case 3: opts->list_syntax = 1; break;
 		case 4: opts->list_format = 1; break;
-		case 5: opts->dry_run = 1; break;
+		case 5: opts->list_symbols = 1; break;
+		case 6: opts->dry_run = 1; break;
 
 		case ARGP_KEY_ARG:
 			tgt_list_add( opts->targets, tgt_file, arg );
@@ -588,11 +592,6 @@ static void dry_run( struct opdis_options * opts ) {
 		printf( "Jobs:\n" );
 		job_list_print( opts->jobs, stdout );
 	}
-
-	if ( opts->bfd_all_targets || opts->bfd_targets ) {
-		printf( "BFD Symbols:\n" );
-		tgt_list_foreach( opts->targets, print_target_syms, NULL );
-	}
 }
 
 /* ---------------------------------------------------------------------- */
@@ -629,6 +628,15 @@ static void list_format() {
 	printf( "\txml\t: XML representation\n" );
 	printf( "\t(format string)\n" );
 }
+
+static void list_bfd_symbols( struct opdis_options * opts ) {
+
+	if ( opts->bfd_all_targets || opts->bfd_targets ) {
+		printf( "BFD Symbols:\n" );
+		tgt_list_foreach( opts->targets, print_target_syms, NULL );
+	}
+}
+
 /* ---------------------------------------------------------------------- */
 /* MAIN */
 int main( int argc, char ** argv ) {
@@ -669,6 +677,11 @@ int main( int argc, char ** argv ) {
 	}
 
 	load_bfd_targets( & opts );
+
+	if ( opts.list_symbols ) {
+		list_bfd_symbols( & opts );
+		return 0;
+	}
 
 	if ( opts.dry_run ) {
 		dry_run( & opts );
