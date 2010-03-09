@@ -9,11 +9,40 @@
 
 #include <opdis/opdis.h>
 
-int main( int argc, char ** argv ) {
+static void display_insn( const opdis_insn_t * insn, void * arg ) {
+	const char * filename = (const char *) arg;
+	printf( "%08X [%s:%X]\t%s\n", insn->vma, filename, insn->offset,
+		insn->ascii );
+}
+
+static int disassemble_file( const char * name, opdis_off_t offset,
+			     opdis_off_t length ) {
+	int rv;
 	FILE * f;
-	long size;
 	opdis_t o;
 	opdis_buf_t buf;
+
+	f = fopen( name, "r" );
+	if (! f ) {
+		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
+		return -1;
+	}
+
+	buf = opdis_buf_read( f, 0, 0 );
+
+	fclose( f );
+
+	o = opdis_init();
+	opdis_set_display( o, display_insn, (void *) name );
+
+	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
+
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+
+int main( int argc, char ** argv ) {
 	opdis_off_t offset = 0;
 	opdis_off_t length = 0;
 
@@ -26,21 +55,5 @@ int main( int argc, char ** argv ) {
 			length = (opdis_off_t) strtoul( argv[3], NULL, 0 );
 		}
 	}
-
-	f = fopen( argv[1], "r" );
-	if (! f ) {
-		printf( "Unable to open file %s: %s\n", argv[1], 
-			strerror(errno) );
-		return -1;
-	}
-
-	buf = opdis_buf_read( f, 0, 0 );
-
-	fclose( f );
-
-	o = opdis_init();
-	opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
-	opdis_term( o );
-	
-	return 0;
+	return disassemble_file( argv[1], offset, length );
 }
