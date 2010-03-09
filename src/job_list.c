@@ -327,6 +327,10 @@ static int perform_job( job_list_item_t * job, job_opts_t o ) {
 	}
 
 	target = tgt_list_find( o->targets, job->target );
+	if (! target ) {
+		fprintf( stderr, "Unable to find target %d\n", job->target );
+		return 0;
+	}
 
 	/* attempt to get VMA from memory map */
 	if ( job->vma == OPDIS_INVALID_ADDR ) {
