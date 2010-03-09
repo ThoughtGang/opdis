@@ -27,11 +27,11 @@
  */
 enum opdis_insn_decode_t {
 	opdis_decode_invalid = 0,	/*!< invalid instruction */
-	opdis_decode_basic = 1,		/*!< ascii, offset, vma, bytes */
+	opdis_decode_basic = 1,		/*!< ascii, offset, vma, size, bytes */
 	opdis_decode_mnem = 2,		/*!< mnemonic, prefixes parsed */
-	opdis_decode_ops = 4,		/*!< operands parsed */
-	opdis_decode_mnem_flags = 8,	/*!< insn flags decoded */
-	opdis_decode_op_flags = 16	/*!< operand flags decoded */
+	opdis_decode_ops = 4,		/*!< operand list and dest/src/tgt */
+	opdis_decode_mnem_flags = 8,	/*!< insn category, flags decoded */
+	opdis_decode_op_flags = 16	/*!< operand category, flags decoded */
 };
 
 /* ---------------------------------------------------------------------- */
@@ -47,7 +47,7 @@ enum opdis_insn_decode_t {
  * \struct opdis_reg_t 
  * \ingroup model
  * \brief CPU Register operand
- * \details A register operand.
+ * \details A register operand, e.g. EAX in the x86 architecture.
  * \sa opdis_op_t
  */
 typedef struct {
@@ -61,7 +61,7 @@ typedef struct {
  * \struct opdis_abs_addr_t 
  * \ingroup model
  * \brief An absolute address operand
- * \details A segment:offset address.
+ * \details A segment:offset address, eg CS:0x401000 in the x86 architecture.
  * \sa opdis_op_t
  */
 typedef struct {
@@ -104,8 +104,20 @@ enum opdis_addr_expr_shift_t {
  * \struct opdis_addr_expr_t 
  * \ingroup model
  * \brief An address expression operand
- * \details An address expression or "effective address" operand.
- *          scale, index, base.
+ * \details An address expression or "effective address" operand. This consists
+ *          of a displacement or absolute address, a base register, an index
+ *          register, a scale factor, and a scale operation. All of these
+ *          components are optional. The general format in x86 is
+ *          \code
+ *          segment:[base + index * scale + displacement]
+ *          \endcode
+ *          for Intel syntax and
+ *          \code
+ *          segment:displacement(base,index,scale)
+ *          \endcode
+ *          for AT&T syntax.<p>
+ *          In general, the scale operation is always a left shift, though in
+ *          the ARM architecture additional scale operations can be specified.
  * \sa opdis_op_t
  */
 typedef struct {
@@ -125,7 +137,7 @@ typedef struct {
  * \struct opdis_op_t 
  * \ingroup model
  * \brief Operand object
- * \details  An instruction operand.
+ * \details  An instruction operand (i.e. an argument to a CPU opcode).
  * \sa opdis_insn_t
  */
 
@@ -158,7 +170,8 @@ typedef struct {
  * \ingroup model
  * \brief Instruction object
  * \details A disassembled instruction. Depending on the decoder, some or
- *          all of the fields will be set.
+ *          all of the fields will be set. The \e status field specifies 
+ *	    what information is present.
  * \note The \e ascii field always contains the raw libopcodes output
  *       for the instruction.
  * \note The \e offset field is always set to the offset of the instruction
@@ -186,9 +199,9 @@ typedef struct {
 	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */
 	char * prefixes;		/*!< Array of prefix strings */
 
-	char * mnemonic;		/*!< ASCII mnemonic for insn */
-	enum opdis_insn_cat_t category;	/*!< Type of insn */
-	enum opdis_insn_subset_t isa;	/*!< Subset of ISA for insn */
+	char * mnemonic;		/*!< ASCII mnemonic for insn opcode */
+	enum opdis_insn_cat_t category;	/*!< Type of insn opcode */
+	enum opdis_insn_subset_t isa;	/*!< Subset of ISA for insn opcode */
 	union {
 		enum opdis_cflow_flag_t cflow;	/*!< Control flow insn flags */
 		enum opdis_stack_flag_t stack;	/*!< Stack insn flags */

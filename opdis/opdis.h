@@ -54,9 +54,9 @@ typedef int (*OPDIS_HANDLER) ( const opdis_insn_t * i, void * arg );
  * The default handler returns true unless the instruction is invalid or
  * if the address has already been visited.
  * \note The default handler callback takes an opdis_t as the \e arg
- *       parameter. If this parameter is NULL, the handler will not
- *       check if an address has already been visited (which could
- *       lead to cflow disassembler loops).
+ *       parameter. If this parameter is NULL, or if the \e visited_addr
+ *       field of the opdis_t is NULL, the handler will not check
+ *       check if an address has already been visited.
  */
 int opdis_default_handler( const opdis_insn_t * i, void * arg );
 
