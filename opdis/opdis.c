@@ -436,7 +436,7 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
 	return disasm_linear( o, vma, length );
 }
 
-static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
+static int disasm_cflow(opdis_t o, opdis_vma_tree_t tree, opdis_vma_t vma) {
 	int cont = 1;
 	unsigned int count = 0;
 	opdis_off_t pos = vma;
@@ -480,27 +480,25 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 			cont = 0;
 		}
 
-		if ( opdis_insn_is_branch( insn ) ) {
-			opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
-			/* recurse on branch target */
-			if ( vma == OPDIS_INVALID_ADDR ) {
-				opdis_debug( o, 2, "Cannot Resolve: %s",
-					     insn->ascii );
-			} else if ( vma < o->config.buffer_vma || 
-				    vma >= max_pos ) {
-				opdis_debug( o, 2, 
-					"Branch target %p not in buffer %p", 
-			    		(void *) vma, 
-					(void *) o->config.buffer_vma );
-			} else if ( opdis_vma_tree_contains( o->visited_addr, 
-							     vma) ) {
-				opdis_debug( o, 3, "VMA %p already visited\n",
-			    		(void *) vma );
-			} else {
-				opdis_debug( o, 2, "CFLOW BRANCH START: %p",
-						(void *) vma );
-				count +=  disasm_cflow( o, vma );
-			}
+		if (! opdis_insn_is_branch( insn ) ) {
+			/* no need for further processing */
+			continue;
+		}
+
+		opdis_vma_t vma = o->resolver( insn, o->resolver_arg );
+		/* recurse on branch target */
+		if ( vma == OPDIS_INVALID_ADDR ) {
+			opdis_debug( o, 2, "Cannot Resolve: %s", insn->ascii );
+		} else if ( vma < o->config.buffer_vma || vma >= max_pos ) {
+			opdis_debug( o, 2, "Branch target %p not in buffer %p", 
+				(void *) vma, (void *) o->config.buffer_vma );
+		} else if ( opdis_vma_tree_add( tree, vma ) ) {
+			opdis_debug( o, 2, "CFLOW BRANCH START: %p", 
+				     (void *) vma );
+			count +=  disasm_cflow( o, tree, vma );
+		} else {
+			opdis_debug( o, 3, "VMA %p already visited\n",
+				     (void *) vma );
 		}
 	}
 
@@ -510,15 +508,16 @@ static int disasm_cflow(opdis_t o, opdis_vma_t vma) {
 }
 
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, opdis_vma_t vma ) {
-
-	if (! o->visited_addr ) {
-		/* ensure visited address tree is initialized */
-		o->visited_addr = opdis_vma_tree_init();
-	}
+	int count;
+	opdis_vma_tree_t tree = opdis_vma_tree_init();
 
 	set_opdis_buffer( o, buf );
 
-	return disasm_cflow( o, vma );
+	count = disasm_cflow( o, tree, vma );
+
+	opdis_vma_tree_free( tree );
+
+	return count;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -603,6 +602,8 @@ int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
 
 int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 	int count;
+	opdis_vma_tree_t tree;
+
 	if (! o || ! abfd ) {
 		return 0;
 	}
@@ -611,12 +612,11 @@ int LIBCALL opdis_disasm_bfd_cflow( opdis_t o, bfd * abfd, opdis_vma_t vma ) {
 		return 0;
 	}
 
-	if (! o->visited_addr ) {
-		/* ensure visited address tree is initialized */
-		o->visited_addr = opdis_vma_tree_init();
-	}
+	tree = opdis_vma_tree_init();
 
-	count = disasm_cflow( o, vma );
+	count = disasm_cflow( o, tree, vma );
+
+	opdis_vma_tree_free( tree );
 
 	free( o->config.buffer );
 	o->config.buffer = NULL;
@@ -642,20 +642,16 @@ int LIBCALL opdis_disasm_bfd_section( opdis_t o, asection * sec ) {
 
 int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 	int count;
+	opdis_vma_tree_t tree;
 	asection * sec = sym->section;
 	if (! o || ! sym || ! sec ) {
 		return 0;
 	}
 
-	if (! o->visited_addr ) {
-fprintf( stderr, "CREATING TREE\n" );
-		/* ensure visited address tree is initialized */
-		o->visited_addr = opdis_vma_tree_init();
-	}
-
 	if ( load_section( o, sec ) ) {
-fprintf( stderr, "TREE %p\n", o->visited_addr );
-		count = disasm_cflow( o, sym->value );
+		tree = opdis_vma_tree_init();
+		count = disasm_cflow( o, tree, sym->value );
+		opdis_vma_tree_free( tree );
 		free( o->config.buffer );
 		o->config.buffer = NULL;
 	}

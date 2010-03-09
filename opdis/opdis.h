@@ -270,6 +270,15 @@ typedef struct {
 
 	/*! \var visited_addr
 	 *  \brief Index of all VMAs that have been disassembled and displayed.
+	 *  \details A tree of all instructions that have been disassembled.
+	 *   If this is non-NULL, the default handler will check if the VMA
+	 *   for the current instruction is in the tree. If not, the instruction
+	 *   is added to the tree and the handler returns 1 (i.e. instruction
+	 *   will be displayed). Otherwise, the handler returns 0 (do not
+	 *   display the instruction, and stop disassembly).
+	 *   \note Use of the visited addresses tree will ensure that no
+	 *         duplicate instructions are emitted, but will noticably 
+	 *         slow down disassembly.
 	 */
 	opdis_vma_tree_t visited_addr;
 
