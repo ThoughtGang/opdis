@@ -68,11 +68,13 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 \endcode
 <p>
 
-3. Add a call to \ref opdis_disasm_linear to perform the disassembly.
+3. Add a \ref opdis_t and a call to \ref opdis_disasm_linear to perform the 
+   disassembly.
 \code
 static int disassemble_file( const char * name, opdis_off_t offset,
 			     opdis_off_t length ) {
 	int rv;
+	opdis_t o;
 
 	/* ... */
 
@@ -101,7 +103,7 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 	/* ... */
 
 	o = opdis_init();
-	opdis_set_display( o, display_insn, name );
+	opdis_set_display( o, display_insn, (void *) name );
 
 	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
 	opdis_term( o );
@@ -157,10 +159,12 @@ int main( int argc, char ** argv ) {
 \endcode
 <p>
 
-2. Add a call to \ref opdis_disasm_cflow to perform the disassembly.
+2. Add an \ref opdis_t and a call to \ref opdis_disasm_cflow to perform the 
+   disassembly.
 \code
 static int disassemble_file( const char * name, opdis_off_t offset) {
 	int rv;
+	opdis_t o;
 
 	/* ... */
 
@@ -217,7 +221,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
 
-	opdis_insn_tree_delete( tree );
+	opdis_insn_tree_free( tree );
 	opdis_term( o );
 	
 	return (rv > 0) ? 0 : -2;
@@ -238,7 +242,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 	/* ... */
 
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
-	opdis_insn_tree_foreach( tree, print_insn, name );
+	opdis_insn_tree_foreach( tree, print_insn, (void *) name );
 
 	/* ... */
 }
@@ -248,7 +252,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 <hr>
   \subsection tute_bfd_disasm Writing a BFD-based disassembler
  This tutorial demonstrates how to write a simple disassembler that performs
- control-flow disassembly on a BFD entry point.
+ control-flow disassembly on a BFD symbol.
 
 1. Create a \b main() as in \ref tute_cflow_linear.
 \code
@@ -280,7 +284,7 @@ static int disassemble_file( const char * name, const char * symbol ) {
 	bfd * abfd;
 
 	abfd = bfd_openr( name, NULL );
-	if (! bfd ) {
+	if (! abfd ) {
 		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
 		return -1;
 	}
@@ -385,7 +389,7 @@ static int disassemble_file( const char * name, const char * symbol ) {
 
 	/* ... */
 
-	o = opdis_init();
+	o = opdis_init_from_bfd( abfd );
 	rv = opdis_disasm_bfd_symbol( o, sym );
 	opdis_term( o );
 
