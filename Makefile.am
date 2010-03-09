@@ -14,7 +14,8 @@ lib_LTLIBRARIES = dist/libopdis.la
 # lib_LIBRARIES = dist/libopdis.a
 
 # Test programs to be built by 'make check'
-check_PROGRAMS = test/tree_test test/disasm_cflow test/disasm_linear
+check_PROGRAMS = test/tree_test test/disasm_cflow test/disasm_linear \
+		 test/disasm_bfd test/howto_callbacks
 
 # Test programs to be run by 'make check'
 TESTS = test/tree_test
@@ -49,6 +50,10 @@ test_disasm_cflow_SOURCES = test/disasm_cflow.c
 test_disasm_cflow_LDADD = dist/libopdis.la -lbfd -lopcodes 
 test_disasm_linear_SOURCES = test/disasm_linear.c
 test_disasm_linear_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_disasm_bfd_SOURCES = test/disasm_bfd.c
+test_disasm_bfd_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_howto_callbacks_SOURCES = test/howto_callbacks.c
+test_howto_callbacks_LDADD = dist/libopdis.la -lbfd -lopcodes 
 
 # ----------------------------------------------------------------------
 # DOXYGEN TARGET
