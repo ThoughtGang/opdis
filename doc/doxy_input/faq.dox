@@ -18,9 +18,10 @@
 \ref libopdis
  - \ref faq_libopdis_arch
  - \ref faq_libopdis_algo
+ - \ref faq_libopdis_vma
  - \ref faq_libopdis_bfd
- - \ref faq_libopdis_cflow_arch
  - \ref faq_libopdis_meta
+ - \ref faq_libopdis_cflow_arch
  - \ref faq_libopdis_decoder_when
  - \ref faq_libopdis_decoder_work
 <p>
@@ -70,7 +71,7 @@ alternate licensing terms.
 
   \subsection faq_opdis_arch What target architectures does opdis support?
 \b opdis will support whatever architectures are supported by the 
-locally-installed GBU \b binutils. A list of supported architectures can be 
+locally-installed GNU \b binutils. A list of supported architectures can be 
 displayed by using the <b>--list-architectures</b> option.
 <p>
 Note that while an architecture is supported, it may not support advanced 
@@ -297,35 +298,30 @@ bash$ opdis -f '%a %i\n' -E /bin/ls  | head -3
 0x4026e2 mov    %rdx,%r9
 0x4026e5 pop    %rsi
 \endcode
-
 \code
 bash$ opdis -f '%ao %l [%b]\n' -E /bin/ls  | head -3
 0x0 2 [31 ED]
 0x2 3 [49 89 D1]
 0x5 1 [5E]
 \endcode
-
 \code
 bash$ opdis -f '[%a]%p %m\t%o\t# %b\n' -E /bin/ls  | head -3
 [0x4026e0] xor	%ebp, %ebp	# 31 ED
 [0x4026e2] mov	%rdx, %r9	# 49 89 D1
 [0x4026e5] pop	%rsi	# 5E
 \endcode
-
 \code
 bash$ opdis -f '%m\t%os%?,%od\n' -E /bin/ls  | head -3
 xor	%ebp,%ebp
 mov	%rdx,%r9
 pop	%rsi
 \endcode
-
 \code
 opdis -f '%ao: %b "%bC"\n' -E /bin/ls  | head -3
 0x0: 31 ED "1 í"
 0x2: 49 89 D1 "I  Ñ"
 0x5: 5E "^"
 \endcode
-
 \code
 bash$ opdis -f '%a %i\t#%iC%?:%iF\n' -E /bin/ls  | head -3
 0x4026e0 xor    %ebp,%ebp	#bitwise:bitwise xor
@@ -384,31 +380,147 @@ contiguous memory region.
   \subsection faq_opdis_map_size Why does a memory map size not limit disassembly?
 The memory maps are only used when scheduling jobs. Once disassembly starts,
 libopcodes is invoked in a loop using the \b disassemble_info structure
-contained in the \ref opdis_t. This structure uses the target buffer to
+contained in the \ref opdis_\codet. This structure uses the target buffer to
 determine the bounds of disassembly.
 <p>
 <hr>
   \section faq_libopdis libopdis
 <p>
   \subsection faq_libopdis_arch What target architectures does libopdis support?
+\b libopdis will support whatever architectures are supported by the 
+locally-installed GNU \b binutils. The list of architectures and file formats
+that \b binutils supports can be displayed by running <em>objdump -i</em>.
+<p>
+Note that basic support for an architecture only means that the \e ascii, 
+\e offset, \e vma, \e size, and \e bytes fields of the \ref opdis_insn_t are
+guaranteed to be filled. All other fields, including the operand list,
+require that an architecture-specific decoder function be invoked by
+\b libopdis. Use the \e status field to determine if any of these additional
+fields have been filled.
+<p>
+Currently, \b libopdis ships only with an i386 (x86, x86-64) decoder.
 <p>
 
   \subsection faq_libopdis_algo What is the difference between linear and control flow disassembly?
+Most disassemblers, including <b>objdump(1)</b>, implement what is known as
+\e linear or <em>linear sweep</em> disassembly: the algorithm starts
+disassembly at a given entry point, using the byte after a disassembled
+instruction as the start of the next instruction. This type of disassembly
+is fast and easy to implement, as there is no analysis of the instruction
+needed, and no danger of getting caught in an endless loop.
+<p>
+<em>Control-flow</em> disassembly attempts to follow the flow of control in
+a program as it disassembles instructions. The algorithm starts disassembly 
+at an entry point, then examines the instruction to see if it is a branch
+(call or conditional jump), a jump, or a return. Branch instructions and jump
+instructions examine the target operand and begin disassembly at that
+location. Once the disassembly of the target operand is complete, branch 
+instructions will continue disassembly at the byte after the current 
+instruction, while jump instructions will stop disassemby. Return instructions 
+always halt disassembly.
+<p>
+The implementation of control-flow disassembly is much more tricky than
+linear disassembly. A list of disassembled addresses must be maintained to
+avoid getting trapped in an endless loop (this may be reduced to a list of
+branch targets that have been visited, at the price of redundant disassembly).
+Each instruction must be analyzed to determine if it is a branch, jump, or
+return; in addition, the operand of these instructions must be analyzed
+and resolved to a vma if it is a register or reference.
+<p>
+While control-flow disassembly is more accurate than linear disassembly, it
+is still not perfect: instructions found by a linear disassembler might only
+be reachable by jumping to the contents of a register. It is recommended that
+control flow disassembly of the symbols and entry point in a program be
+supplemented by the linear disassembly of all executable and loadable sections
+in the program: instructions which are duplicates or which begin inside of
+existing instructions should be discarded.
+<p>
+
+  \subsection faq_libopdis_vma What is the difference between a vma and an offset?
+<p>
+An offset is an index into a buffer of bytes, with offset 0 being the first
+item of the buffer and offset (buffer.size - 1) being the offset of the last
+item in the buffer. 
+<p>
+A \e vma or <em>virtual memory address</em> is the load address of an offset.
+Some buffer contents (e.g. an executable code segment in a binary file)
+assume they have been loaded to a specific virtual address; this virtual
+address is used as the vma for the buffer. This vma is added to an offset into
+the buffer in order to determine the vma for an instruction.
+<p>
+A buffer can always have a load address of 0, meaning that the vma and the 
+offset will be identical for its contents.
 <p>
 
   \subsection faq_libopdis_bfd What are the various opdis_disasm_bfd functions used for?
+The BFD support provided by \b libopdis consists of a configuration function and
+five disassembly functions:
+ - \ref opdis_init_from_bfd : create an \ref opdis_t from a \b bfd object
+ - \ref opdis_disasm_bfd_linear : linear disassembly on a vma in a \b bfd object
+ - \ref opdis_disasm_bfd_cflow : control-flow disassembly on a vma in a \b bfd object
+ - \ref opdis_disasm_bfd_section : linear disassembly on a \b bfd section
+ - \ref opdis_disasm_bfd_symbol : control-flow disassembly on a \b bfd symbol
+ - \ref opdis_disasm_bfd_entry : control-flow disassembly on the entry point of a \b bfd object
+Using \b libbfd to manage \b libopdis targets has some advantages and 
+disadvantages. On the positive side, it simplifies the loading of the target
+by detecting the architecture, and provides access to symbolic information
+such as program sections and symbol tables. On the negative side, \b libbfd
+will fail to load a file which has malformed or missing headers, or which
+is not in a recognized file format.
+<p>
+It is recommended that users employ the BFD API where suitable, while 
+keeping the standard API in reserve to handle files that BFD fails to load.
+<p>
+
+  \subsection faq_libopdis_meta Why is metadata not being generated for a particular architecture?
+The disassembly generated by \b libopcodes is a sequence of strings intended
+for writing to a stream. There is no metadata, so the strings must be
+examined to determine which are mnemonics and which are operands, and which
+of these are branch/jump/return instructions and what their targets are.
+<p>
+This means that the logic which generates an \ref opdis_insn_t from 
+\b libopcodes output must be able to parse every assembly language that is
+supported by GNU \b binutils. Doing do would, it goes without saying, be
+a long and time-consuming endeavor that only delay the release of 
+\b libopdis. Instead, metadata support for the x86 architecture has been 
+provided, and support for additional architectures will be add as time and 
+merit warrant.
 <p>
 
   \subsection faq_libopdis_cflow_arch Why does control flow disassembly not work for a particular architecture?
+The control-flow algorithm requires that metadata be generated for every
+instruction disassembled by \b libopcodes. As discussed in 
+\ref faq_libopdis_meta, this is infeasible, so most architectures supported
+by \b libopcodes will have no metadata generated by \b libopdis.
 <p>
-
-  \subsection faq_libopdis_meta Why is metadata not being generated
+Those in need of control-flow disassembly on an architecture for which 
+metadata support is missing may want to write their own decoder callback
+(see \ref faq_libopdis_decoder_work) to provide the metadata to \b libopdis.
 <p>
 
   \subsection faq_libopdis_decoder_when When will additional decoders be made available?
+There are currently no plans to develop additional decoders for \b libopdis;
+the x86 decoder currently meets the needs of the \b libopdis developers. If
+there is sufficient demand, work might begin on ARM, SPARK, or IA-64 decoders.
+Submissions of decoder implementations for any architecture are of course
+welcome.
 <p>
 
   \subsection faq_libopdis_decoder_work How much work is it to write a decoder?
+As discussed in \ref faq_libopdis_meta, \b libopcodes generates a sequence of
+strings for each instruction; \b libopdis stores these in an \ref insn_buf_t.
+This means that a decoder must scan through a list of strings in order to
+detect instruction mnemonics and operands.
+<p>
+For the simple case of supporting control-flow disassembly, this is not
+too much work.  The decoder can scan for the handful of relevant instructions,
+then generate an operand for the branch target and set all relevant metadata
+(instruction category, instruction flags, operand category, operand
+flags, instruction target operand pointer).
+<p>
+More complete support of an architecture, such as detection of register
+flags or stack trap instruction types, is a great deal of work, and should
+ideally be automated. 
 <p>
 */
 
