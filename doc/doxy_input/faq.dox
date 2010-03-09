@@ -554,5 +554,6 @@ More complete support of an architecture, such as detection of register
 flags or stack trap instruction types, is a great deal of work, and should
 ideally be automated. 
 <p>
+\sa \ref howto_app_decoder.
 */
 
