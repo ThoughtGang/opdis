@@ -10,9 +10,394 @@ Step-by-step guides to writing applications with \e libopdis.
 <hr>
   \section tute_disasm Disassembly Tutorials
   \subsection tute_linear_disasm Writing a Linear Disassembler
+This tutorial demonstrates how to implement a very basic linear
+disassembler.
+<p>
+1. Create a basic \b main() to validate arguments and invoke a disassembly
+   routine.
+\code
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <opdis/opdis.h>
+
+static int disassemble_file( const char * name, opdis_off_t offset,
+			     opdis_off_t length ) {
+	return 0;
+}
+
+int main( int argc, char ** argv ) {
+	opdis_off_t offset = 0;
+	opdis_off_t length = 0;
+
+	if ( argc < 2 ) {
+		printf( "Usage: %s file [offset [len]]\n", argv[0] );
+		return 1;
+	} else if ( argc >= 3 ) {
+		offset = (opdis_off_t) strtoul( argv[2], NULL, 0 );
+		if ( argc >= 4 ) {
+			length = (opdis_off_t) strtoul( argv[3], NULL, 0 );
+		}
+	}
+	return disassemble_file( argv[1], offset, length );
+}
+\endcode
+<p>
+
+2. Create an \b opdis buffer from the input filename.
+\code
+static int disassemble_file( const char * name, opdis_off_t offset,
+			     opdis_off_t length ) {
+	FILE * f;
+	opdis_buf_t buf;
+
+	f = fopen( name, "r" );
+	if (! f ) {
+		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
+		return -1;
+	}
+
+	buf = opdis_buf_read( f, 0, 0 );
+
+	fclose( f );
+	
+	return 0;
+}
+\endcode
+<p>
+
+3. Add a call to \ref opdis_disasm_linear to perform the disassembly.
+\code
+static int disassemble_file( const char * name, opdis_off_t offset,
+			     opdis_off_t length ) {
+	int rv;
+
+	/* ... */
+
+	fclose( f );
+
+	o = opdis_init();
+	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+\endcode
+<p>
+
+4. Override the default display callback.
+<p>
+\code
+static void display_insn( const opdis_insn_t * insn, void * arg ) {
+	const char * filename = (const char *) arg;
+	printf( "%08X [%s:%X]\t%s\n", insn->vma, filename, insn->offset,
+		insn->ascii );
+}
+
+static int disassemble_file( const char * name, opdis_off_t offset,
+			     opdis_off_t length ) {
+	/* ... */
+
+	o = opdis_init();
+	opdis_set_display( o, display_insn, name );
+
+	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+\endcode
+<p>
+
 <hr>
   \subsection tute_cflow_disasm Writing a Control-flow Disassembler
+This tutorial demonstrates how to write a basic control-flow disassembler
+which stores instructions instead of displaying them immediately.
+
+1. Create a \b main() and function to load a buffer, as in 
+   \ref tute_cflow_linear.
+\code
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <opdis/opdis.h>
+
+static int disassemble_file( const char * name, opdis_off_t offset ) {
+	FILE * f;
+	opdis_buf_t buf;
+
+	f = fopen( name, "r" );
+	if (! f ) {
+		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
+		return -1;
+	}
+
+	buf = opdis_buf_read( f, 0, 0 );
+
+	fclose( f );
+	
+	return 0;
+}
+
+int main( int argc, char ** argv ) {
+	opdis_off_t offset = 0;
+
+	if ( argc < 2 ) {
+		printf( "Usage: %s file [offset]\n", argv[0] );
+		return 1;
+	} else if ( argc >= 3 ) {
+		offset = (opdis_off_t) strtoul( argv[2], NULL, 0 );
+	}
+	return disassemble_file( argv[1], offset );
+}
+\endcode
+<p>
+
+2. Add a call to \ref opdis_disasm_cflow to perform the disassembly.
+\code
+static int disassemble_file( const char * name, opdis_off_t offset) {
+	int rv;
+
+	/* ... */
+
+	fclose( f );
+
+	o = opdis_init();
+	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+\endcode
+<p>
+
+3. Override the default display callback with one that duplicates the 
+instruction.
+\code
+static void store_insn( const opdis_insn_t * insn, void * arg ) {
+	opdis_insn_t * i = opdis_insn_dupe( insn );
+}
+
+static int disassemble_file( const char * name, opdis_off_t offset ) {
+	/* ... */
+
+	o = opdis_init();
+	opdis_set_display( o, store_insn, NULL );
+
+	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+\endcode
+<p>
+
+4. Add an \ref opdis_insn_tree_t to store the instructions.
+\code
+static void store_insn( const opdis_insn_t * insn, void * arg ) {
+	opdis_insn_tree_t tree = (opdis_insn_tree_t) arg;
+	opdis_insn_t * i = opdis_insn_dupe( insn );
+
+	opdis_insn_tree_add( tree, i );
+}
+
+static int disassemble_file( const char * name, opdis_off_t offset ) {
+	opdis_insn_tree_t tree;
+
+	/* ... */
+
+	o = opdis_init();
+	tree = opdis_insn_tree_init( 1 );
+
+	opdis_set_display( o, store_insn, tree );
+
+	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+
+	opdis_insn_tree_delete( tree );
+	opdis_term( o );
+	
+	return (rv > 0) ? 0 : -2;
+}
+\endcode
+<p>
+
+5. Add code to print the tree after disassembly is complete.
+\code
+static int print_insn( opdis_insn_t * insn, void * arg ) {
+	const char * filename = (const char *) arg;
+	printf( "%08X [%s:%X]\t%s\n", insn->vma, filename, insn->offset,
+		insn->ascii );
+	return 1;
+}
+
+static int disassemble_file( const char * name, opdis_off_t offset ) {
+	/* ... */
+
+	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+	opdis_insn_tree_foreach( tree, print_insn, name );
+
+	/* ... */
+}
+\endcode
+<p>
+
 <hr>
   \subsection tute_bfd_disasm Writing a BFD-based disassembler
-*/
+ This tutorial demonstrates how to write a simple disassembler that performs
+ control-flow disassembly on a BFD entry point.
 
+1. Create a \b main() as in \ref tute_cflow_linear.
+\code
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <opdis/opdis.h>
+
+static int disassemble_file( const char * name, const char * symbol ) {
+	return 0;
+}
+
+int main( int argc, char ** argv ) {
+	if ( argc < 3 ) {
+		printf( "Usage: %s file name\n", argv[0] );
+		return 1;
+	}
+
+	return disassemble_file( argv[1], argv[2] );
+}
+\endcode
+<p>
+
+2. Write code to load the file using \b libbfd.
+\code
+static int disassemble_file( const char * name, const char * symbol ) {
+	bfd * abfd;
+
+	abfd = bfd_openr( name, NULL );
+	if (! bfd ) {
+		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
+		return -1;
+	}
+	if ( bfd_get_flavour( abfd ) == bfd_target_unknown_flavour ) {
+		printf( "BFD does not recognize file format for %s\n", name );
+		bfd_close( abfd );
+		return -2;
+	}
+
+	bfd_close( abfd );
+	return 0;
+}
+\endcode
+<p>
+
+3. Load the BFD symbol tables to find the symbol in the file.
+\code
+static asymbol * find_in_symtab( asymbol ** syms, unsigned int num_syms,
+				 const char * name ) {
+	unsigned int i;
+	symbol_info info;
+	asymbol * sym = NULL;
+
+	for ( i = 0; i < num_syms; i++ ) {
+		bfd_symbol_info( syms[i], &info );
+		if ( strcmp( info.name, name ) ) {
+			continue;
+		}
+		sym = malloc( sizeof(asymbol) );
+		if ( sym ) {
+			memcpy( sym, syms[i], sizeof(asymbol) );
+			break;
+		}
+	}
+
+	return sym;
+}
+
+static asymbol * find_bfd_symbol( bfd * abfd, const char * name ) {
+	size_t size;
+	unsigned int num;
+	asymbol ** syms, *s = NULL;
+
+	if (! bfd_get_file_flags(abfd) & HAS_SYMS ) {
+		return;
+	}
+
+	/* check dynamic symtab first */
+	size = bfd_get_dynamic_symtab_upper_bound( abfd );
+	if ( size > 0 ) {
+		syms = (asymbol **) malloc(size);
+		if ( syms ) {
+			num = bfd_canonicalize_dynamic_symtab( abfd, syms );
+			s = find_in_symtab( syms, num, name );
+			free(syms);
+		}
+	}
+	if ( s ) {
+		return s;
+	}
+
+	/* check regular symtab */
+	size = bfd_get_symtab_upper_bound( abfd );
+	if ( size > 0 ) {
+		syms = (asymbol **) malloc(size);
+		if ( syms ) {
+			num = bfd_canonicalize_symtab( abfd, syms );
+			s = find_in_symtab( syms, num, name );
+			free(syms);
+		}
+	}
+
+	return s;
+}
+
+static int disassemble_file( const char * name, const char * symbol ) {
+	bfd * abfd;
+	asymbol * sym;
+
+	/* ... */
+
+	sym = find_bfd_symbol( abfd, symbol );
+	if (! sym ) {
+		printf( "%s does not contain symbol '%s'\n", name, symbol );
+		return -3;
+	}
+
+	free( sym );
+	bfd_close( abfd );
+
+	return 0;
+}
+\endcode
+<p>
+
+4. Add an \ref opdis_t and a call to \ref opdis_disasm_bfd_symbol to perform 
+   control-flow disassembly on the symbol.
+\code
+static int disassemble_file( const char * name, const char * symbol ) {
+	int rv;
+	opdis_t o;
+
+	/* ... */
+
+	o = opdis_init();
+	rv = opdis_disasm_bfd_symbol( o, sym );
+	opdis_term( o );
+
+	free( sym );
+	bfd_close( abfd );
+
+	return 0;
+}
+\endcode
+<p>
+
+5. Add code to store instructions in an \ref opdis_insn_tree_t and print
+   the instructions after disassembly as demonstrated in \ref tute_cflow_disasm.
+<p>
+*/

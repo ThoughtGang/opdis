@@ -33,25 +33,26 @@ The libopdis library contains the core functionality; it uses linear and
 control-flow algorithms to generate instruction and operand objects. 
 </P>
 
-\subsection sec_libopdis_config Configuration
+\link configuration  Configuration \endlink
+<P>
 
-<P></P>
+\link disassembly Disassembly \endlink
+<P>
 
-\subsection sec_libopdis_disasm Disassembly
+\link model Data Model \endlink
+<P>
 
-<P></P>
-
-\subsection sec_libopdis_model Data Model
-
-<P></P>
+\link bfd BFD Support \endlink
+<P>
 
 \subsection sec_libopdis_link Linking to libopdis
 
-\ref opdis_insn_t
-
-\ref opdis_operand_t
-
-<P></P>
+<P>
+\b libopdis requires both \b libopcodes and \b libbfd :
+\code
+-lopdis -lopcodes -lbfd
+\endcode
+</P>
 
 <HR>
 \section sec_opdis opdis

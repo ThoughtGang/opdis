@@ -540,9 +540,9 @@ welcome.
 
   \subsection faq_libopdis_decoder_work How much work is it to write a decoder?
 As discussed in \ref faq_libopdis_meta, \b libopcodes generates a sequence of
-strings for each instruction; \b libopdis stores these in an \ref insn_buf_t.
-This means that a decoder must scan through a list of strings in order to
-detect instruction mnemonics and operands.
+strings for each instruction; \b libopdis stores these in an 
+\ref opdis_insn_buf_t. This means that a decoder must scan through a list of 
+strings in order to detect instruction mnemonics and operands.
 <p>
 For the simple case of supporting control-flow disassembly, this is not
 too much work.  The decoder can scan for the handful of relevant instructions,
