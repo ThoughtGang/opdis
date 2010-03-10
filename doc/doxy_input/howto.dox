@@ -80,7 +80,8 @@ The \b :, \b @, and \b + characters are delimiters indicating that what follows
 is an offset, a vma, or a size, respectively. These components may appear in
 any order, but the \b target must always be first as it is not delimited.
 Note that these values are all parsed with strtoul, and so they may appear
-in any supported base (octal, decimal, or hexadecimal).
+in any supported base (octal with a '0' prefix, decimal, or hexadecimal with
+a '0x' prefix).
 <p>
 The \b target, \b size, and \b offset components are all optional. The default
 value for \b target is 1, the ID of the first target. The default value for
@@ -97,33 +98,66 @@ Memory maps are generally used for the following purposes:
 
 Map the entirety of a.out to VMA 0x400000:
 \code
-opdis -m @0x400000 a.out
+opdis -m @0x400000 --dry-run a.out
 \endcode
 
 Map the entirety of a.out to VMA 0x400000 and the entirety of libc.so.6 to 
 0x7f626a934000:
 \code
-opdis -m @0x400000 -m 2:0x7f626a934000 a.out /usr/lib/libc.so.6
+opdis -m @0x400000 -m 2:0x7f626a934000 --dry-run a.out /usr/lib/libc.so.6
 \endcode
 
 Map offset 0x1000 of a.out to VMA 0x401000:
 \code
-opdis -m :0x1000@0x401000 a.out
+opdis -m :0x1000@0x401000 --dry-run a.out
 \endcode
 
 Map buffer 1 to 0x400000 and offset 0x1000 of a.out to VMA 0x401000:
 \code
-opdis -m 1@400000 -m 2:0x1000@0x401000 -b '7f 45 4c 46 02 01 01 00 00' a.out
+opdis -m 1@400000 -m 2:0x1000@0x401000 -b '7f 45 4c 46 02 01 01 00 00' --dry-run a.out
 \endcode
 
 Make buffer 1 and buffer 2 contiguous in memory:
 \code
-opdis -m 1@0 2@4 -b '2e 2e 74 50' -b '89 e1 31 d2'
+opdis -m 1@0 2@4 -b '2e 2e 74 50' -b '89 e1 31 d2' --dry-run
 \endcode
 
 Make buffer 2 and buffer 1 contiguous in memory:
 \code
-opdis -m 2@0 1@4 -b '2e 2e 74 50' -b '89 e1 31 d2'
+opdis -m 2@0 1@4 -b '2e 2e 74 50' -b '89 e1 31 d2' --dry-run
+\endcode
+
+Use \b ldd to determine the load address of a shared library:
+\code
+bash$ ldd a.out 
+        linux-vdso.so.1 =>  (0x00007fffc74cf000)
+        libssl.so.0.9.8 => /lib/libssl.so.0.9.8 (0x00007f0340274000)
+        libc.so.6 => /lib/libc.so.6 (0x00007f033ff05000)
+        libcrypto.so.0.9.8 => /lib/libcrypto.so.0.9.8 (0x00007f033fb7e000)
+        libdl.so.2 => /lib/libdl.so.2 (0x00007f033f97a000)
+        libz.so.1 => /lib/libz.so.1 (0x00007f033f763000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f03404c2000)
+bash$ opdis -m 2@0x7f0340274000 --dry-run a.out /usr/lib/libssl.so
+\endcode
+
+Use \b readelf to get the load address of the .text section for linear 
+disassembly:
+\code
+bash$ readelf a.out -S | grep -A 1 text
+  [14] .text             PROGBITS         00000000004005d0  000005d0
+       00000000000001f8  0000000000000000  AX       0     0     16
+bash$ opdis -m :0x5d0@0x4005d0+0x1f8 -l @0x4005d0 a.out
+\endcode
+
+Use \b readelf to get the executable program segment and program entry
+point for control-flow disassembly: 
+\code
+bash$ readelf a.out -l | grep -A 1 LOAD | grep -B 1 'R E'
+  LOAD           0x0000000000000000 0x0000000000400000 0x0000000000400000
+                 0x000000000000087c 0x000000000000087c  R E    200000
+bash$ readelf a.out -h | grep Entry
+  Entry point address:               0x4005d0
+bash$ opdis -m :@0x400000+0x87C -c @0x4005d0 a.out
 \endcode
 
 <p>
