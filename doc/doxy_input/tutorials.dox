@@ -121,6 +121,7 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 	return (rv > 0) ? 0 : -2;
 }
 \endcode
+\sa \ref howto_app_display
 <p>
 
 <hr>
@@ -215,6 +216,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 	return (rv > 0) ? 0 : -2;
 }
 \endcode
+\sa \ref howto_app_display
 <p>
 
 4. Add an \ref opdis_insn_tree_t to store the instructions.
