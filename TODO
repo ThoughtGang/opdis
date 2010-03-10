@@ -1,5 +1,4 @@
-* Note in docs on not using opdis_t across threads
-* asm_format output module
-* x86 decoder
-* generic decoder: use libopcodes info to set jump flags, etc if avail
-* fixed-size insn handling: update main opdis to support this
+fix opdis resolver
+opdis uses symtab toadd comments to cflow targets if symbol
+-s name@vma symbol option
+cflow goes through and flags insns as jump targets?
