@@ -96,6 +96,7 @@ The built-in output formats are:
  - dump : standard disassembled listing
  - delim : pipe-delimited table of instructions
  - xml : xml representation of instructions
+<p>
 The default output format is 'dump'.
 <p>
 The \b asm format consists of the libopcodes strings followed by a comment
@@ -345,6 +346,7 @@ will assign target IDs as follows:
  -# : buffer 'cc cc cc cc'
  -# : file 'a.out'
  -# : file 'rom.bin'
+<p>
 Use the <b>--dry-run</b> option to preview the target list.
 <p>
 
@@ -359,6 +361,7 @@ Memory maps have three main uses:
  - to change the VMA that appears in the output
  - to allow multiple files and buffers to appear contiguous in memory
  - to disassemble multiple targets
+<p>
 This last point is worth examining in more detail.
 <p>
 When \b opdis disassembles a target, it stores the disassembled instructions 
@@ -462,6 +465,7 @@ five disassembly functions:
  - \ref opdis_disasm_bfd_section : linear disassembly on a \b bfd section
  - \ref opdis_disasm_bfd_symbol : control-flow disassembly on a \b bfd symbol
  - \ref opdis_disasm_bfd_entry : control-flow disassembly on the entry point of a \b bfd object
+<p>
 Using \b libbfd to manage \b libopdis targets has some advantages and 
 disadvantages. On the positive side, it simplifies the loading of the target
 by detecting the architecture, and provides access to symbolic information

@@ -39,10 +39,10 @@ opdis -a i386:x86-64
 <p>
 
   \subsection howto_cli_disasm_opts Setting disassembler options
-The available disassembler options for an architecture can be displayed with
-the \b --list-disassembler-options option: 
+The available disassembler options for all supported architectures can be 
+displayed with the \b --list-disassembler-options option: 
 \code
-bash$ /opdis -a i386 --list-disassembler-options
+bash$ /opdis --list-disassembler-options
 
 The following i386/x86-64 specific disassembler options are supported for use
 with the -M switch (multiple options should be separated by commas):

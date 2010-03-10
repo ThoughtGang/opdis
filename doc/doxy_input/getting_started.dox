@@ -36,7 +36,7 @@ option.
 \code
 opdis -b '90 90 90 90'
 opdis -b 'CC'
-opdis -b "`od -j 0x1C20 -t x1 -A x -N 16 -w16 dist/.libs/opdis | head -1 | cut -f 1 -d ' ' --complement `"
+opdis -b "`od -j 0x1C20 -t x1 -A x -N 16 -w16 a.out | head -1 | cut -f 1 -d ' ' --complement `"
 \endcode
 <P>
 
@@ -55,7 +55,7 @@ The section can be disassembled using the option
 
 2. Use readelf to get the address of the \e main symbol.
 \code
-readelf -s dist/.libs/opdis | grep main
+readelf -s a.out | grep main
     17: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main\@GLIBC_2.2.5 (3)
    124: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main\@\@GLIBC_
    208: 00000000004026c0  1417 FUNC    GLOBAL DEFAULT   14 main

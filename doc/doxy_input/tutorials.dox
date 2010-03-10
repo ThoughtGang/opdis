@@ -25,6 +25,9 @@ disassembler.
 
 static int disassemble_file( const char * name, opdis_off_t offset,
 			     opdis_off_t length ) {
+
+	/* TODO: code to load and disassemble file */
+
 	return 0;
 }
 
@@ -41,6 +44,7 @@ int main( int argc, char ** argv ) {
 			length = (opdis_off_t) strtoul( argv[3], NULL, 0 );
 		}
 	}
+
 	return disassemble_file( argv[1], offset, length );
 }
 \endcode
@@ -61,6 +65,8 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 
 	buf = opdis_buf_read( f, 0, 0 );
 
+	/* TODO: code to disassemble file */
+
 	fclose( f );
 	
 	return 0;
@@ -76,12 +82,14 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 	int rv;
 	opdis_t o;
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 
 	fclose( f );
 
 	o = opdis_init();
+
 	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
+
 	opdis_term( o );
 	
 	return (rv > 0) ? 0 : -2;
@@ -100,12 +108,14 @@ static void display_insn( const opdis_insn_t * insn, void * arg ) {
 
 static int disassemble_file( const char * name, opdis_off_t offset,
 			     opdis_off_t length ) {
-	/* ... */
+
+	/* ... code from previous step(s) omitted ... */
 
 	o = opdis_init();
 	opdis_set_display( o, display_insn, (void *) name );
 
 	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );
+
 	opdis_term( o );
 	
 	return (rv > 0) ? 0 : -2;
@@ -140,6 +150,8 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 
 	buf = opdis_buf_read( f, 0, 0 );
 
+	/* TODO: code to disassemble file */
+
 	fclose( f );
 	
 	return 0;
@@ -154,6 +166,7 @@ int main( int argc, char ** argv ) {
 	} else if ( argc >= 3 ) {
 		offset = (opdis_off_t) strtoul( argv[2], NULL, 0 );
 	}
+
 	return disassemble_file( argv[1], offset );
 }
 \endcode
@@ -166,12 +179,14 @@ static int disassemble_file( const char * name, opdis_off_t offset) {
 	int rv;
 	opdis_t o;
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 
 	fclose( f );
 
 	o = opdis_init();
+
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+
 	opdis_term( o );
 	
 	return (rv > 0) ? 0 : -2;
@@ -187,12 +202,14 @@ static void store_insn( const opdis_insn_t * insn, void * arg ) {
 }
 
 static int disassemble_file( const char * name, opdis_off_t offset ) {
-	/* ... */
+
+	/* ... code from previous step(s) omitted ... */
 
 	o = opdis_init();
 	opdis_set_display( o, store_insn, NULL );
 
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
+
 	opdis_term( o );
 	
 	return (rv > 0) ? 0 : -2;
@@ -212,11 +229,10 @@ static void store_insn( const opdis_insn_t * insn, void * arg ) {
 static int disassemble_file( const char * name, opdis_off_t offset ) {
 	opdis_insn_tree_t tree;
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 
 	o = opdis_init();
 	tree = opdis_insn_tree_init( 1 );
-
 	opdis_set_display( o, store_insn, tree );
 
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
@@ -239,12 +255,13 @@ static int print_insn( opdis_insn_t * insn, void * arg ) {
 }
 
 static int disassemble_file( const char * name, opdis_off_t offset ) {
-	/* ... */
+
+	/* ... code from previous step(s) omitted ... */
 
 	rv = opdis_disasm_cflow( o, buf, (opdis_vma_t) offset );
 	opdis_insn_tree_foreach( tree, print_insn, (void *) name );
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 }
 \endcode
 <p>
@@ -264,6 +281,9 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 #include <opdis/opdis.h>
 
 static int disassemble_file( const char * name, const char * symbol ) {
+
+	/* TODO: code to load and disassemble file */
+
 	return 0;
 }
 
@@ -288,13 +308,17 @@ static int disassemble_file( const char * name, const char * symbol ) {
 		printf( "Unable to open file %s: %s\n", name, strerror(errno) );
 		return -1;
 	}
+
 	if ( bfd_get_flavour( abfd ) == bfd_target_unknown_flavour ) {
 		printf( "BFD does not recognize file format for %s\n", name );
 		bfd_close( abfd );
 		return -2;
 	}
 
+	/* TODO: code to disassemble file */
+
 	bfd_close( abfd );
+
 	return 0;
 }
 \endcode
@@ -342,6 +366,7 @@ static asymbol * find_bfd_symbol( bfd * abfd, const char * name ) {
 			free(syms);
 		}
 	}
+
 	if ( s ) {
 		return s;
 	}
@@ -364,7 +389,7 @@ static int disassemble_file( const char * name, const char * symbol ) {
 	bfd * abfd;
 	asymbol * sym;
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 
 	sym = find_bfd_symbol( abfd, symbol );
 	if (! sym ) {
@@ -387,16 +412,17 @@ static int disassemble_file( const char * name, const char * symbol ) {
 	int rv;
 	opdis_t o;
 
-	/* ... */
+	/* ... code from previous step(s) omitted ... */
 
 	o = opdis_init_from_bfd( abfd );
-	rv = opdis_disasm_bfd_symbol( o, sym );
-	opdis_term( o );
 
+	rv = opdis_disasm_bfd_symbol( o, sym );
+
+	opdis_term( o );
 	free( sym );
 	bfd_close( abfd );
 
-	return 0;
+	return (rv > 0) ? 0 : -4;
 }
 \endcode
 <p>
