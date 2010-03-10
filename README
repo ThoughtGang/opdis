@@ -39,6 +39,29 @@ SPECIAL BUILD TARGETS
 	# Make doxygen documentation in doc/api
 	make doxygen
 
+OS X BUILD NOTES
+----------------
+
+Opdis relies on GNU binutils and argp from GNU libc.
+
+These are provided by the following packages in macports:
+	binutils
+	argp-standalone
+
+The source for binutils can be downloaded from
+	http://ftp.gnu.org/gnu/binutils/binutils-2.20.1.tar.bz2
+
+The source for argp-standalone can be downloaded from
+	http://www.freshports.org/devel/argp-standalone
+
+Build process for OS X machines with the macports packages installed:
+	./bootstrap
+	./configure \
+		LDFLAGS="-L/opt/local/lib -L/opt/local/lib/`uname -m` -largp" \
+		CPPFLAGS='-I/opt/local/include'
+	make
+	make install
+
 MISC
 ----
 
@@ -52,7 +75,3 @@ To debug from the local directory:
 
 To run test utilities from the local directory:
 	libtool execute test/tree_test
-
-NOTES
------
-	* decoder is not fully implemented
