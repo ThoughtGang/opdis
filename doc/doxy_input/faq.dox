@@ -321,8 +321,8 @@ pop	%rsi
 \endcode
 \code
 opdis -f '%ao: %b "%bC"\n' -E /bin/ls  | head -3
-0x0: 31 ED "1 í"
-0x2: 49 89 D1 "I  Ñ"
+0x0: 31 ED "1 ."
+0x2: 49 89 D1 "I . ."
 0x5: 5E "^"
 \endcode
 \code
