@@ -1,7 +1,12 @@
 #!/bin/sh
 
 aclocal
-libtoolize --force --copy
+if [ `uname` == "Darwin" ]
+then
+	glibtoolize --force --copy
+else
+	libtoolize --force --copy
+fi
 automake --add-missing --copy
 autoconf
 
