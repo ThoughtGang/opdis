@@ -34,8 +34,9 @@ static int my_handler( const opdis_insn_t * insn, void * arg ) {
 	struct HANDLER_ARG * harg = (struct HANDLER_ARG *) arg;
 
 	/* halt disassembly if specified mnemonic is encountered */
-	if ( harg->halt_mnem[0] && 
+	if ( (insn->status & opdis_decode_mnem) && 
 	     ! strcmp(harg->halt_mnem, insn->mnemonic) ) {
+		harg->opdis->display( insn, harg->opdis->display_arg );
 		return 0;
 	}
 

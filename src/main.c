@@ -632,6 +632,8 @@ static void list_arch() {
 }
 
 static void list_disasm_opts() {
+	/* NOTE: this is not architecture-specific; libopcodes prints all
+	 * available disassembler options to STDOUT */
 	disassembler_usage( stdout );
 }
 
@@ -659,8 +661,9 @@ static void list_bfd_symbols( struct opdis_options * opts ) {
 /* ---------------------------------------------------------------------- */
 /* MAIN */
 int main( int argc, char ** argv ) {
-	struct opdis_options opts = {0}; // TODO: defaults
+	struct opdis_options opts = {0};
 	struct job_options_t job_opts;
+	int list_only = 0;
 
 	set_defaults( &opts );
 
@@ -668,21 +671,25 @@ int main( int argc, char ** argv ) {
 
 	if ( opts.list_arch ) {
 		list_arch();
-		return 0;
+		list_only = 1;
 	}
 
 	if ( opts.list_disasm_opt ) {
 		list_disasm_opts();
-		return 0;
+		list_only = 1;
 	}
 
 	if ( opts.list_syntax ) {
 		list_syntax();
-		return 0;
+		list_only = 1;
 	}
 
 	if ( opts.list_format ) {
 		list_format();
+		list_only = 1;
+	}
+
+	if ( list_only ) {
 		return 0;
 	}
 
