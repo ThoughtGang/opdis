@@ -614,10 +614,12 @@ static int handle_bytes( FILE * f, const opdis_insn_t * insn,
 	}
 
 	for ( i = 0; i < insn->size; i++ ) {
+		opdis_byte_t byte = (*c == 'C' && ! isprint(insn->bytes[i])) ? 
+				'.' : insn->bytes[i];
 		if ( preceding ) {
 			fprintf( f, " " );
 		}
-		fprintf( f, fmt_str, insn->bytes[i] ); 
+		fprintf( f, fmt_str, byte ); 
 		preceding = 1;
 	}
 
