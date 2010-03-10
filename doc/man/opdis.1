@@ -359,7 +359,7 @@ The format for specifying an address (a \fImemspec\fR) is
 .IP
 	[target]:offset|@vma[+size]
 .PP
-where \fBtarget\fR is the ID of the target containing the address, \fBoffset\fR is the offset of the addressin the target buffer, \fBvma\fR is the load address of that offset, and \fBsize\fR is the size of the memory region being specified. The \fBtarget\fR is onlty required if more than one target is being disassembled. Either \fBoffset\fR or \fBvma\fR must be specified, except in defining memory maps when \fBvma\fR is required. The \fBsize\fR is only used to limit the number of bytes processed by linear disassembly.
+where \fBtarget\fR is the ID of the target containing the address, \fBoffset\fR is the offset of the addressin the target buffer, \fBvma\fR is the load address of that offset, and \fBsize\fR is the size of the memory region being specified. The \fBtarget\fR is onlty required if more than one target is being disassembled. Either \fBoffset\fR or \fBvma\fR must be specified, except in defining memory maps when \fBvma\fR is required.
 .PP
 Note that \fB:\fR is used to indicate that the next argument is an offset, \fB@\fR is used to indicate that the next argument is a vma, and \fB+\fR is used to indicate that the next argument is a size. This means that the arguments can appear in any order, except for target which is undelimited and must appear first.
 .pp

@@ -72,7 +72,58 @@ opdis -O 'intel,x86-64'
       should be ignored.
 
   \subsection howto_cli_map Mapping memory regions
+The general format for specifying a memory map is:
 \code
+[target]:offset@vma[+size]
+\endcode
+The \b :, \b @, and \b + characters are delimiters indicating that what follows
+is an offset, a vma, or a size, respectively. These components may appear in
+any order, but the \b target must always be first as it is not delimited.
+Note that these values are all parsed with strtoul, and so they may appear
+in any supported base (octal, decimal, or hexadecimal).
+<p>
+The \b target, \b size, and \b offset components are all optional. The default
+value for \b target is 1, the ID of the first target. The default value for
+\b offset is 0. The default value for \b size is the size of the target.
+<p>
+Memory maps are generally used for the following purposes:
+ - to alter the VMA that appears in the disassembler output
+ - to make multiple targets appear as a contiguous range of memory
+ - to change the order in which targets appear in memory 
+ - to mimic the OS load addresses of the target(s)
+<p>
+\b Examples
+<p>
+
+Map the entirety of a.out to VMA 0x400000:
+\code
+opdis -m @0x400000 a.out
+\endcode
+
+Map the entirety of a.out to VMA 0x400000 and the entirety of libc.so.6 to 
+0x7f626a934000:
+\code
+opdis -m @0x400000 -m 2:0x7f626a934000 a.out /usr/lib/libc.so.6
+\endcode
+
+Map offset 0x1000 of a.out to VMA 0x401000:
+\code
+opdis -m :0x1000@0x401000 a.out
+\endcode
+
+Map buffer 1 to 0x400000 and offset 0x1000 of a.out to VMA 0x401000:
+\code
+opdis -m 1@400000 -m 2:0x1000@0x401000 -b '7f 45 4c 46 02 01 01 00 00' a.out
+\endcode
+
+Make buffer 1 and buffer 2 contiguous in memory:
+\code
+opdis -m 1@0 2@4 -b '2e 2e 74 50' -b '89 e1 31 d2'
+\endcode
+
+Make buffer 2 and buffer 1 contiguous in memory:
+\code
+opdis -m 2@0 1@4 -b '2e 2e 74 50' -b '89 e1 31 d2'
 \endcode
 
 <p>
