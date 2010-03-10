@@ -15,8 +15,8 @@ AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-AC_CHECK_LIB([libbfd.so], [bfd_init], [], [AC_MSG_ERROR([Missing GNU binutils])])
-AC_CHECK_LIB([libopcodes.so], [init_disassemble_info], [], [AC_MSG_ERROR([Missing GNU binutils])])
+AC_CHECK_LIB([bfd], [bfd_init], [], [AC_MSG_ERROR([Missing GNU binutils])])
+AC_CHECK_LIB([opcodes], [init_disassemble_info], [], [AC_MSG_ERROR([Missing GNU binutils])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sys/types.h], [], [AC_MSG_ERROR([Missing UNIX libc headers])])
