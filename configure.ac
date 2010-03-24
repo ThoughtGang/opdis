@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.59])
 AC_INIT([opdis], [1.0], [community@thoughtgang.org])
 AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
 
