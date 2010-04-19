@@ -71,7 +71,7 @@ To run from the local directory:
 
 To debug from the local directory:
 
-	libtool execute gdb/opdis
+	libtool execute gdb opdis
 
 To run test utilities from the local directory:
 	libtool execute test/tree_test
