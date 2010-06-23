@@ -170,9 +170,7 @@ void LIBCALL opdis_term( opdis_t o ) {
 	}
 }
 
-opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
-	opdis_t o = opdis_init();
-	
+void LIBCALL opdis_config_from_bfd( opdis_t o, bfd * abfd ) {
 	if ( o ) {
 		o->config.flavour = bfd_get_flavour(abfd);
 		o->config.endian = abfd->xvec->byteorder;
@@ -180,6 +178,12 @@ opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
 		opdis_set_arch( o, bfd_get_arch(abfd), bfd_get_mach(abfd),
 				disassembler(abfd) );
 	}
+}
+
+opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
+	opdis_t o = opdis_init();
+	
+	opdis_config_from_bfd( o, abfd );
 
 	return o;
 }

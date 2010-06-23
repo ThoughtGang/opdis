@@ -317,6 +317,37 @@ opdis_t LIBCALL opdis_init( void );
  * \details Allocates an opdis_t using opdis_init(), then configures libopcodes 
  * based on information (e.g. the architecture) in the BFD.
  * \param target A BFD object to operate on
+ * \sa opdis_init opdis_config_from_bfd
+ * \return An opdis disassembler object
+ * \note This requires that the BFD be configured correctly for the target
+ *       architecture. See the documentation for libbfd in the GNU binutils
+ *       distribution.
+ */
+opdis_t LIBCALL opdis_init_from_bfd( bfd * target );
+
+/*!
+ * \fn opdis_config_from_bfd( opdis_t, bfd * )
+ * \ingroup bfd
+ * \brief Use a BFD object to configure an existing opdis disassembler
+ * \details Configures libopcodes based on information (e.g. the architecture) 
+ *  in the BFD.
+ * \param o opdis disassembler to configure.
+ * \param target A BFD object to operate on
+ * \sa opdis_init opdis_init_from_bfd
+ * \return An opdis disassembler object
+ * \note This requires that the BFD be configured correctly for the target
+ *       architecture. See the documentation for libbfd in the GNU binutils
+ *       distribution.
+ */
+void LIBCALL opdis_config_from_bfd( opdis_t o, bfd * target );
+
+/*!
+ * \fn opdis_init_from_bfd( bfd * )
+ * \ingroup bfd
+ * \brief Initialize an opdis disassembler based on a BFD object
+ * \details Allocates an opdis_t using opdis_init(), then configures libopcodes 
+ * based on information (e.g. the architecture) in the BFD.
+ * \param target A BFD object to operate on
  * \sa opdis_init_from_bfd
  * \return An opdis disassembler object
  * \note This requires that the BFD be configured correctly for the target
