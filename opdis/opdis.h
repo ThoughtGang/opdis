@@ -357,6 +357,19 @@ void LIBCALL opdis_config_from_bfd( opdis_t o, bfd * target );
 opdis_t LIBCALL opdis_init_from_bfd( bfd * target );
 
 /*!
+ * \fn opdis_dupe()
+ * \ingroup disassembly
+ * \brief Duplicate an opdis disassembler
+ * \details Allocates an opdis_t and fills it based on the provided opdis_t. 
+ * This is used when running multiple threads in a single target, as one 
+ * opdis_t must be used per-thread..
+ * \sa opdis_init opdis_term
+ * \return An opdis disassembler object
+ */
+
+opdis_t LIBCALL opdis_dupe( opdis_t );
+
+/*!
  * \fn opdis_term( opdis_t )
  * \ingroup disassembly
  * \brief Cleanup an opdis disassembler
@@ -590,6 +603,19 @@ int LIBCALL opdis_disasm_linear( opdis_t o, opdis_buf_t buf, opdis_vma_t vma,
  */
 int LIBCALL opdis_disasm_cflow( opdis_t o, opdis_buf_t buf, 
 				opdis_vma_t vma );
+/*!
+ * \fn opdis_disasm_insn( opdis_t, bfd *, opdis_vma_t, opdis_insn_t * )
+ * \ingroup bfd
+ * \brief Disassemble a single instruction in a BFD
+ * \param o opdis disassembler
+ * \param abfd The BFD to disassemble
+ * \param vma The address (VMA) in the BFD to start disassembly at.
+ * \param insn The op_insn_t to fill with the disassembled instruction
+ * \note If the vma of \e buf is 0, then \e vma is the offset into the buffer.
+ */
+unsigned int LIBCALL opdis_disasm_bfd_insn( opdis_t o, bfd * abfd, 
+					    opdis_vma_t vma, 
+					    opdis_insn_t * insn );
 /*!
  * \fn opdis_disasm_bfd_linear( opdis_t, bfd *, opdis_vma_t, opdis_off_t )
  * \ingroup bfd

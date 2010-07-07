@@ -164,6 +164,40 @@ opdis_t LIBCALL opdis_init( void ) {
 	return o;
 }
 
+opdis_t LIBCALL opdis_dupe( opdis_t src ) {
+	if (! src ) {
+		return opdis_init();
+	}
+
+	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
+	
+	if ( o ) {
+		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
+
+		memcpy( &o->config, &src->config, sizeof(disassemble_info) );
+		o->config.application_data = (void *) o;
+
+		o->disassembler = src->disassembler;
+		o->error_reporter = src->error_reporter;
+		o->error_reporter_arg = src->error_reporter_arg;
+		o->display = src->display;
+		o->display_arg = src->display_arg;
+		o->handler = src->handler;
+		o->handler_arg = src->handler_arg;
+		o->resolver = src->resolver;
+		o->resolver_arg = src->resolver_arg;
+		o->decoder = src->decoder;
+		o->decoder_arg = src->decoder_arg;
+		o->debug = src->debug;
+
+		/* NOTE: this is not threadsafe, but we don't really care;
+		 *       it just means an insn might be disassembled twice */
+		o->visited_addr = src->visited_addr;
+	}
+
+	return o;
+}
+
 void LIBCALL opdis_term( opdis_t o ) {
 	if ( o ) {
 		free( o );
@@ -583,6 +617,28 @@ static int load_section_for_vma( opdis_t o, bfd * abfd, bfd_vma vma ){
 	}
 
 	return 1;
+}
+
+unsigned int LIBCALL opdis_disasm_bfd_insn( opdis_t o, bfd * abfd, 
+					    opdis_vma_t vma, 
+					    opdis_insn_t * insn ) {
+	size_t size;
+
+	if (! o || ! abfd ) {
+		return 0;
+	}
+
+	if (! load_section_for_vma(o, abfd, vma) ) {
+		return 0;
+	}
+
+	size = disasm_single_insn( o, vma, insn );
+	o->display( insn, o->display_arg );
+
+	free( o->config.buffer );
+	o->config.buffer = NULL;
+
+	return size;
 }
 
 int LIBCALL opdis_disasm_bfd_linear( opdis_t o, bfd * abfd, opdis_vma_t vma,
