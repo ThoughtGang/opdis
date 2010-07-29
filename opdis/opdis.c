@@ -711,9 +711,13 @@ int LIBCALL opdis_disasm_bfd_symbol( opdis_t o, asymbol * sym ) {
 	}
 
 	if ( load_section( o, sec ) ) {
+		symbol_info info;
+		bfd_symbol_info( sym, &info );
+
 		tree = opdis_vma_tree_init();
-		count = disasm_cflow( o, tree, sym->value );
+		count = disasm_cflow( o, tree, info.value );
 		opdis_vma_tree_free( tree );
+
 		free( o->config.buffer );
 		o->config.buffer = NULL;
 	}
