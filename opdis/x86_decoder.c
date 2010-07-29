@@ -679,13 +679,13 @@ int opdis_x86_att_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			   opdis_vma_t vma, opdis_off_t length, void * arg ) {
 
 	int i, max_i, rv;
-	struct INSN_BUF_PARSE parse;
+	struct INSN_BUF_PARSE parse = { 0 };
 
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
 
 	parse_insn_buf( in, is_att_operand, & parse );
 
-	add_prefixes( in, out, & parse );
+	add_prefixes( in, out, &parse );
 
 	/* fill instruction info */
 	if ( parse.mnem > -1 ) {
@@ -900,8 +900,9 @@ int opdis_x86_intel_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 		             const opdis_byte_t * buf, opdis_off_t offset,
 			     opdis_vma_t vma, opdis_off_t length, void * arg ) {
 
-	struct INSN_BUF_PARSE parse;
 	int i, max_i, rv;
+	struct INSN_BUF_PARSE parse = { 0 };
+
 	rv = opdis_default_decoder( in, out, buf, offset, vma, length, NULL );
 
 	parse_insn_buf( in, is_intel_operand, & parse );

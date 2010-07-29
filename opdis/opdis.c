@@ -94,6 +94,7 @@ int opdis_default_decoder( const opdis_insn_buf_t in, opdis_insn_t * out,
 			   opdis_vma_t vma, opdis_off_t length, void * arg ) {
 	opdis_insn_set_ascii( out, in->string );
 
+
 	if (! out->bytes ) {
 		out->bytes = calloc(1, length);
 		if (! out->bytes ) {
@@ -343,6 +344,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 	o->buf->string[0] = '\0';
 	opdis_insn_clear( insn );
 
+	o->config.stream = o;
 	size = o->disassembler( (bfd_vma) vma, &o->config );
 	if (! size ) {
 		char msg[32];

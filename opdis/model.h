@@ -197,7 +197,7 @@ typedef struct {
 
 	/* instruction  */
 	opdis_off_t num_prefixes;	/*!< Number of prefixes in insn */
-	char * prefixes;		/*!< Array of prefix strings */
+	char * prefixes;		/*!< Space-delimited prefix strings */
 
 	char * mnemonic;		/*!< ASCII mnemonic for insn opcode */
 	enum opdis_insn_cat_t category;	/*!< Type of insn opcode */
