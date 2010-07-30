@@ -78,7 +78,7 @@ opdis_buf_t LIBCALL opdis_buf_read( FILE * f, opdis_off_t size,
 int LIBCALL opdis_buf_fill( opdis_buf_t buf, opdis_off_t offset,
 			    void * src, opdis_off_t len ) {
 	if ( ! buf || ! buf->data || ! src || ! len || 
-	     offset + len >= buf->len ) {
+	     offset + len > buf->len ) {
 		return 0;
 	}
 
