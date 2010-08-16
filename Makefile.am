@@ -5,12 +5,15 @@ ACLOCAL_AMFLAGS = -I m4
 #  TARGETS
 
 # Binary programs to be built and installed by 'make install'
+if BUILD_CLI
 bin_PROGRAMS = dist/opdis
+endif
 
 # Libtool libraries to be built and installed by 'make install'
 lib_LTLIBRARIES = dist/libopdis.la
 
 # Standard .so/.a libraries to be built and installed by 'make install'
+# Uncomment if you cannot use libtool fpr some reason.
 # lib_LIBRARIES = dist/libopdis.a
 
 # Test programs to be built by 'make check'
@@ -26,15 +29,18 @@ nobase_include_HEADERS = opdis/insn_buf.h opdis/metadata.h opdis/model.h \
 			 opdis/x86_decoder.h
 
 # Additional files to distribute with the source
-EXTRA_DIST = config doc/doxy_input doc/examples doc/html doc/man bootstrap
+EXTRA_DIST = config doc/doxy_input doc/examples doc/html doc/man bootstrap \
+	     LICENSE LICENSE.README
 
 # ----------------------------------------------------------------------
 # OPDIS TARGET
 
+if BUILD_CLI
 dist_opdis_SOURCES = src/main.c src/job_list.c src/map.c src/target_list.c \
 		     src/asm_format.c src/sym.c src/job_list.h src/map.h \
 		     src/target_list.h src/asm_format.h src/sym.h
 dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes 
+endif
 
 
 # ----------------------------------------------------------------------

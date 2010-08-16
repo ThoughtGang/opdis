@@ -62,6 +62,13 @@ Build process for OS X machines with the macports packages installed:
 	make
 	make install
 
+To build libopdis, but not the opdis command-line utility, use the --disable-cli
+configure options:
+	./bootstrap
+	./configure --disable-cli
+	make
+	make install
+
 MISC
 ----
 
