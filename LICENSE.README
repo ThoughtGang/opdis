@@ -1,8 +1,11 @@
-opdis and libopdis are released under the GNU Public License version 3.0,
-distributed in this package as LICENSE.
+The opdis command-line utility is released under the GNU Public License (GPL)
+version 3.0, distributed in this package as LICENSE.
+
+The libopdis library is released under the GNU Lesser General Public License 
+(LGPL) version 3.0, distributed in this package as LICENSE.LIBRARY.
 
 The intent of this license choice is not to restrict distribution, but for
 compatibility with the distribution terms of GNU binutils.
 
 Contact community@thoughtgang.org for alternative licensing arrangements if
-the GPLv3 is too restrictive.
+the GPLv3 or LGPL is too restrictive.
