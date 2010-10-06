@@ -283,15 +283,13 @@ void LIBCALL opdis_set_arch( opdis_t o, enum bfd_architecture arch,
 	disassemble_init_for_target( &o->config );
 
 	/* set appropriate decoder for architecture */
-	// TODO : move this detection into its own file?
-	switch ( arch ) {
-		case bfd_arch_i386:
-			d_fn = opdis_x86_intel_decoder; break;
-		default:
-			break;
+	if ( arch == bfd_arch_i386 ) {
+		/* default to ATT syntax and decoder */
+		opdis_set_x86_syntax( o, opdis_x86_syntax_att );
+	} else {
+		// TODO: else switch on arch, setting d_fn 
+		opdis_set_decoder( o, d_fn, o );
 	}
-
-	opdis_set_decoder( o, d_fn, o );
 }
 
 void LIBCALL opdis_set_display( opdis_t o, OPDIS_DISPLAY fn, void * arg ) {
