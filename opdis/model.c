@@ -356,7 +356,7 @@ opdis_op_t * LIBCALL opdis_insn_next_avail_op( opdis_insn_t * i ) {
 	opdis_op_t * op;
 
 	if (! i ) {
-		return;
+		return NULL;
 	}
 
 	if ( i->num_operands == i->alloc_operands ) {
