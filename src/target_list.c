@@ -210,7 +210,7 @@ static void load_symbols( bfd * abfd, sym_tab_t symtab ) {
 
 int tgt_list_make_bfd( tgt_list_item_t * tgt ) {
 	if (! tgt ) {
-		return;
+		return 0;
 	}
 
 	tgt->tgt_bfd = bfd_openr( tgt->ascii, NULL );
@@ -243,7 +243,7 @@ unsigned int tgt_list_id( tgt_list_t targets, const char * ascii ) {
 	unsigned int id = 1;
 
 	if (! targets || ! ascii ) {
-		return;
+		return 0;
 	}
 
 	for ( item = targets->head; item; item = item->next, id++ ) {
@@ -259,7 +259,7 @@ tgt_list_item_t * tgt_list_find( tgt_list_t targets, unsigned int id ) {
 	unsigned int curr_id = 1;
 
 	if (! targets ) {
-		return;
+		return NULL;
 	}
 
 	for ( item = targets->head; item; item = item->next, curr_id++ ) {
@@ -296,7 +296,7 @@ bfd * tgt_list_bfd( tgt_list_t targets, unsigned int id ) {
 	unsigned int curr_id = 1;
 
 	if (! targets ) {
-		return;
+		return NULL;
 	}
 
 	for ( item = targets->head; item; item = item->next, curr_id++ ) {

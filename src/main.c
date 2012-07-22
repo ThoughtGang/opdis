@@ -493,7 +493,7 @@ static int print_insn( opdis_insn_t * i, void * arg ) {
 	struct opdis_options * opts = (struct opdis_options *) arg;
 
 	if (! opts ) {
-		return;
+		return 0;
 	}
 
 	// TODO : have display track jump/call targets in a tree,
