@@ -377,7 +377,7 @@ int job_list_perform( job_list_t jobs, unsigned int id, job_opts_t opts ) {
 	unsigned int curr_id = 1;
 
 	if (! jobs ) {
-		return;
+		return 0;
 	}
 
 	for ( item = jobs->head; item; item = item->next, curr_id++ ) {
@@ -395,7 +395,7 @@ int job_list_perform_all( job_list_t jobs , job_opts_t opts ) {
 	int rv = 1;
 
 	if (! jobs ) {
-		return;
+		return rv;
 	}
 
 	for ( item = jobs->head; item; item = item->next ) {

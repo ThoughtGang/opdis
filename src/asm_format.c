@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 
 #include "asm_format.h"
 
@@ -110,7 +111,7 @@ static int dump_insn( FILE * f, opdis_insn_t * insn ) {
 
 	if ( insn->status == opdis_decode_invalid ) {
 		rv += fprintf( f, "(invalid instruction)\n" );
-		return;
+		return rv;
 	}
 
 	/* enforce space for 6 bytes */

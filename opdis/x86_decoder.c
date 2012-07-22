@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <opdis/opdis.h>
 
@@ -85,22 +86,22 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 	/* stack instructions */
 	if (! strncmp( "pop", item, 3 ) && strcmp( "popcnt", item ) ) {
 		out->category = opdis_insn_cat_stack;
-		out->flags.cflow = opdis_stack_flag_pop;
+		out->flags.stack = opdis_stack_flag_pop;
 		return;
 	}
 	if (! strncmp( "push", item, 4 ) ) {
 		out->category = opdis_insn_cat_stack;
-		out->flags.cflow = opdis_stack_flag_push;
+		out->flags.stack = opdis_stack_flag_push;
 		return;
 	}
 	if (! strncmp( "enter", item, 5 ) ) {
 		out->category = opdis_insn_cat_stack;
-		out->flags.cflow = opdis_stack_flag_frame;
+		out->flags.stack = opdis_stack_flag_frame;
 		return;
 	}
 	if (! strncmp( "leave", item, 5 ) ) {
 		out->category = opdis_insn_cat_stack;
-		out->flags.cflow = opdis_stack_flag_unframe;
+		out->flags.stack = opdis_stack_flag_unframe;
 		return;
 	}
 
@@ -240,7 +241,7 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 }
 
 typedef void (*MNEMONIC_DECODE_FN) ( opdis_insn_t *, const char * );
-static int decode_mnemonic( opdis_insn_t * insn, MNEMONIC_DECODE_FN decode_fn, 
+static void decode_mnemonic( opdis_insn_t * insn, MNEMONIC_DECODE_FN decode_fn, 
 			    const char * item ) {
 	int i;
 	char buf[64];
@@ -316,7 +317,7 @@ static enum opdis_reg_flag_t lookup_register_type( unsigned int id ) {
 		type = opdis_reg_flag_gen;
 	} else if ( id >= 17 && id <= 24 ) {
 		type = opdis_reg_flag_fpu | opdis_reg_flag_simd;
-	} else if ( id >= 25 && id <= 32 || id == 61 ) {
+	} else if (( id >= 25 && id <= 32 ) || id == 61 ) {
 		type = opdis_reg_flag_simd;
 	} else if ( id >= 33 && id <= 40 ) {
 		type = opdis_reg_flag_task;
@@ -443,6 +444,8 @@ static int decode_operand( opdis_op_t * op, OPERAND_DECODE_FN decode_fn,
 	op->flags = opdis_op_flag_none;
 	opdis_op_set_ascii( op, item );
 	decode_fn( op, item );
+
+	return 1;
 }
 
 /* ---------------------------------------------------------------------- */

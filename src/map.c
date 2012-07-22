@@ -79,7 +79,7 @@ void mem_map_foreach( mem_map_t memmap, MEM_MAP_FOREACH_FN fn, void * arg ) {
 static int print_memmap( map_t * map, void * arg ) {
 	FILE *f = (FILE *) arg;
 	if (! f ) {
-		return;
+		return 0;
 	}
 
 	fprintf( f, "\t%p - %p : Target %d [%p:%p]\n", (void *) map->vma,

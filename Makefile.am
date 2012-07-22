@@ -39,7 +39,7 @@ if BUILD_CLI
 dist_opdis_SOURCES = src/main.c src/job_list.c src/map.c src/target_list.c \
 		     src/asm_format.c src/sym.c src/job_list.h src/map.h \
 		     src/target_list.h src/asm_format.h src/sym.h
-dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes 
+dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes -ldl
 endif
 
 

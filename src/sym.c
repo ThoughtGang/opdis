@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sym.h"
 
@@ -135,10 +136,11 @@ static int print_symtab( void * item, void * arg ) {
 	FILE * f = (FILE *) arg;
 
 	if (! sym || ! f ) {
-		return;
+		return 0;
 	}
 
 	fprintf( f, "\t%p: %s\n", (void *) sym->vma, sym->name );
+	return 1;
 }
 
 void sym_tab_print( sym_tab_t s, FILE * f ) {
