@@ -29,7 +29,7 @@ nobase_include_HEADERS = opdis/insn_buf.h opdis/metadata.h opdis/model.h \
 			 opdis/x86_decoder.h
 
 # Additional files to distribute with the source
-EXTRA_DIST = config doc/doxy_input doc/examples doc/html doc/man bootstrap \
+EXTRA_DIST = config doc/doxy_input doc/examples doc/man bootstrap \
 	     LICENSE LICENSE.LIBRARY LICENSE.README
 
 # ----------------------------------------------------------------------
