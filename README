@@ -21,6 +21,14 @@ To build binaries from src distro:
 	./configure
 	make
 
+To build a distribution from a Git repo:
+
+	./bootstrap
+	./configure
+	make doxygen
+	make dist
+      
+
 SPECIAL BUILD TARGETS
 ---------------------
 
