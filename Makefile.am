@@ -2,6 +2,10 @@ INCLUDES = -I$(top_srcdir)
 ACLOCAL_AMFLAGS = -I m4
 
 # ----------------------------------------------------------------------
+# TOOLCHAIN FLAGS
+AM_CXXFLAGS = -Wall -Werror
+
+# ----------------------------------------------------------------------
 #  TARGETS
 
 # Binary programs to be built and installed by 'make install'
