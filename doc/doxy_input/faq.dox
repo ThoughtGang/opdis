@@ -7,6 +7,7 @@
 <p>
 \ref opdis
  - \ref faq_opdis_arch
+ - \ref faq_opdis_bfd_tgt
  - \ref faq_opdis_bfd
  - \ref faq_opdis_format
  - \ref faq_opdis_fmt_str
@@ -81,13 +82,31 @@ relies on metadata). A warning will be printed to STDERR if control flow
 disassembly is not supported on the target architecture.
 <p>
 
-  \subsection faq_opdis_bfd What are BFD targets?
+  \subsection faq_opdis_bfd_tgt What are BFD targets?
 A BFD target is a file that has been loaded using \b libbfd, part of the GNU
 \b binutils distribution. BFD targets have many advantages: the target
 architecture is automatically detected, memory maps are not required, and
 elements of the object file structure such as sections and symbols are
 available. Use of BFD targets is recommended when the target is supported
 by \b libbfd.
+<p>
+
+  \subsection faq_opdis_bfd Is BFD required?
+The BFD library (\b libbfd) is required by \b libopcodes; it is therefore an
+unconditional dependency of \b libopdis. The use of BFD to load a target is
+\b not required. The \b opdis_disasm_linear and \b opdis_disasm_cflow
+functions take an opdis_buf_t argument, which is an unsigned char * containing
+the bytes to disassemble.
+<p>
+Note that when not using BFD, the opdis_t will have to be configured before
+use if the default values (set by \b opdis_set_defaults) are not appropriate.
+\code
+o = opdis_init();
+opdis_set_arch( o, bfd_arch_i386, bfd_mach_x86_64, NULL );
+opdis_set_x86_syntax( o, opdis_x86_syntax_att );
+...
+opdis_term( o );
+\endcode
 <p>
 
   \subsection faq_opdis_format What output formats are available?
