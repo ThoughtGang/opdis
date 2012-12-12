@@ -43,7 +43,7 @@ if BUILD_CLI
 dist_opdis_SOURCES = src/main.c src/job_list.c src/map.c src/target_list.c \
 		     src/asm_format.c src/sym.c src/job_list.h src/map.h \
 		     src/target_list.h src/asm_format.h src/sym.h
-dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes -ldl
+dist_opdis_LDADD = dist/libopdis.la -lbfd -lopcodes -liberty -lgettextlib -ldl
 endif
 
 
@@ -57,15 +57,15 @@ dist_libopdis_la_SOURCES = opdis/insn_buf.c opdis/model.c opdis/opdis.c \
 # TEST PROGRAMS
 
 test_tree_test_SOURCES = test/tree_test.c
-test_tree_test_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_tree_test_LDADD = dist/libopdis.la -lbfd -lopcodes -lopcodes -liberty -lgettextlib -ldl
 test_disasm_cflow_SOURCES = test/disasm_cflow.c
-test_disasm_cflow_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_disasm_cflow_LDADD = dist/libopdis.la -lbfd -lopcodes -lopcodes -liberty -lgettextlib -ldl
 test_disasm_linear_SOURCES = test/disasm_linear.c
-test_disasm_linear_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_disasm_linear_LDADD = dist/libopdis.la -lbfd -lopcodes -lopcodes -liberty -lgettextlib -ldl
 test_disasm_bfd_SOURCES = test/disasm_bfd.c
-test_disasm_bfd_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_disasm_bfd_LDADD = dist/libopdis.la -lbfd -lopcodes -lopcodes -liberty -lgettextlib -ldl
 test_howto_callbacks_SOURCES = test/howto_callbacks.c
-test_howto_callbacks_LDADD = dist/libopdis.la -lbfd -lopcodes 
+test_howto_callbacks_LDADD = dist/libopdis.la -lbfd -lopcodes -lopcodes -liberty -lgettextlib -ldl
 
 # ----------------------------------------------------------------------
 # DOXYGEN TARGET

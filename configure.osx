@@ -2,10 +2,12 @@
 # Wrapper for ./configure which passes paths to MacPorts and HomeBrew installs.
 
 MP='/opt/local'	# MacPorts base directory
+MP_LIBDIR="-L${MP}/lib -L${MP}/lib/x86_64"
+
 HB='/usr/local'	# Homebrew base directory
+HB_LIBDIR="-L${HB}/lib -L${HB}/lib/x86_64 -L${HB}/opt/gettext/lib"
 
-LIBDIR="-L${MP}/lib -L${MP}/lib/x86_64 -L${HB}/lib -L${HB}/lib/x86_64"
 LIBS='-largp'
-INCDIR="-I${MP}/include -I${HB}/include"
+INCDIR="-I${MP}/include -I${HB}/include -I${HB}/opt/gettext/include"
 
-./configure LDFLAGS="${LIBDIR} ${LIBS}" CPPFLAGS="${INCDIR}" $*
+./configure LDFLAGS="${MP_LIBDIR} ${HB_LIBDIR} ${LIBS}" CPPFLAGS="${INCDIR}" $*

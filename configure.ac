@@ -13,9 +13,16 @@ AC_CONFIG_FILES([Makefile])
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
+# Checks for libraries. NOTE: libopcodes needs gettext (and it may need intl).
 AC_CHECK_LIB([bfd], [bfd_init], [], [AC_MSG_ERROR([Missing GNU binutils])])
-AC_CHECK_LIB([opcodes], [init_disassemble_info], [], [AC_MSG_ERROR([Missing GNU binutils])])
+AC_CHECK_LIB([gettextlib], [quote], [], [AC_MSG_ERROR([Missing GNU gettext])])
+# OS X gettext has a dependency on libintl; Linux does not
+case $host in
+	*-darwin*)
+		AC_CHECK_LIB([intl], [gettext], [], [AC_MSG_ERROR([Missing GNU libintl])])
+		;;
+esac
+AC_CHECK_LIB([opcodes], [init_disassemble_info], [], [AC_MSG_ERROR([Missing GNU libopcodes])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sys/types.h], [], [AC_MSG_ERROR([Missing UNIX libc headers])])
