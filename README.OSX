@@ -1,0 +1,53 @@
+OS X BUILD NOTES
+----------------
+
+
+DEPENDENCIES
+
+Opdis relies on GNU binutils and argp from GNU libc. On OS X, GNU binutils 
+relies on libintl and libiconv.
+
+These dependencies can be installed via MacPorts, HomeBrew, or from source.
+
+
+MACPORTS BUILD
+
+	sudo port install gettext
+	sudo port install argp-standalone
+	sudo port install binutils
+	./bootstrap
+	./configure.osx
+	make
+	make install
+
+
+HOMEBREW BUILD
+
+	brew install gettext
+	brew install argp-standalone
+	brew install binutils
+	./bootstrap
+	./configure.osx
+	make
+	make install
+
+SOURCE BUILD
+
+Download the latest binutils source package from
+	http://ftp.gnu.org/gnu/binutils
+
+Download the latest argp-standalone package from
+	http://www.freshports.org/devel/argp-standalone
+
+Build and install these packages as you see fit. Then build opdis as usual:
+
+	./bootstrap
+	./configure
+	make
+	make install
+
+Be sure to pass configure the settings it needs to find the dependencies. For
+example, the MacPorts build uses the following configure command line:
+	./configure \
+		LDFLAGS="-L/opt/local/lib -L/opt/local/lib/x86_64 -largp" \
+		CPPFLAGS='-I/opt/local/include'

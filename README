@@ -4,6 +4,7 @@
 NOTES:
 	* BFD jobs ignore user-provided options for -a. 
 
+
 BUILD
 -----
 
@@ -12,21 +13,21 @@ This repository contains source for the following binaries:
 	libopdis : shared/static library for performing disassembly
 	opdis : command-line disassembler
 
-To build src distro from repo:
-
-   libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
-
-To build binaries from src distro:
+To build binaries from the source package:
 
 	./configure
 	make
 
-To build a distribution from a Git repo:
+To build the source package for distribution (from the Git repo):
 
 	./bootstrap
 	./configure
 	make doxygen
 	make dist
+
+To build the configure script from the Git repo (without using bootstrap):
+
+   libtoolize --force --copy; aclocal; automake --add-missing --copy; autoconf
       
 
 SPECIAL BUILD TARGETS
@@ -44,35 +45,24 @@ SPECIAL BUILD TARGETS
 	# Make doxygen documentation in doc/api
 	make doxygen
 
+
 OS X BUILD NOTES
 ----------------
 
-Opdis relies on GNU binutils and argp from GNU libc.
+See README.OSX .
 
-These are provided by the following packages in macports:
-	binutils
-	argp-standalone
 
-The source for binutils can be downloaded from
-	http://ftp.gnu.org/gnu/binutils/binutils-2.20.1.tar.bz2
+LIBRARY-ONLY BUILD
+------------------
 
-The source for argp-standalone can be downloaded from
-	http://www.freshports.org/devel/argp-standalone
+To build only the libopdis library, and not the opdis command-line utility,
+pass the --disable-cli option to configure;
 
-Build process for OS X machines with the macports packages installed:
-	./bootstrap
-	./configure \
-		LDFLAGS="-L/opt/local/lib -L/opt/local/lib/`uname -m` -largp" \
-		CPPFLAGS='-I/opt/local/include'
-	make
-	make install
-
-To build libopdis, but not the opdis command-line utility, use the --disable-cli
-configure options:
 	./bootstrap
 	./configure --disable-cli
 	make
 	make install
+
 
 MISC
 ----
