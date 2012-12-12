@@ -44,13 +44,13 @@ static int printtree( void * data, void * arg ) {
 
 static int sumtree( void * data, void * arg ) {
 	int *sum = (int *) arg;
-	int num = (int) data;
+	long num = (long) data;
 	*sum += num;
 	return 1;
 }
 
 static int cmp_int( void * arg_a, void * arg_b ) {
-	int a = (int) arg_a, b = (int) arg_b;
+	long a = (long) arg_a, b = (long) arg_b;
 
 	if ( a < b ) {
 		return -1;
@@ -68,7 +68,7 @@ static int cmp_str( void * arg_a, void * arg_b ) {
 }
 
 int main (void) {
-	int i, sum, treesum;
+	long i, sum, treesum;
 	opdis_tree_t t;
 	struct TN *strtn;
 
@@ -83,7 +83,7 @@ int main (void) {
 
 	opdis_tree_foreach( t, sumtree, &treesum );
 
-	printf( "(unsigned) SUM: %d TreeSUM: %d\n", sum, treesum );
+	printf( "(unsigned) SUM: %ld TreeSUM: %ld\n", sum, treesum );
 	opdis_tree_free( t );
 		
 
@@ -97,7 +97,7 @@ int main (void) {
 
 	opdis_tree_foreach( t, sumtree, &treesum );
 
-	printf( " (signed)  SUM: %d TreeSUM: %d\n", sum, treesum );
+	printf( " (signed)  SUM: %ld TreeSUM: %ld\n", sum, treesum );
 	opdis_tree_free( t );
 
 

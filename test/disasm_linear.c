@@ -11,8 +11,8 @@
 
 static void display_insn( const opdis_insn_t * insn, void * arg ) {
 	const char * filename = (const char *) arg;
-	printf( "%08X [%s:%X]\t%s\n", insn->vma, filename, insn->offset,
-		insn->ascii );
+	printf( "%08X [%s:%X]\t%s\n", (unsigned int) insn->vma, filename, 
+		(unsigned int) insn->offset, insn->ascii );
 }
 
 static int disassemble_file( const char * name, opdis_off_t offset,
