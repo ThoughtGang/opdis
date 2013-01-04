@@ -221,6 +221,7 @@ static void decode_intel_mnemonic( opdis_insn_t * out, const char * item ) {
 
 	/* system instructions */
 	if (! strncmp( "inv", item, 3 ) || ! strncmp( "halt", item, 4 ) ||
+	    ! strncmp( "hlt", item, 3 ) ||
 	    ! strncmp( "clts", item, 4 ) || ! strncmp( "ltr", item, 3 ) ||
 	    ! strncmp( "rsm", item, 3 ) || ! strncmp( "wbinvd", item, 6 ) ) {
 		out->category = opdis_insn_cat_priv;
