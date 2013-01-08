@@ -201,6 +201,7 @@ opdis_t LIBCALL opdis_dupe( opdis_t src ) {
 
 void LIBCALL opdis_term( opdis_t o ) {
 	if ( o ) {
+		opdis_insn_buf_free(o->buf);
 		free( o );
 	}
 }
