@@ -465,6 +465,8 @@ static int disasm_linear( opdis_t o, opdis_vma_t vma, opdis_off_t length ) {
 
 	opdis_debug( o, 1, "End linear %p (count %d)", (void *) vma, count );
 
+	opdis_insn_free(insn);
+
 	return count;
 }
 
