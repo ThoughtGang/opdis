@@ -214,11 +214,23 @@ void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
 		free( (void *) insn->mnemonic);
 	}
 
+	if ( insn->prefixes ) {
+		free( (void *) insn->prefixes);
+	}
+
+	if ( insn->comment ) {
+		free( (void *) insn->comment);
+	}
+
 	for ( i = 0; i < insn->num_operands; i++ ) {
 		opdis_op_t * op = insn->operands[i];
 		if ( op ) {
 			opdis_op_free( op );
 		}
+	}
+
+	if ( insn->operands ) {
+		free( (void *) insn->operands);
 	}
 
 	free(insn);
