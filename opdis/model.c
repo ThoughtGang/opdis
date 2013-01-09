@@ -452,6 +452,8 @@ void LIBCALL opdis_op_free( opdis_op_t * op ) {
 	if ( op->ascii ) {
 		free((void *) op->ascii);
 	}
+
+	free ((void *)op);
 }
 
 void LIBCALL opdis_op_set_ascii( opdis_op_t * op, const char * ascii ) {
