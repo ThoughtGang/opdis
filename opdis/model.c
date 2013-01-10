@@ -63,7 +63,6 @@ opdis_insn_t * LIBCALL opdis_insn_alloc_fixed( size_t ascii_sz,
 		opdis_op_t * op = opdis_op_alloc_fixed( op_ascii_sz );
 		if ( op ) {
 			insn->operands[i] = op;
-			insn->alloc_operands++;
 		} else {
 			opdis_insn_free( insn );
 			return NULL;
@@ -222,7 +221,7 @@ void LIBCALL opdis_insn_free( opdis_insn_t * insn ) {
 		free( (void *) insn->comment);
 	}
 
-	for ( i = 0; i < insn->num_operands; i++ ) {
+	for ( i = 0; i < insn->alloc_operands; i++ ) {
 		opdis_op_t * op = insn->operands[i];
 		if ( op ) {
 			opdis_op_free( op );
