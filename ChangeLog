@@ -1,3 +1,5 @@
+2014-01-19 :	mkfs <mkfs@thoughtgang.org>
+	*	Added init_disassemble_info argument to opdis_init()
 2010-08-16 :	mkfs <mkfs@thoughtgang.org>
 	*	Added configure option to disable CLI build (for OS X users)
 2010-04-19 :    mkfs <mkfs@thoughtgang.org>

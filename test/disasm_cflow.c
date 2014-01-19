@@ -41,7 +41,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 
 	fclose( f );
 
-	o = opdis_init();
+	o = opdis_init( NULL );
 
 	tree = opdis_insn_tree_init( 1 );
 	opdis_set_display( o, store_insn, tree );

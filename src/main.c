@@ -131,7 +131,7 @@ static void set_defaults( struct opdis_options * opts ) {
 	opts->jobs = job_list_alloc();
 	opts->map = mem_map_alloc();
 	opts->targets = tgt_list_alloc();
-	opts->opdis = opdis_init();
+	opts->opdis = opdis_init( NULL );
 	opts->insn_tree = opdis_insn_tree_init( 1 );
 	opts->output_file = stdout;
 

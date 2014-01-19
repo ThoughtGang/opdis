@@ -151,12 +151,12 @@ static void report_memory_error( int status, bfd_vma vma,
 /* ---------------------------------------------------------------------- */
 /* OPDIS MGT */
 
-opdis_t LIBCALL opdis_init( void ) {
+opdis_t LIBCALL opdis_init( OPCODES_INIT init_fn ) {
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	
 	if ( o ) {
 		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
-		init_disassemble_info ( &o->config, o, build_insn_fprintf );
+		init_fn( &o->config, o, build_insn_fprintf );
 		o->config.application_data = (void *) o;
 		o->config.memory_error_func = report_memory_error;
 		opdis_set_defaults( o );
@@ -167,7 +167,7 @@ opdis_t LIBCALL opdis_init( void ) {
 
 opdis_t LIBCALL opdis_dupe( opdis_t src ) {
 	if (! src ) {
-		return opdis_init();
+		return opdis_init( NULL );
 	}
 
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
@@ -217,7 +217,7 @@ void LIBCALL opdis_config_from_bfd( opdis_t o, bfd * abfd ) {
 }
 
 opdis_t LIBCALL opdis_init_from_bfd( bfd * abfd ) {
-	opdis_t o = opdis_init();
+	opdis_t o = opdis_init(NULL);
 	
 	opdis_config_from_bfd( o, abfd );
 

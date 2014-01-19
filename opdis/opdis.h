@@ -267,7 +267,6 @@ typedef struct {
 	 */
 	opdis_insn_buf_t buf;
 
-
 	/*! \var visited_addr
 	 *  \brief Index of all VMAs that have been disassembled and displayed.
 	 *  \details A tree of all instructions that have been disassembled.
@@ -288,6 +287,7 @@ typedef struct {
 	int debug;
 } opdis_info_t;
 
+
 /*!
  * \typedef opdis_info_t * opdis_t
  * \ingroup configuration
@@ -298,16 +298,21 @@ typedef opdis_info_t * opdis_t;
 
 /* ---------------------------------------------------------------------- */
 
+/* function pointer type for libopcodes init_disassemble_info() */
+typedef void (*OPCODES_INIT) (struct disassemble_info *, void *, fprintf_ftype);
+
 /*!
- * \fn opdis_init()
+ * \fn opdis_init( OPCODES_INIT init_fn )
  * \ingroup disassembly
  * \brief Initialize an opdis disassembler
  * \details Allocates an opdis_t and configures it using opdis_set_defaults().
+ * \param init_fn Pointer to init_disassemble_info function to use. If NULL,
+ *        the function in the default (linked) libopcodes is used.
  * \sa opdis_init_from_bfd opdis_term
  * \return An opdis disassembler object
  */
 
-opdis_t LIBCALL opdis_init( void );
+opdis_t LIBCALL opdis_init( OPCODES_INIT init_fn );
 
 
 /*!
