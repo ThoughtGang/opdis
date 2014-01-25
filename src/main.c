@@ -22,7 +22,7 @@
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
-const char * argp_program_version = "opdis 1.0";
+const char * argp_program_version = "opdis 1.0.6";
 const char * argp_program_bug_address = "<dev@thoughtgang.org>";
 static const char usage_str[] = "[FILE]...";
 static const char help_str[] = 
