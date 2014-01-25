@@ -2,7 +2,7 @@
  * Startup routine for opdis command-line utility
  * Copyright (c) 2010 ThoughtGang
  * Written by TG Community Developers <community@thoughtgang.org>
- * Released under the GNU Public License, version 3.
+ * Released under the GNU Public License, version 2.1.
  * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
@@ -22,7 +22,7 @@
 /* ---------------------------------------------------------------------- */
 /* ARGUMENTS AND DOC */
 
-const char * argp_program_version = "opdis 1.0.6";
+const char * argp_program_version = "opdis 1.1";
 const char * argp_program_bug_address = "<dev@thoughtgang.org>";
 static const char usage_str[] = "[FILE]...";
 static const char help_str[] = 

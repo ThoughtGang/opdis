@@ -3,7 +3,7 @@
  * \brief Data model implementation for libopdis.
  * \author TG Community Developers <community@thoughtgang.org>
  * \note Copyright (c) 2010 ThoughtGang.
- * Released under the GNU Lesser Public License (LGPL), version 3.
+ * Released under the GNU Lesser Public License (LGPL), version 2.1.
  * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 

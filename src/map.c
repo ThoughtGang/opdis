@@ -2,7 +2,7 @@
  * map of memory addresses
  * Copyright (c) 2010 ThoughtGang
  * Written by TG Community Developers <community@thoughtgang.org>
- * Released under the GNU Public License, version 3.
+ * Released under the GNU Public License, version 2.1.
  * See http://www.gnu.org/licenses/gpl.txt for details.
  */
 
