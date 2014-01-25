@@ -152,6 +152,10 @@ static void report_memory_error( int status, bfd_vma vma,
 /* OPDIS MGT */
 
 opdis_t LIBCALL opdis_init( OPCODES_INIT init_fn ) {
+	if (! init_fn ) {
+		init_fn = (OPCODES_INIT) init_disassemble_info;
+	}
+
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	
 	if ( o ) {
