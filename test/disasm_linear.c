@@ -32,7 +32,7 @@ static int disassemble_file( const char * name, opdis_off_t offset,
 
 	fclose( f );
 
-	o = opdis_init( NULL );
+	o = opdis_init();
 	opdis_set_display( o, display_insn, (void *) name );
 
 	rv = opdis_disasm_linear( o, buf, (opdis_vma_t) offset, length );

@@ -170,7 +170,7 @@ static int disassemble_file( const char * name, opdis_off_t offset ) {
 
 	fclose( f );
 
-	o = opdis_init( NULL );
+	o = opdis_init();
 	o->visited_addr = opdis_vma_tree_init();
 
 	tree = opdis_insn_tree_init( 1 );
