@@ -348,7 +348,7 @@ void LIBCALL opdis_set_error_reporter( opdis_t o, OPDIS_ERROR fn, void * arg ) {
 // NOTE: This requires that opdis_set_buffer() have been called
 static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma, 
 					opdis_insn_t * insn ) {
-	unsigned int size;
+	int size;
 
 	o->config.insn_info_valid = 0;
 	o->buf->item_count = 0;
@@ -357,7 +357,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 
 	o->config.stream = o;
 	size = o->disassembler( (bfd_vma) vma, &o->config );
-	if (! size ) {
+	if ( size < 1 ) {
 		char msg[32];
 		snprintf( msg, 31, "VMA %p: %02X\n", (void *) vma, 
 			  o->config.buffer[(vma - o->config.buffer_vma)] );
@@ -391,7 +391,7 @@ static unsigned int disasm_single_insn( opdis_t o, opdis_vma_t vma,
 	/* clear insn buffer now that decoding has taken place */
 	opdis_insn_buf_clear( o->buf );
 
-	return size;
+	return (unsigned int) size;
 }
 
 // size of single insn at address
