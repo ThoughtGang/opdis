@@ -432,6 +432,15 @@ Currently, \b libopdis ships only with an i386 (x86, x86-64) decoder.
 \sa \ref faq_libopdis_arch
 <p>
 
+  \subsection faq_libopdis_binutils_mgr Can libopdis be used with libbinutils_mgr?
+Support has been added to libopdis for using dynamic libopcodes libraries via 
+binutils_mgr. An example has been provided in doc/examples/binutils_mgr.c .
+Note that binutils-mgr is not required; any application can dynamically load
+libopcodes libraries and apply them using the same technique.
+<p>
+
+  \subsection faq_libopdis_arch What target architectures does libopdis support?
+
   \subsection faq_libopdis_algo What is the difference between linear and control flow disassembly?
 Most disassemblers, including <b>objdump(1)</b>, implement what is known as
 \e linear or <em>linear sweep</em> disassembly: the algorithm starts
