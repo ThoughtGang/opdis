@@ -151,14 +151,19 @@ static void report_memory_error( int status, bfd_vma vma,
 /* ---------------------------------------------------------------------- */
 /* OPDIS MGT */
 
+
+static void invoke_opcodes_init( opdis_t o, OPCODES_INIT fn ) {
+	fn( &o->config, o, build_insn_fprintf );
+	o->config.application_data = (void *) o;
+	o->config.memory_error_func = report_memory_error;
+}
+
 opdis_t LIBCALL opdis_init( void ) {
 	opdis_t o = (opdis_t) calloc( sizeof(opdis_info_t), 1 );
 	
 	if ( o ) {
 		o->buf = opdis_insn_buf_alloc( 0, 0, 0 );
-		init_disassemble_info ( &o->config, o, build_insn_fprintf );
-		o->config.application_data = (void *) o;
-		o->config.memory_error_func = report_memory_error;
+		invoke_opcodes_init( o, init_disassemble_info );
 		opdis_set_defaults( o );
 	}
 
@@ -236,6 +241,13 @@ void LIBCALL opdis_set_defaults( opdis_t o ) {
 	/* note: this sets the decoder */
 	opdis_set_x86_syntax( o, opdis_x86_syntax_intel );
 }
+
+void LIBCALL opdis_override_opcodes_init( opdis_t o, OPCODES_INIT fn ) {
+	invoke_opcodes_init( o, init_disassemble_info );
+	/* ensure arch, mach, and print_insn are unset. */
+	opdis_set_arch( o, bfd_arch_unknown, 0, NULL );
+}
+
 
 void LIBCALL opdis_set_disassembler_options( opdis_t o, const char * options ) {
 	if (! o ) {

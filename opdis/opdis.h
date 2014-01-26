@@ -380,6 +380,23 @@ void LIBCALL opdis_term( opdis_t o );
  */
 void LIBCALL opdis_set_defaults( opdis_t o );
 
+typedef void (*OPCODES_INIT) (struct disassemble_info *, void *, fprintf_ftype);
+
+/*!
+ * \fn opdis_override_opcodes_init( opdis_t o, OPCODES_INIT fn );
+ * \ingroup configuration
+ * \brief Invoke a custom libopcodes init_disassemble_info function
+ * This invokes the provided init_disassemble_info function in the config
+ * member of the opdis_t. This is used to apply a dynamically-loaded libopcodes
+ * to an opdis_t created by opdis_init.
+ * \param o opdis disassembler to configure.
+ * \param fn pointer to a libopcodes init_disassemble_info function
+ * \sa opdis_init opdis_set_arch opdis_set_disassembler_options
+ * \note This will reset o.config.disassembler, o.config.arch, o.config.mach, 
+ * o.config.application_data, and o.config.memory_error_func.
+ */
+void LIBCALL opdis_override_opcodes_init( opdis_t o, OPCODES_INIT fn );
+
 /*!
  * \enum opdis_x86_syntax_t
  * \ingroup configuration
