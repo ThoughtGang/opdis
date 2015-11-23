@@ -580,7 +580,8 @@ static void set_job_opts( struct opdis_options * o, job_opts_t j ) {
 	j->targets = o->targets;
 	j->map = o->map;
 	j->opdis = o->opdis;
-	j->quiet = o->quiet;
+	/* disable job headers if --quiet or if format is XML */
+	j->quiet = (o->quiet || o->fmt == asmfmt_xml);
 }
 
 static void print_target_syms (tgt_list_item_t * t, unsigned int id, void * a) {
