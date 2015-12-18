@@ -193,7 +193,7 @@ flags?,operands?,invalid?)>
 <!ELEMENT flag (#PCDATA)>
 <!ELEMENT operands (operand*)>
 <!ELEMENT operand (ascii,category,flags,value)>
-<!ATTLIST operand type (target|src|dest) "">
+<!ATTLIST operand type (target|src|dest|none) 'none'>
 <!ELEMENT value (register?,immediate?,absolute?,expression?)>
 <!ELEMENT register (ascii,id,size,flags)>
 <!ELEMENT immediate (#PCDATA)>

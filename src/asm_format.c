@@ -50,7 +50,7 @@ int asm_fprintf_header( FILE * f, enum asm_format_t fmt ) {
 			rv += fprintf( f, "<!ELEMENT operand (ascii," );
 			rv += fprintf( f, "category,flags,value)>\n" );
 			rv += fprintf( f, "<!ATTLIST operand type " );
-			rv += fprintf( f, "(target|src|dest) \"\">\n" );
+			rv += fprintf( f, "(target|src|dest|none) 'none'>\n" );
 			rv += fprintf( f, "<!ELEMENT value (register?," );
 			rv += fprintf( f, "immediate?,absolute?," );
 			rv += fprintf( f, "expression?)>\n" );
