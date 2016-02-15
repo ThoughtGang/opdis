@@ -18,7 +18,7 @@ AC_CHECK_LIB([bfd], [bfd_init], [], [AC_MSG_ERROR([Missing GNU binutils])])
 AC_SEARCH_LIBS([gettext], [intl gettextlib], [], [AC_MSG_ERROR([Missing GNU gettext])])
 AC_CHECK_LIB([opcodes], [init_disassemble_info], [], [AC_MSG_ERROR([Missing GNU libopcodes])])
 # NOTE: This adds -liberty if libiberty is present. No error if not present.
-AC_CHECK_LIB([liberty], [hex_init], [], [])
+AC_CHECK_LIB([iberty], [hex_init], [], [])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sys/types.h], [], [AC_MSG_ERROR([Missing UNIX libc headers])])
