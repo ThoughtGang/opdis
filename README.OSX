@@ -12,9 +12,7 @@ These dependencies can be installed via MacPorts, HomeBrew, or from source.
 
 MACPORTS BUILD
 
-	sudo port install gettext
-	sudo port install argp-standalone
-	sudo port install binutils
+	sudo port install argp-standalone automake binutils gettext libtool
 	./bootstrap
 	./configure.osx
 	make
@@ -23,9 +21,7 @@ MACPORTS BUILD
 
 HOMEBREW BUILD
 
-	brew install gettext
-	brew install argp-standalone
-	brew install binutils
+	brew install argp-standalone automake binutils gettext libtool
 	./bootstrap
 	./configure.osx
 	make
